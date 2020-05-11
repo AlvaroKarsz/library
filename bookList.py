@@ -8,6 +8,7 @@ import re
 from tkinter import font
 from threading import Thread
 from insertBook import InsertBook
+from stories import Stories
 from tkinter import messagebox
 
 class App:
@@ -18,6 +19,7 @@ class App:
         self.authorFilterStr = 'aF'
         self.settings = settings
         self.canvas = None
+        self.picFolder = settings['pics']['picFolderPath']
         self.nextSum = True
         self.goNextBind = None
         self.currentImageHodler = None
@@ -59,8 +61,8 @@ class App:
 
 
     def getBooksInfoFromDB(self):
-        self.books = fetchMyLibrary(self.db,self.settings)
-        self.booksCount = len(self.books)
+        self.data = fetchMyLibrary(self.db,self.settings)
+        self.booksCount = len(self.data)
         self.totalBooks = self.booksCount
         self.totalPages = roundUpDividation(self.booksCount, self.settings['maxBooksFetch']) or 1
 
@@ -75,7 +77,7 @@ class App:
 
     def markRelevantLibrary(self):
         mark = True
-        for i,book in enumerate(self.books):
+        for i,book in enumerate(self.data):
             if i == self.settings['maxBooksFetch']:
                 mark = False
             book['relevant'] = mark
@@ -111,7 +113,7 @@ class App:
 
     def toggleBooks(self):
         counter = 0
-        for book in self.books:
+        for book in self.data:
             if counter >= self.settings['maxBooksFetch']:
                 book['relevant'] = False
             else:
@@ -146,7 +148,7 @@ class App:
 
     def displayBooks(self,threadID):
         counter = 0
-        for i,book in enumerate(self.books):
+        for i,book in enumerate(self.data):
             if self.currentThread != threadID: # a new thread is running
                 return
             if book['relevant']:
@@ -168,12 +170,11 @@ class App:
 
     def addPic(self,name,parent,bigSize = False):
         path = name.replace(':','.').replace('/','.').lower()
-        path = self.settings['pics']['picFolderPath'] + re.sub('\s+','',path)
+        path = self.picFolder + re.sub('\s+','',path)
         path = getExtensionIfExist(path)
-        if path:
-            return self.postPic(path,parent,bigSize)
-        return None
-
+        path = path if path else self.settings['pics']['blank_pic']
+        return self.postPic(path,parent,bigSize)
+        
 
     def postPic(self,path,parent,bigSize):
         width = self.settings['pics']['width_big'] if bigSize else self.settings['pics']['width']
@@ -210,7 +211,8 @@ class App:
 
         img = self.addPic(book['name'],bookView)
         bookView.pack(side=LEFT,fill=BOTH,expand=True)
-        img.bind("<Button-1>",lambda event :self.selectBookOnclick(book['id']))
+        if img:
+            img.bind("<Button-1>",lambda event :self.selectBookOnclick(book['id']))
 
 
     def padTheRowWithBlankRows(self):
@@ -376,14 +378,14 @@ class App:
 
 
     def navigatePrevBook(self,id):
-        prevBookID = getPrevValueInJsonByElementKey(self.books,'id',id)
+        prevBookID = getPrevValueInJsonByElementKey(self.data,'id',id)
         if prevBookID:
             self.killOverlay()
             self.selectBookOnclick(prevBookID)
 
 
     def navigateNextBook(self,id):
-        nextBookID = getNextValueInJsonByElementKey(self.books,'id',id)
+        nextBookID = getNextValueInJsonByElementKey(self.data,'id',id)
         if nextBookID:
             self.killOverlay()
             self.selectBookOnclick(nextBookID)
@@ -481,8 +483,8 @@ class App:
         self.notRelevantAll()
         count = 0
         while minRelevant >= 0 and count < self.settings['maxBooksFetch']:
-            if includeInsensitive(self.books[minRelevant]['name'],self.nameValueFilter) and includeInsensitive(self.books[minRelevant]['author'],self.authorValueFilter):
-                self.books[minRelevant]['relevant'] = True
+            if includeInsensitive(self.data[minRelevant]['name'],self.nameValueFilter) and includeInsensitive(self.data[minRelevant]['author'],self.authorValueFilter):
+                self.data[minRelevant]['relevant'] = True
                 count += 1
             minRelevant -= 1
         self.removeBooks()
@@ -507,8 +509,8 @@ class App:
         count = 0
 
         while maxRelevant <= len and count < self.settings['maxBooksFetch']:
-            if includeInsensitive(self.books[maxRelevant]['name'],self.nameValueFilter) and includeInsensitive(self.books[maxRelevant]['author'],self.authorValueFilter):
-                self.books[maxRelevant]['relevant'] = True
+            if includeInsensitive(self.data[maxRelevant]['name'],self.nameValueFilter) and includeInsensitive(self.data[maxRelevant]['author'],self.authorValueFilter):
+                self.data[maxRelevant]['relevant'] = True
                 count += 1
             maxRelevant += 1
         self.removeBooks()
@@ -528,7 +530,7 @@ class App:
         len = self.totalBooks - 1
         count = len
         while len > -1 :
-            if self.books[count]['relevant']:
+            if self.data[count]['relevant']:
                 return count
             count -= 1
         return None
@@ -540,14 +542,14 @@ class App:
 
 
     def getIndexFirstRelevant(self):
-        for i,book in enumerate(self.books):
+        for i,book in enumerate(self.data):
             if book['relevant']:
                 return i
         return None
 
 
     def notRelevantAll(self):
-        for book in self.books:
+        for book in self.data:
             book['relevant'] = False
 
 
@@ -565,7 +567,7 @@ class App:
 
     def resetCountRelevantBooks(self):
         count = 0
-        for book in self.books:
+        for book in self.data:
             if includeInsensitive(book['name'],self.nameValueFilter) and includeInsensitive(book['author'],self.authorValueFilter):
                 count += 1
         self.booksCount = count
@@ -646,7 +648,7 @@ class App:
         displayMenu = Menu(topNav,tearoff=False,bg='white',font=('Arial',11))
         displayMenu.add_checkbutton(label="Display Books")
         displayMenu.add_checkbutton(label="Display Series")
-        displayMenu.add_checkbutton(label="Display Stories")
+        displayMenu.add_checkbutton(label="Display Stories", command = lambda : self.loadStories())
         displayMenu.add_checkbutton(label="Display Wishlist")
         displayMenu.add_checkbutton(label="Display Reads")
         displayMenu.add_checkbutton(label="Display Stats")
@@ -675,7 +677,7 @@ class App:
 
 
     def evalSortingFunction(self,key,reverseFlag):
-        self.books.sort(key = lambda u : u[key], reverse = reverseFlag)
+        self.data.sort(key = lambda u : u[key], reverse = reverseFlag)
 
 
     def sortBooks(self,args):
@@ -689,11 +691,28 @@ class App:
         sortingLabel = Label(parent)
         sortingLabel.pack(side=LEFT,expand=True,fill=X)
         Label(sortingLabel,text="Sort By:",font=('Arial', 14),anchor="n").pack(side=TOP)
-        sortInp = Combobox(sortingLabel,
+        self.sortInp = Combobox(sortingLabel,
         values = options,
         width=25,
         state="readonly"
         )
-        sortInp.pack(side=BOTTOM)
-        sortInp.set(options[0])
-        sortInp.bind('<<ComboboxSelected>>',lambda a : self.sortBooks(optionTranslation[sortInp.current()] ))
+        self.sortInp.pack(side=BOTTOM)
+        self.sortInp.set(options[0])
+        self.sortInp.bind('<<ComboboxSelected>>',lambda a : self.sortBooks(optionTranslation[self.sortInp.current()] ))
+
+
+    def loadStories(self):
+        stories = Stories(self.settings,self.db)
+        self.data = stories.setData()
+        self.booksCount = len(self.data)
+        self.totalBooks = self.booksCount
+        self.picFolder = stories.setPituresFolder()
+        self.sortOptions = stories.setSortOptions()
+        self.sortTranslations = stories.setSortTranslations()
+        self.reloadSortingTool()
+
+
+    def reloadSortingTool(self):
+        self.sortInp['values'] = self.sortOptions
+        self.sortInp.bind('<<ComboboxSelected>>',lambda a : self.sortBooks(self.sortTranslations[self.sortInp.current()] ))
+        self.filter()

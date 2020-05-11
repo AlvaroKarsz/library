@@ -26,10 +26,13 @@ settings['booksDisplayPreRow'] = 4
 settings['appDir'] = 'C:/path'
 settings['pics'] = {}
 settings['pics']['picFolderPath'] = settings['appDir'] + 'pictures/'
+settings['pics']['storiesFolderPath'] = settings['appDir'] + 'stories/'
 settings['pics']['width'] = 180
 settings['pics']['height'] = 200
 settings['pics']['width_big'] =  220
 settings['pics']['height_big'] =  250
+
+
 
 settings['insertBook'] = {}
 settings['insertBook']['padx_popup'] = 100
