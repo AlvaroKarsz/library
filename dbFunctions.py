@@ -217,3 +217,24 @@ def markBookAsReaded(db,settings,bookID,date):
     '''
     db.execute(sql,[date,bookID])
     return db.fetchone()[0]
+
+
+def fetchAllMyStories(db,settings):
+    sql = '''
+    SELECT
+        self.id,
+        self.name,
+        self.pages,
+        parent.name AS parent_name,
+        parent.author,
+        parent.year
+        FROM ''' + settings['db']['stories_table'] + ''' self
+        LEFT JOIN ''' + settings['db']['books_table'] + ''' parent
+        ON self.parent = parent.id
+        ORDER BY
+        self.id;
+        '''
+    db.execute(sql)
+    rows = db.fetchall()
+    columns = db.description
+    return postgresResultToColumnRowJson(columns,rows)
