@@ -18,5 +18,10 @@ class Stories:
     def setSortTranslations(self):
         return [['id',False],['id',True],['name',False],['name',True],['parent_name',False],['parent_name',True],['pages',False],['pages',True],['year',False],['year',True]]
 
+
     def setPituresFolder(self):
         return self.settings['pics']['storiesFolderPath']
+
+
+    def fetchById(db,settings,id):
+        return fetchStoryById(db,settings,id)

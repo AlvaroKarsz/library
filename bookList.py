@@ -9,6 +9,7 @@ from tkinter import font
 from threading import Thread
 from insertBook import InsertBook
 from stories import Stories
+from books import Books
 from tkinter import messagebox
 
 class App:
@@ -28,6 +29,7 @@ class App:
         self.authorValueFilter = ''
         self.currPage = 1
         self.currentOverlay = None
+        self.fetchById = lambda self,id: fetchById(self.db,self.settings,id)
         self.perRow = settings['booksDisplayPreRow']
         centerWindow(win,settings['gui']['width'],settings['gui']['height'])
         self.getBooksInfoFromDB()
@@ -37,7 +39,6 @@ class App:
         self.createView()
         self.displyBooksThread()
         self.fitlerOnKeyUp()
-
 
     def filterYourself(self,event):
         if event.keycode != 13:
@@ -174,7 +175,7 @@ class App:
         path = getExtensionIfExist(path)
         path = path if path else self.settings['pics']['blank_pic']
         return self.postPic(path,parent,bigSize)
-        
+
 
     def postPic(self,path,parent,bigSize):
         width = self.settings['pics']['width_big'] if bigSize else self.settings['pics']['width']
@@ -301,7 +302,7 @@ class App:
     def selectBookOnclick(self,id):
         if self.currentOverlay:
             return
-        bookObj = fetchBookById(self.db,self.settings,id)
+        bookObj = self.fetchById(self,id)
         self.createOverlay()
         selectedBookHeader = Label(self.currentOverlay,background='white')
         selectedBookHeader.pack(side=TOP,fill=X,padx=3,pady=3)
@@ -606,9 +607,12 @@ class App:
         self.goPrevBind = None
 
 
-    def clearFilters(self,event):
+    def emptyFilters(self):
         clearEntry(getattr(self,self.nameFilterStr))
         clearEntry(getattr(self,self.authorFilterStr))
+
+    def clearFilters(self,event):
+        self.emptyFilters()
         self.filter()
 
 
@@ -645,19 +649,23 @@ class App:
         self.insertionsMenu.add_command(label="Insert Serie")
         self.insertionsMenu.add_command(label="Insert Wishlist")
         topNav.add_cascade(label="Insert", menu=self.insertionsMenu)
-        displayMenu = Menu(topNav,tearoff=False,bg='white',font=('Arial',11))
-        displayMenu.add_checkbutton(label="Display Books")
-        displayMenu.add_checkbutton(label="Display Series")
-        displayMenu.add_checkbutton(label="Display Stories", command = lambda : self.loadStories())
-        displayMenu.add_checkbutton(label="Display Wishlist")
-        displayMenu.add_checkbutton(label="Display Reads")
-        displayMenu.add_checkbutton(label="Display Stats")
-        topNav.add_cascade(label="Display", menu=displayMenu)
+        self.displayMenu = Menu(topNav,tearoff=False,bg='white',font=('Arial',11))
+        self.displayMenu.add_checkbutton(label="Display Books")
+        self.displayMenu.add_checkbutton(label="Display Series")
+        self.displayMenu.add_checkbutton(label="Display Stories", command = lambda : self.loadDsiplay(self.loadStories))
+        self.displayMenu.add_checkbutton(label="Display Wishlist")
+        self.displayMenu.add_checkbutton(label="Display Reads")
+        self.displayMenu.add_checkbutton(label="Display Stats")
+        topNav.add_cascade(label="Display", menu=self.displayMenu)
         bckupMenu = Menu(topNav,tearoff=False,bg='white',font=('Arial',11))
         bckupMenu.add_command(label="Backup DB Structure")
         bckupMenu.add_command(label="Backup DB Data")
         topNav.add_cascade(label="BackUps", menu=bckupMenu)
 
+
+    def loadDsiplay(self,callback):
+        callback()
+        print(self.displayMenu.entrycget(2,'command'))
 
     def makeOverlayAndPopUp(self,parent,color='white',borderThicknes = 2, borderColor = "black",padx=0,pady=0):
         c = Canvas(parent,bg=color,highlightthickness=borderThicknes, highlightbackground=borderColor)
@@ -702,6 +710,7 @@ class App:
 
 
     def loadStories(self):
+        self.emptyFilters()
         stories = Stories(self.settings,self.db)
         self.data = stories.setData()
         self.booksCount = len(self.data)

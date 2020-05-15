@@ -238,3 +238,64 @@ def fetchAllMyStories(db,settings):
     rows = db.fetchall()
     columns = db.description
     return postgresResultToColumnRowJson(columns,rows)
+
+
+def fetchStoryById(db,settings,id):
+    sql = '''
+    SELECT
+        my_stories_main.id AS id,
+        my_stories_main.name AS name,
+        my_stories_main.pages AS pages,
+        my_books_main.year AS year,
+        my_books_main.author AS author,
+        my_books_main.language AS language,
+        my_books_main.original_language AS o_language,
+        my_books_main.read_order AS read,
+        my_stories_entry1.id AS next_id,
+        my_stories_entry1.name AS next_name,
+        my_stories_entry2.id AS prev_id,
+        my_stories_entry2.name AS prev_name
+
+        FROM ''' + settings['db']['stories_table'] + ''' my_stories_main
+
+        LEFT JOIN  ''' + settings['db']['books_table'] + ''' my_books_main
+        ON my_stories_main.parent = my_books_main.id
+
+        LEFT JOIN ''' +  settings['db']['stories_table'] + ''' my_stories_entry1
+        ON my_stories_entry1.id = (
+            SELECT id FROM ''' + settings['db']['stories_table'] + ''' aa
+            WHERE aa.parent = my_stories_main.parent
+            AND
+            aa.id > my_stories_main.id
+            ORDER BY aa.id ASC
+            LIMIT 1
+        )
+
+        LEFT JOIN ''' +  settings['db']['stories_table'] + ''' my_stories_entry2
+        ON my_stories_entry2.id = (
+            SELECT id FROM ''' + settings['db']['stories_table'] + ''' aaa
+                WHERE aaa.parent = my_stories_main.parent
+                AND
+                aaa.id < my_stories_main.id
+                ORDER BY aaa.id DESC
+                LIMIT 1
+            )
+        WHERE my_stories_main.id = %s
+        GROUP BY
+        my_stories_main.id,
+        my_stories_main.name,
+        my_stories_main.pages,
+        my_books_main.year,
+        my_books_main.author,
+        my_books_main.language,
+        my_books_main.original_language,
+        my_books_main.read_order,
+        my_stories_entry1.id,
+        my_stories_entry1.name,
+        my_stories_entry2.id,
+        my_stories_entry2.name;
+        '''
+    db.execute(sql,[id])
+    rows = [db.fetchone()]
+    columns = db.description
+    return postgresResultToColumnRowJson(columns,rows)[0]
