@@ -20,7 +20,6 @@ class App:
         self.authorFilterStr = 'aF'
         self.settings = settings
         self.canvas = None
-        self.picFolder = settings['pics']['picFolderPath']
         self.nextSum = True
         self.goNextBind = None
         self.currentImageHodler = None
@@ -28,15 +27,16 @@ class App:
         self.nameValueFilter = ''
         self.authorValueFilter = ''
         self.currPage = 1
+        self.totalPages = 1#default untill books loads
+        self.booksCount = 1#default untill books loads
         self.currentOverlay = None
-        self.fetchById = lambda self,id: fetchById(self.db,self.settings,id)
         self.perRow = settings['booksDisplayPreRow']
         centerWindow(win,settings['gui']['width'],settings['gui']['height'])
-        self.getBooksInfoFromDB()
-        self.markRelevantLibrary()
         self.addTopNav()
         self.addHeader()
         self.createView()
+        self.loadBooks(True)#the default one is books, true to avoid loading the books, it will load next
+        self.markRelevantLibrary()
         self.displyBooksThread()
         self.fitlerOnKeyUp()
 
@@ -59,13 +59,6 @@ class App:
         self.updatePageNavigators()
         self.displyBooksThread()
         self.reCenterBooks()
-
-
-    def getBooksInfoFromDB(self):
-        self.data = fetchMyLibrary(self.db,self.settings)
-        self.booksCount = len(self.data)
-        self.totalBooks = self.booksCount
-        self.totalPages = roundUpDividation(self.booksCount, self.settings['maxBooksFetch']) or 1
 
 
     def displyBooksThread(self):
@@ -275,9 +268,10 @@ class App:
         stringLabel = Label(labelParent,text=string,background='white')
         labelParent.pack(side=LEFT)
         holder.pack(side=LEFT)
-        if readFlag:
+        if readFlag and not self.markReadedFlag:
             stringLabel.pack(side=LEFT)
-        else:
+
+        elif not readFlag and self.markReadedFlag:
             stringLabel.pack()
             toggle = Label(labelParent,text='Mark as readed',background='white',anchor='sw',font=('Arial',10))
             self.styleRedirectText(toggle)
@@ -295,7 +289,7 @@ class App:
             if type(readNum) is not int:
                 messagebox.showerror(title='Error', message="Error Updating DB data.")
             else:
-                messagebox.showinfo('Change saved',f'''This is the {readNum}th book you read''')
+                messagebox.showinfo('Change saved',f'''This is the {readNum}th book you've read''')
                 self.redirectPopUp(bookID) # reload with the new icon
 
 
@@ -608,8 +602,10 @@ class App:
 
 
     def emptyFilters(self):
-        clearEntry(getattr(self,self.nameFilterStr))
-        clearEntry(getattr(self,self.authorFilterStr))
+        if hasattr(self,self.nameFilterStr):
+            clearEntry(getattr(self,self.nameFilterStr))
+        if hasattr(self,self.authorFilterStr):
+            clearEntry(getattr(self,self.authorFilterStr))
 
     def clearFilters(self,event):
         self.emptyFilters()
@@ -617,28 +613,51 @@ class App:
 
 
     def addBookData(self,bookO,parent):
-        self.postSingleBookLine('ID: ' + str(bookO['id']),parent)
-        self.postSingleBookLine('Author: ' + bookO['author'],parent)
-        self.postSingleBookLine('Publication Year: ' + str(bookO['year']),parent)
-        self.postSingleBookLine('Number of Pages: ' + str(bookO['pages']),parent)
-        self.postSingleBookLine('Language: ' + bookO['language'],parent)
-        self.postSingleBookLine('Original Language: ' + bookO['o_language'],parent)
-        self.postSingleBookLine('ISBN: ' + str(bookO['isbn']),parent)
-        self.postBookFormat(parent,bookO['type'])
-        self.postSingleBookLine('Serie: ' + ('None' if (not bookO['serie'] or not bookO['serie_num']) else bookO['serie'] + ' (' + str(bookO['serie_num']) + ')'),parent)
+        if 'id' in bookO:
+            self.postSingleBookLine('ID: ' + str(bookO['id']),parent)
 
-        if bookO['prev_id'] :
-            self.postSingleBookLineWithRedirect('Preceded by: ' ,  bookO['prev_name'] + ' by ' + bookO['prev_author'],parent,bookO['prev_id'])
-        else:
-            self.postSingleBookLine('Preceded by: None',parent)
+        if 'author' in bookO:
+            self.postSingleBookLine('Author: ' + bookO['author'],parent)
 
-        if bookO['next_id'] :
-            self.postSingleBookLineWithRedirect('Followed by: ' ,  bookO['next_name'] + ' by ' + bookO['next_author'],parent,bookO['next_id'])
-        else:
-            self.postSingleBookLine('Followed by: None',parent)
+        if 'year' in bookO:
+            self.postSingleBookLine('Publication Year: ' + str(bookO['year']),parent)
 
-        if bookO['stories'] and notEmptyEls(bookO['stories']):
-            self.postStoriesList(bookO['stories'],parent)
+        if 'parent_name' in bookO:
+            self.postSingleBookLine('Part Of: ' + bookO['parent_name'],parent)
+
+        if 'pages' in bookO:
+            self.postSingleBookLine('Number of Pages: ' + str(bookO['pages']),parent)
+
+        if 'language' in bookO:
+            self.postSingleBookLine('Language: ' + bookO['language'],parent)
+
+        if 'o_language' in bookO:
+            self.postSingleBookLine('Original Language: ' + bookO['o_language'],parent)
+
+        if 'isbn' in bookO:
+            self.postSingleBookLine('ISBN: ' + str(bookO['isbn']),parent)
+
+        if 'type' in bookO:
+            self.postBookFormat(parent,bookO['type'])
+
+        if 'serie' in bookO:
+            self.postSingleBookLine('Serie: ' + ('None' if (not bookO['serie'] or not bookO['serie_num']) else bookO['serie'] + ' (' + str(bookO['serie_num']) + ')'),parent)
+
+        if 'prev_name' in bookO:
+            if bookO['prev_id'] :
+                self.postSingleBookLineWithRedirect('Preceded by: ' ,  bookO['prev_name'] + ' by ' + (bookO['prev_author'] if 'prev_author' in bookO else bookO['author']),parent,bookO['prev_id'])
+            else:
+                self.postSingleBookLine('Preceded by: None',parent)
+
+        if 'next_id' in bookO:
+            if bookO['next_id'] :
+                self.postSingleBookLineWithRedirect('Followed by: ' ,  bookO['next_name'] + ' by ' + (bookO['next_author'] if 'next_author' in bookO else bookO['author']),parent,bookO['next_id'])
+            else:
+                self.postSingleBookLine('Followed by: None',parent)
+
+        if 'stories' in bookO:
+            if bookO['stories'] and notEmptyEls(bookO['stories']):
+                self.postStoriesList(bookO['stories'],parent)
 
 
     def addTopNav(self):
@@ -650,7 +669,7 @@ class App:
         self.insertionsMenu.add_command(label="Insert Wishlist")
         topNav.add_cascade(label="Insert", menu=self.insertionsMenu)
         self.displayMenu = Menu(topNav,tearoff=False,bg='white',font=('Arial',11))
-        self.displayMenu.add_checkbutton(label="Display Books")
+        self.displayMenu.add_checkbutton(label="Display Books", command = lambda : self.loadDsiplay(self.loadBooks))
         self.displayMenu.add_checkbutton(label="Display Series")
         self.displayMenu.add_checkbutton(label="Display Stories", command = lambda : self.loadDsiplay(self.loadStories))
         self.displayMenu.add_checkbutton(label="Display Wishlist")
@@ -665,7 +684,6 @@ class App:
 
     def loadDsiplay(self,callback):
         callback()
-        print(self.displayMenu.entrycget(2,'command'))
 
     def makeOverlayAndPopUp(self,parent,color='white',borderThicknes = 2, borderColor = "black",padx=0,pady=0):
         c = Canvas(parent,bg=color,highlightthickness=borderThicknes, highlightbackground=borderColor)
@@ -694,18 +712,15 @@ class App:
 
 
     def addSortingTool(self,parent):
-        options = ['ID, Lowest first','ID, Latest first','Book Name, ABC','Book Name, ZYX','Number of Pages, Lowest first','Number of Pages, Biggest first','Publication Year, Lowest first','Publication Year, Latest first']
-        optionTranslation = [['id',False],['id',True],['name',False],['name',True],['pages',False],['pages',True],['year',False],['year',True]]
         sortingLabel = Label(parent)
         sortingLabel.pack(side=LEFT,expand=True,fill=X)
         Label(sortingLabel,text="Sort By:",font=('Arial', 14),anchor="n").pack(side=TOP)
         self.sortInp = Combobox(sortingLabel,
-        values = options,
+        values = [] ,
         width=25,
         state="readonly"
         )
         self.sortInp.pack(side=BOTTOM)
-        self.sortInp.set(options[0])
         self.sortInp.bind('<<ComboboxSelected>>',lambda a : self.sortBooks(optionTranslation[self.sortInp.current()] ))
 
 
@@ -713,15 +728,34 @@ class App:
         self.emptyFilters()
         stories = Stories(self.settings,self.db)
         self.data = stories.setData()
+        self.markReadedFlag = stories.markAsReadedFlag
         self.booksCount = len(self.data)
         self.totalBooks = self.booksCount
-        self.picFolder = stories.setPituresFolder()
-        self.sortOptions = stories.setSortOptions()
-        self.sortTranslations = stories.setSortTranslations()
+        self.totalPages = roundUpDividation(self.booksCount, self.settings['maxBooksFetch']) or 1
+        self.picFolder = stories.picturesFolder
+        self.sortOptions = stories.sortOptions
+        self.sortTranslations = stories.sortTranslations
+        self.fetchById = lambda self,id: Stories.fetchById(self.db,self.settings,id)
         self.reloadSortingTool()
 
+    def loadBooks(self, addDisplayFlag = False):
+        self.emptyFilters()
+        books = Books(self.settings,self.db)
+        self.data = books.setData()
+        self.markReadedFlag = books.markAsReadedFlag
+        self.booksCount = len(self.data)
+        self.totalBooks = self.booksCount
+        self.totalPages = roundUpDividation(self.booksCount, self.settings['maxBooksFetch']) or 1
+        self.picFolder = books.picturesFolder
+        self.sortOptions = books.sortOptions
+        self.sortTranslations = books.sortTranslations
+        self.fetchById = lambda self,id: Books.fetchById(self.db,self.settings,id)
+        self.reloadSortingTool(addDisplayFlag)
 
-    def reloadSortingTool(self):
+
+    def reloadSortingTool(self,addDisplayFlag=False):
         self.sortInp['values'] = self.sortOptions
         self.sortInp.bind('<<ComboboxSelected>>',lambda a : self.sortBooks(self.sortTranslations[self.sortInp.current()] ))
-        self.filter()
+        self.sortInp.set(self.sortOptions[0])
+        if not addDisplayFlag:
+            self.filter()
