@@ -9,6 +9,7 @@ class InsertWish:
     def __init__(self,win,settings,db):
         self.window = win
         self.db = db
+        self.sucess = BooleanVar()
         self.settings = settings
         self.closeOnclick()
         self.addTitle()
@@ -49,6 +50,7 @@ class InsertWish:
 
     def killWindow(self):
         self.window.destroy()
+        self.sucess.set(True)
 
 
     def addNewLabelAndInput(self,prent,text,row,column,varName):

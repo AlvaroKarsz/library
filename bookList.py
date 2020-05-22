@@ -845,11 +845,21 @@ class App:
 
 
     def insertWishWindow(self):
+        if self.currentOverlay:
+            return
         self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"white",2,"black",self.settings['insertWish']['padx_popup'],self.settings['insertWish']['pady_popup'])
-        InsertWish(self.insertBookCanvas,self.settings,self.db)
+        self.currentOverlay = True
+        trace = InsertWish(self.insertBookCanvas,self.settings,self.db)
+        _self = self #acess from another class object
+        trace.sucess.trace("w", _self.removeOverlayFlag)#remove overlay indicator to allow another popups
+
+    def removeOverlayFlag(self,*args):
+        self.currentOverlay = None
 
 
     def insertBookWindow(self,autoData = {},destoryAfter = False):
+        if self.currentOverlay:
+            return
         self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"white",2,"black",self.settings['insertBook']['padx_popup'],self.settings['insertBook']['pady_popup'])
         return InsertBook(self.insertBookCanvas,self.settings,self.db,autoData,destoryAfter)
 
