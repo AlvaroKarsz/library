@@ -230,7 +230,65 @@ def markWishAsOrdered(db,settings,bookID):
         return True
     except Exception as err:
         return err
-        
+
+def fetchAllMySeries(db,settings):
+    sql = '''
+    SELECT
+        ser.id,
+        ser.name,
+        ser.author,
+        (
+            SELECT COUNT(1)
+            FROM ''' + settings['db']['books_table'] + '''
+            WHERE serie = ser.id
+        ) AS books,
+        (
+            SELECT COUNT(1)
+            FROM ''' + settings['db']['books_table'] + '''
+            WHERE serie = ser.id AND read_order IS NOT NULL
+        ) AS books_read,
+        (
+            SELECT COUNT(1)
+            FROM ''' + settings['db']['wish_table'] + '''
+            WHERE serie = ser.id
+        ) AS wish_books
+        FROM ''' + settings['db']['series_table'] + ''' ser
+        ORDER BY ser.id;
+    '''
+    db.execute(sql)
+    rows = db.fetchall()
+    columns = db.description
+    return postgresResultToColumnRowJson(columns,rows)
+
+
+def fetchSerieById(db,settings,id):
+    sql = '''
+    SELECT
+        ser.id,
+        ser.name,
+        ser.author,
+        (
+            SELECT COUNT(1)
+            FROM ''' + settings['db']['books_table'] + '''
+            WHERE serie = ser.id
+        ) AS books,
+        (
+            SELECT COUNT(1)
+            FROM ''' + settings['db']['books_table'] + '''
+            WHERE serie = ser.id AND read_order IS NOT NULL
+        ) AS books_read,
+        (
+            SELECT COUNT(1)
+            FROM ''' + settings['db']['wish_table'] + '''
+            WHERE serie = ser.id
+        ) AS wish_books
+        FROM ''' + settings['db']['series_table'] + ''' ser
+        WHERE id = %s
+    '''
+    db.execute(sql,[id])
+    rows = [db.fetchone()]
+    columns = db.description
+    return postgresResultToColumnRowJson(columns,rows)[0]
 
 
 def fetchAllMyStories(db,settings):

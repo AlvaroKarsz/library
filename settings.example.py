@@ -30,6 +30,7 @@ settings['pics'] = {}
 settings['pics']['picFolderPath'] = settings['appDir'] + 'f1/'
 settings['pics']['wishFolderPath'] = settings['appDir'] + 'f2/'
 settings['pics']['storiesFolderPath'] = settings['appDir'] + 'f3/'
+settings['pics']['seriesFolderPath'] = settings['appDir'] + 'f4/'
 settings['pics']['width'] = 1
 settings['pics']['height'] = 1
 settings['pics']['width_big'] =  1

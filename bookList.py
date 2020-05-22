@@ -11,6 +11,7 @@ from insertBook import InsertBook
 from stories import Stories
 from books import Books
 from reads import Reads
+from series import Series
 from wishlist import Wishlist
 from tkinter import messagebox
 
@@ -303,7 +304,7 @@ class App:
 
 
     def markThisBookAsOrdered(self,id):
-        flag =  markWishAsOrdered(self.db,self.settings,id) 
+        flag =  markWishAsOrdered(self.db,self.settings,id)
         if flag == True:
             messagebox.showinfo('change saved',f'''Book status changed to "Ordered"''')
         else :
@@ -672,6 +673,15 @@ class App:
         if 'pages' in bookO:
             self.postSingleBookLine('Number of Pages: ' + str(bookO['pages']),parent)
 
+        if 'books' in bookO:
+            self.postSingleBookLine('Owned Books: ' + str(bookO['books']),parent)
+
+        if 'books_read' in bookO:
+            self.postSingleBookLine('Readed Books: ' + str(bookO['books_read']),parent)
+
+        if 'wish_books' in bookO:
+            self.postSingleBookLine('Books in Wish List: ' + str(bookO['wish_books']),parent)
+
         if 'read_date' in bookO:
             self.postSingleBookLine('Read Date: ' + str(bookO['read_date']),parent)
 
@@ -715,19 +725,47 @@ class App:
         self.insertionsMenu.add_command(label="Insert Serie")
         self.insertionsMenu.add_command(label="Insert Wishlist")
         topNav.add_cascade(label="Insert", menu=self.insertionsMenu)
+
+        self.displayVars = []
+
         self.displayMenu = Menu(topNav,tearoff=False,bg='white',font=('Arial',11))
-        self.displayMenu.add_checkbutton(label="Display Books", command = lambda : self.loadBooks())
-        self.displayMenu.add_checkbutton(label="Display Series")
-        self.displayMenu.add_checkbutton(label="Display Stories", command = lambda : self.loadStories())
-        self.displayMenu.add_checkbutton(label="Display Wishlist", command = lambda : self.loadWish())
-        self.displayMenu.add_checkbutton(label="Display Reads", command = lambda : self.loadReads())
-        self.displayMenu.add_checkbutton(label="Display Stats")
+
+        temp = IntVar(self.window)
+        temp.set(1)#default one
+        self.displayMenu.add_checkbutton(label="Display Books", command = lambda : self.loadNew(self.loadBooks,0), variable = temp)
+        self.displayVars.append(temp)
+
+        temp = IntVar(self.window)
+        self.displayMenu.add_checkbutton(label="Display Series", command = lambda : self.loadNew(self.loadSeries,1), variable = temp)
+        self.displayVars.append(temp)
+
+        temp = IntVar(self.window)
+        self.displayMenu.add_checkbutton(label="Display Stories", command = lambda : self.loadNew(self.loadStories,2), variable = temp)
+        self.displayVars.append(temp)
+
+        temp = IntVar(self.window)
+        self.displayMenu.add_checkbutton(label="Display Wishlist", command = lambda : self.loadNew(self.loadWish,3), variable = temp)
+        self.displayVars.append(temp)
+
+        temp = IntVar(self.window)
+        self.displayMenu.add_checkbutton(label="Display Reads", command = lambda : self.loadNew(self.loadReads,4), variable = temp)
+        self.displayVars.append(temp)
+
+        temp = IntVar(self.window)
+        self.displayMenu.add_checkbutton(label="Display Stats", variable = temp)
+        self.displayVars.append(temp)
+
         topNav.add_cascade(label="Display", menu=self.displayMenu)
         bckupMenu = Menu(topNav,tearoff=False,bg='white',font=('Arial',11))
         bckupMenu.add_command(label="Backup DB Structure")
         bckupMenu.add_command(label="Backup DB Data")
         topNav.add_cascade(label="BackUps", menu=bckupMenu)
 
+
+    def loadNew(self,function,labelIndex):
+        for ind,var in enumerate(self.displayVars):
+            var.set(0 if ind != labelIndex else 1)
+        function()
 
     def makeOverlayAndPopUp(self,parent,color='white',borderThicknes = 2, borderColor = "black",padx=0,pady=0):
         c = Canvas(parent,bg=color,highlightthickness=borderThicknes, highlightbackground=borderColor)
@@ -781,6 +819,22 @@ class App:
         self.sortTranslations = stories.sortTranslations
         self.updateTitle(stories.title)
         self.fetchById = lambda self,id: Stories.fetchById(self.db,self.settings,id)
+        self.reloadSortingTool()
+
+
+    def loadSeries(self):
+        self.emptyFilters()
+        series = Series(self.settings,self.db)
+        self.data = series.setData()
+        self.markReadedFlag = series.markAsReadedFlag
+        self.booksCount = len(self.data)
+        self.totalBooks = self.booksCount
+        self.totalPages = roundUpDividation(self.booksCount, self.settings['maxBooksFetch']) or 1
+        self.picFolder = series.picturesFolder
+        self.sortOptions = series.sortOptions
+        self.sortTranslations = series.sortTranslations
+        self.updateTitle(series.title)
+        self.fetchById = lambda self,id: Series.fetchById(self.db,self.settings,id)
         self.reloadSortingTool()
 
 
