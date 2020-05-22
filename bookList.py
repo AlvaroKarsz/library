@@ -10,6 +10,7 @@ from threading import Thread
 from insertBook import InsertBook
 from stories import Stories
 from books import Books
+from reads import Reads
 from tkinter import messagebox
 
 class App:
@@ -268,15 +269,16 @@ class App:
         stringLabel = Label(labelParent,text=string,background='white')
         labelParent.pack(side=LEFT)
         holder.pack(side=LEFT)
-        if readFlag and not self.markReadedFlag:
+        if readFlag:
             stringLabel.pack(side=LEFT)
 
-        elif not readFlag and self.markReadedFlag:
+        else:
             stringLabel.pack()
-            toggle = Label(labelParent,text='Mark as readed',background='white',anchor='sw',font=('Arial',10))
-            self.styleRedirectText(toggle)
-            toggle.pack(side=LEFT)
-            toggle.bind('<Button-1>',lambda event: self.markThisBoodReaded(bookID))
+            if self.markReadedFlag:
+                toggle = Label(labelParent,text='Mark as readed',background='white',anchor='sw',font=('Arial',10))
+                self.styleRedirectText(toggle)
+                toggle.pack(side=LEFT)
+                toggle.bind('<Button-1>',lambda event: self.markThisBoodReaded(bookID))
 
 
     def markThisBoodReaded(self,bookID):
@@ -628,6 +630,9 @@ class App:
         if 'pages' in bookO:
             self.postSingleBookLine('Number of Pages: ' + str(bookO['pages']),parent)
 
+        if 'read_date' in bookO:
+            self.postSingleBookLine('Read Date: ' + str(bookO['read_date']),parent)
+
         if 'language' in bookO:
             self.postSingleBookLine('Language: ' + bookO['language'],parent)
 
@@ -669,11 +674,11 @@ class App:
         self.insertionsMenu.add_command(label="Insert Wishlist")
         topNav.add_cascade(label="Insert", menu=self.insertionsMenu)
         self.displayMenu = Menu(topNav,tearoff=False,bg='white',font=('Arial',11))
-        self.displayMenu.add_checkbutton(label="Display Books", command = lambda : self.loadDsiplay(self.loadBooks))
+        self.displayMenu.add_checkbutton(label="Display Books", command = lambda : self.loadBooks())
         self.displayMenu.add_checkbutton(label="Display Series")
-        self.displayMenu.add_checkbutton(label="Display Stories", command = lambda : self.loadDsiplay(self.loadStories))
+        self.displayMenu.add_checkbutton(label="Display Stories", command = lambda : self.loadStories())
         self.displayMenu.add_checkbutton(label="Display Wishlist")
-        self.displayMenu.add_checkbutton(label="Display Reads")
+        self.displayMenu.add_checkbutton(label="Display Reads", command = lambda : self.loadReads())
         self.displayMenu.add_checkbutton(label="Display Stats")
         topNav.add_cascade(label="Display", menu=self.displayMenu)
         bckupMenu = Menu(topNav,tearoff=False,bg='white',font=('Arial',11))
@@ -681,9 +686,6 @@ class App:
         bckupMenu.add_command(label="Backup DB Data")
         topNav.add_cascade(label="BackUps", menu=bckupMenu)
 
-
-    def loadDsiplay(self,callback):
-        callback()
 
     def makeOverlayAndPopUp(self,parent,color='white',borderThicknes = 2, borderColor = "black",padx=0,pady=0):
         c = Canvas(parent,bg=color,highlightthickness=borderThicknes, highlightbackground=borderColor)
@@ -738,6 +740,7 @@ class App:
         self.fetchById = lambda self,id: Stories.fetchById(self.db,self.settings,id)
         self.reloadSortingTool()
 
+
     def loadBooks(self, addDisplayFlag = False):
         self.emptyFilters()
         books = Books(self.settings,self.db)
@@ -751,6 +754,21 @@ class App:
         self.sortTranslations = books.sortTranslations
         self.fetchById = lambda self,id: Books.fetchById(self.db,self.settings,id)
         self.reloadSortingTool(addDisplayFlag)
+
+
+    def loadReads(self):
+        self.emptyFilters()
+        reads = Reads(self.settings,self.db)
+        self.data = reads.setData()
+        self.markReadedFlag = reads.markAsReadedFlag
+        self.booksCount = len(self.data)
+        self.totalBooks = self.booksCount
+        self.totalPages = roundUpDividation(self.booksCount, self.settings['maxBooksFetch']) or 1
+        self.picFolder = reads.picturesFolder
+        self.sortOptions = reads.sortOptions
+        self.sortTranslations = reads.sortTranslations
+        self.fetchById = lambda self,id: Reads.fetchById(self.db,self.settings,id)
+        self.reloadSortingTool()
 
 
     def reloadSortingTool(self,addDisplayFlag=False):

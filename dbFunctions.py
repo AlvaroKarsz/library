@@ -225,7 +225,6 @@ def fetchAllMyStories(db,settings):
         self.id,
         self.name,
         self.pages,
-        parent.name AS parent_name,
         parent.author,
         parent.year
         FROM ''' + settings['db']['stories_table'] + ''' self
@@ -233,6 +232,26 @@ def fetchAllMyStories(db,settings):
         ON self.parent = parent.id
         ORDER BY
         self.id;
+        '''
+    db.execute(sql)
+    rows = db.fetchall()
+    columns = db.description
+    return postgresResultToColumnRowJson(columns,rows)
+
+
+def fetchMyReadList(db,settings):
+    sql = '''
+    SELECT
+        id,
+        name,
+        author,
+        pages,
+        year,
+        read_order AS read
+        FROM ''' + settings['db']['books_table'] + '''
+        WHERE read_order IS NOT NULL
+        ORDER BY
+        read_order;
         '''
     db.execute(sql)
     rows = db.fetchall()
@@ -296,6 +315,55 @@ def fetchStoryById(db,settings,id):
         my_stories_entry1.name,
         my_stories_entry2.id,
         my_stories_entry2.name;
+        '''
+    db.execute(sql,[id])
+    rows = [db.fetchone()]
+    columns = db.description
+    return postgresResultToColumnRowJson(columns,rows)[0]
+
+
+def fetchReadById(db,settings,id):
+    sql = '''
+    SELECT
+        main.id,
+        main.name,
+        main.year,
+        main.author,
+        main.language,
+        main.original_language AS o_language,
+        main.isbn,
+        main.type,
+        main.pages,
+        main.read_order AS read,
+        main.read_date,
+        JSON_STRIP_NULLS(
+            JSON_AGG(
+                JSONB_BUILD_OBJECT(
+                    'name',
+                    stories_table.name,
+                    'pages',
+                    stories_table.pages
+                )
+            )
+        ) AS stories
+        FROM ''' + settings['db']['books_table'] + ''' main
+
+        LEFT JOIN ''' + settings['db']['stories_table']  + ''' stories_table
+        ON main.id = stories_table.parent
+
+        WHERE main.id = %s
+        GROUP BY
+        main.id,
+        main.name,
+        main.year,
+        main.author,
+        main.language,
+        main.original_language,
+        main.isbn,
+        main.type,
+        main.pages,
+        main.read_order,
+        main.read_date
         '''
     db.execute(sql,[id])
     rows = [db.fetchone()]
