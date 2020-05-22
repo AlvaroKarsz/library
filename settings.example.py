@@ -1,13 +1,10 @@
-from functions import *
-
 settings = {}
 settings['db'] = {}
 settings['db']['port'] = 1111
 settings['db']['db'] = 'name'
 settings['db']['host'] = 'host'
 settings['db']['user'] = 'username'
-settings['db']['passSeparator'] = '&&'
-settings['db']['password'] = decodePass('65*65*65*65*65*65',settings['db']['passSeparator'])
+settings['db']['password'] = 'pass'
 settings['db']['books_table'] = 't1'
 settings['db']['series_table'] = 't2'
 settings['db']['stories_table'] = 't3'
