@@ -3,6 +3,8 @@ import random
 import re
 import datetime
 import os
+import shutil
+
 
 def decodePass(passw,separator):
     passw = passw.split(separator)
@@ -212,3 +214,16 @@ def moveFile(src,dst):
         return True
     except OSError as e:
         return e
+
+
+def convertnameToPath(name):
+    path = name.replace(':','.').replace('/','.').lower()
+    return re.sub('\s+','',path)
+
+
+def copyFile(src,dst):
+    try:
+        shutil.copyfile(src, dst)
+        return True
+    except shutil.Error as err:
+        return err

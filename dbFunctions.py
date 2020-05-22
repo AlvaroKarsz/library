@@ -522,3 +522,14 @@ def insertNewWish(db,settings,objs):
         return True
     except Exception as err:
         return err
+
+def insertNewSerie(db,settings,json):
+        sql = '''
+        INSERT INTO ''' + settings['db']['series_table'] +  '''(name,author)
+        VALUES(%s,%s);
+        '''
+        try:
+            db.execute(sql,[json['name'],json['author']])
+            return True
+        except Exception as err:
+            return err

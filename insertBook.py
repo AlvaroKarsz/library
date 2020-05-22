@@ -4,6 +4,8 @@ from tkinter.ttk import *
 from dbFunctions import *
 from functions import *
 import re
+from tkinter.filedialog import askopenfilename
+
 
 class InsertBook:
     def __init__(self,win,settings,db,autoValues = {},destoryAfter = False):
@@ -198,6 +200,17 @@ class InsertBook:
             self.clearInputs()
             if self.destoryAfter:
                 self.justDissapear()
+            else :
+                if messagebox.askyesno("Question","Would you like to add a picture?"):
+                    filename = askopenfilename()
+                    if filename:
+                        bookNameAsFile = convertnameToPath(vars['name']) + getExtensionFromPath(filename)
+                        flag = copyFile(filename,self.settings['pics']['wishFolderPath'] + bookNameAsFile)
+                        if flag != True:
+                            insertError(f"""OS error - {flag}""",self.settings['errLog'])
+                            messagebox.showerror(title='Error', message="Oppsss\nOS error.\nCould not copy the picture.\nPlease read LOG for mofe info.")
+                        else:
+                            messagebox.showinfo('Message',f'''Picture Copied.''')
             self.sucess.set(vars['name'])
 
     def clearInputs(self):

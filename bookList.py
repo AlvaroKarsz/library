@@ -9,6 +9,7 @@ from tkinter import font
 from threading import Thread
 from insertBook import InsertBook
 from insertWish import InsertWish
+from insertSerie import InsertSerie
 from stories import Stories
 from books import Books
 from reads import Reads
@@ -359,7 +360,7 @@ class App:
             self.filter()#reload the pictures- one has been deleted
             return
 
-        newPath = self.settings['pics']['picFolderPath'] + self.convertnameToPath(newBookName) + getExtensionFromPath(currentPicturePath)
+        newPath = self.settings['pics']['picFolderPath'] + convertnameToPath(newBookName) + getExtensionFromPath(currentPicturePath)
         moveFlag = moveFile(currentPicturePath,newPath)
         if moveFlag != True:
             insertError(f"""OS error - {moveFlag}""",self.settings['errLog'])
@@ -371,14 +372,9 @@ class App:
 
 
     def bookNameToPicName(self,bookName):
-        path = self.convertnameToPath(bookName)
-        path = self.picFolder + re.sub('\s+','',path)
+        path = convertnameToPath(bookName)
+        path = self.picFolder + path
         path = getExtensionIfExist(path)
-        return path
-
-
-    def convertnameToPath(self,name):
-        path = name.replace(':','.').replace('/','.').lower()
         return path
 
 
@@ -787,7 +783,7 @@ class App:
         self.window.config(menu = topNav)
         self.insertionsMenu = Menu(topNav,tearoff=False,bg='white',font=('Arial',11))
         self.insertionsMenu.add_command(label="Insert Book",command=self.insertBookWindow)
-        self.insertionsMenu.add_command(label="Insert Serie")
+        self.insertionsMenu.add_command(label="Insert Serie",command=self.insertSerieWindow)
         self.insertionsMenu.add_command(label="Insert Wishlist", command=self.insertWishWindow)
         topNav.add_cascade(label="Insert", menu=self.insertionsMenu)
 
@@ -842,6 +838,16 @@ class App:
         padx=padx
         )
         return c
+
+
+    def insertSerieWindow(self):
+        if self.currentOverlay:
+            return
+        self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"white",2,"black",self.settings['insertSerie']['padx_popup'],self.settings['insertSerie']['pady_popup'])
+        self.currentOverlay = True
+        trace = InsertSerie(self.insertBookCanvas,self.settings,self.db)
+        _self = self #acess from another class object
+        trace.sucess.trace("w", _self.removeOverlayFlag)#remove overlay indicator to allow another popups
 
 
     def insertWishWindow(self):
