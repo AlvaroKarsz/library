@@ -11,6 +11,8 @@ settings['db']['password'] = decodePass('65*65*65*65*65*65',settings['db']['pass
 settings['db']['books_table'] = 't1'
 settings['db']['series_table'] = 't2'
 settings['db']['stories_table'] = 't3'
+settings['db']['wish_table'] = 't4'
+
 
 settings['maxBooksFetch'] = 20
 
@@ -26,6 +28,7 @@ settings['booksDisplayPreRow'] = 4
 settings['appDir'] = 'C:/path'
 settings['pics'] = {}
 settings['pics']['picFolderPath'] = settings['appDir'] + 'pictures/'
+settings['pics']['wishFolderPath'] = settings['appDir'] + 'wishlist/'
 settings['pics']['storiesFolderPath'] = settings['appDir'] + 'stories/'
 settings['pics']['width'] = 180
 settings['pics']['height'] = 200
@@ -43,8 +46,12 @@ settings['icons'] = {}
 settings['icons']['width'] = 40
 settings['icons']['height'] = 40
 settings['icons']['folder'] = 'icons/'
-settings['icons']['has_been_read'] = settings['appDir'] + settings['icons']['folder'] + 'hasbeenread.jpg'
-settings['icons']['has_not_been_read'] = settings['appDir'] + settings['icons']['folder'] + 'hasnotbeenread.jpg'
-settings['icons']['paperback'] = settings['appDir'] + settings['icons']['folder'] + 'paperback.png'
-settings['icons']['hardcover'] = settings['appDir'] + settings['icons']['folder'] + 'hardcoverdj.png'
-settings['icons']['hardcover_no_dj'] = settings['appDir'] + settings['icons']['folder'] + 'hardcovernodj.png'
+settings['icons']['has_been_read'] = settings['appDir'] + settings['icons']['folder'] + 'p.jpg'
+settings['icons']['has_not_been_read'] = settings['appDir'] + settings['icons']['folder'] + 'p.jpg'
+settings['icons']['paperback'] = settings['appDir'] + settings['icons']['folder'] + 'p.png'
+settings['icons']['hardcover'] = settings['appDir'] + settings['icons']['folder'] + 'p.png'
+settings['icons']['hardcover_no_dj'] = settings['appDir'] + settings['icons']['folder'] + 'p.png'
+settings['icons']['has_been_ordered'] = settings['appDir'] + settings['icons']['folder'] + 'p.png'
+settings['icons']['has_not_been_ordered'] = settings['appDir'] + settings['icons']['folder'] + 'p.png'
+
+settings['errLog'] = settings['appDir'] + 'p.log'

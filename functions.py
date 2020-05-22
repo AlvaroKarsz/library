@@ -156,3 +156,13 @@ def dateForDB(date):
         return f'''{mon.capitalize()} {year}'''
 
     return False
+
+def insertError(errStr,file):
+    errStr = f'''******************************************************************************************
+{datetime.datetime.now()}
+
+{errStr}
+******************************************************************************************\n'''
+    log = open(file, 'a')
+    log.write(errStr)
+    log.close()

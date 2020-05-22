@@ -219,6 +219,20 @@ def markBookAsReaded(db,settings,bookID,date):
     return db.fetchone()[0]
 
 
+def markWishAsOrdered(db,settings,bookID):
+    sql = '''
+    UPDATE ''' + settings['db']['wish_table'] + '''
+        SET ordered = 't'
+    WHERE id = %s;
+    '''
+    try:
+        db.execute(sql,[bookID])
+        return True
+    except Exception as err:
+        return err
+        
+
+
 def fetchAllMyStories(db,settings):
     sql = '''
     SELECT
@@ -364,6 +378,56 @@ def fetchReadById(db,settings,id):
         main.pages,
         main.read_order,
         main.read_date
+        '''
+    db.execute(sql,[id])
+    rows = [db.fetchone()]
+    columns = db.description
+    return postgresResultToColumnRowJson(columns,rows)[0]
+
+
+def fetchMyWishlist(db,settings):
+    sql = '''
+    SELECT
+        id,
+        name,
+        author,
+        year
+        FROM ''' + settings['db']['wish_table'] + '''
+        ORDER BY
+        id;
+        '''
+    db.execute(sql)
+    rows = db.fetchall()
+    columns = db.description
+    return postgresResultToColumnRowJson(columns,rows)
+
+
+def fetchWishById(db,settings,id):
+    sql = '''
+    SELECT
+        main.id AS id,
+        main.name AS name,
+        main.year AS year,
+        main.author AS author,
+        main.ordered AS ordered,
+        main.serie_num AS serie_num,
+        series.name AS serie
+
+        FROM ''' + settings['db']['wish_table'] + ''' main
+
+        LEFT JOIN  ''' + settings['db']['series_table'] + ''' series
+        ON main.serie = series.id
+
+        WHERE main.id = %s
+        GROUP BY
+
+        main.id,
+        main.name,
+        main.year,
+        main.author,
+        main.ordered,
+        main.serie_num,
+        series.name;
         '''
     db.execute(sql,[id])
     rows = [db.fetchone()]

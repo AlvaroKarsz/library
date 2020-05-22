@@ -11,6 +11,7 @@ from insertBook import InsertBook
 from stories import Stories
 from books import Books
 from reads import Reads
+from wishlist import Wishlist
 from tkinter import messagebox
 
 class App:
@@ -258,6 +259,7 @@ class App:
         hol2.pack(side=LEFT)
         strL.pack(side=LEFT)
 
+
     def addReadStamp(self,parent,readFlag,bookID):
         string = "You've read this book" if readFlag else "You haven't read this book"
         stamp = Image.open(self.settings['icons']['has_been_read'] if readFlag else self.settings['icons']['has_not_been_read'])
@@ -271,7 +273,6 @@ class App:
         holder.pack(side=LEFT)
         if readFlag:
             stringLabel.pack(side=LEFT)
-
         else:
             stringLabel.pack()
             if self.markReadedFlag:
@@ -279,6 +280,39 @@ class App:
                 self.styleRedirectText(toggle)
                 toggle.pack(side=LEFT)
                 toggle.bind('<Button-1>',lambda event: self.markThisBoodReaded(bookID))
+
+
+    def addOrderedStamp(self,parent,orderedFlag,bookID):
+        string = "You've order this book" if orderedFlag else "You haven't order this book"
+        stamp = Image.open(self.settings['icons']['has_been_ordered'] if orderedFlag else self.settings['icons']['has_not_been_ordered'])
+        stamp = stamp.resize((self.settings['icons']['width'],self.settings['icons']['height']))
+        stamp = ImageTk.PhotoImage(stamp)
+        labelParent = Label(parent,background='white')
+        holder = Label(labelParent,image = stamp,background='white')
+        holder.image = stamp # keep a reference!
+        stringLabel = Label(labelParent,text=string,background='white')
+        labelParent.pack(side=LEFT)
+        holder.pack(side=LEFT)
+        stringLabel.pack()
+        actionStr = "Mark ad Ordered" if not orderedFlag else "Mark as Arrived"
+        toggle = Label(labelParent,text=actionStr,background='white',anchor='sw',font=('Arial',10))
+        self.styleRedirectText(toggle)
+        toggle.pack(side=LEFT)
+        toggle.bind('<Button-1>',lambda event: self.markThisBookAsOrdered(bookID) if not orderedFlag else self.markThisBookAsArrived(bookID))
+
+
+    def markThisBookAsOrdered(self,id):
+        flag =  markWishAsOrdered(self.db,self.settings,id)
+        if flag == True:
+            messagebox.showinfo('change saved',f'''Book status changed to "Ordered"''')
+        else :
+            messagebox.showerror(title='Error', message="Oppsss\nDB error.\nPlease read LOG for mofe info.")
+            insertError(f"""DB error - {flag}""",self.settings['errLog'])
+
+
+    def markThisBookAsArrived(self,id):
+        print('arrived')
+        print(id)
 
 
     def markThisBoodReaded(self,bookID):
@@ -303,7 +337,13 @@ class App:
         selectedBookHeader = Label(self.currentOverlay,background='white')
         selectedBookHeader.pack(side=TOP,fill=X,padx=3,pady=3)
         self.addCloseButton(selectedBookHeader)
-        self.addReadStamp(selectedBookHeader,bookObj['read'],bookObj['id'])
+
+        if 'read' in bookObj:
+            self.addReadStamp(selectedBookHeader,bookObj['read'],bookObj['id'])
+
+        if 'ordered' in bookObj:
+            self.addOrderedStamp(selectedBookHeader,bookObj['ordered'],bookObj['id'])
+
         Label(self.currentOverlay,
         text = bookObj['name'],
         font=('Arial', 22),
@@ -677,7 +717,7 @@ class App:
         self.displayMenu.add_checkbutton(label="Display Books", command = lambda : self.loadBooks())
         self.displayMenu.add_checkbutton(label="Display Series")
         self.displayMenu.add_checkbutton(label="Display Stories", command = lambda : self.loadStories())
-        self.displayMenu.add_checkbutton(label="Display Wishlist")
+        self.displayMenu.add_checkbutton(label="Display Wishlist", command = lambda : self.loadWish())
         self.displayMenu.add_checkbutton(label="Display Reads", command = lambda : self.loadReads())
         self.displayMenu.add_checkbutton(label="Display Stats")
         topNav.add_cascade(label="Display", menu=self.displayMenu)
@@ -754,6 +794,21 @@ class App:
         self.sortTranslations = books.sortTranslations
         self.fetchById = lambda self,id: Books.fetchById(self.db,self.settings,id)
         self.reloadSortingTool(addDisplayFlag)
+
+
+    def loadWish(self):
+        self.emptyFilters()
+        wish = Wishlist(self.settings,self.db)
+        self.data = wish.setData()
+        self.markReadedFlag = wish.markAsReadedFlag
+        self.booksCount = len(self.data)
+        self.totalBooks = self.booksCount
+        self.totalPages = roundUpDividation(self.booksCount, self.settings['maxBooksFetch']) or 1
+        self.picFolder = wish.picturesFolder
+        self.sortOptions = wish.sortOptions
+        self.sortTranslations = wish.sortTranslations
+        self.fetchById = lambda self,id: Wishlist.fetchById(self.db,self.settings,id)
+        self.reloadSortingTool()
 
 
     def loadReads(self):
