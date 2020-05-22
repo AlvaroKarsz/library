@@ -6,11 +6,12 @@ from functions import *
 import re
 
 class InsertBook:
-    def __init__(self,win,settings,db,autoValues = {}):
+    def __init__(self,win,settings,db,autoValues = {},destoryAfter = False):
         self.window = win
         self.db = db
         self.sucess = StringVar() # trace
         self.settings = settings
+        self.destoryAfter =
         self.closeOnclick()
         self.addTitle()
         self.addInputs(autoValues)

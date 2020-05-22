@@ -322,7 +322,7 @@ class App:
 
         self.killOverlay()#remove the wishlist display
         #open insert box and listen to tracer.sucess booleanvar
-        tracer = self.insertBookWindow(bookData)
+        tracer = self.insertBookWindow(bookData,True)
         _self = self #acess from another class object
         tracer.sucess.trace("w", lambda self, *args: _self.inertFromWishlistFinish(id,bookData['name'],tracer.sucess))
 
@@ -843,9 +843,10 @@ class App:
         return c
 
 
-    def insertBookWindow(self,autoData = {}):
+    def insertBookWindow(self,autoData = {},destoryAfter = False):
         self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"white",2,"black",self.settings['insertBook']['padx_popup'],self.settings['insertBook']['pady_popup'])
-        return InsertBook(self.insertBookCanvas,self.settings,self.db,autoData)
+        return InsertBook(self.insertBookCanvas,self.settings,self.db,autoData,destoryAfter)
+
 
     def popupConfirmPic(self,path,text,okButton,cancelButton):
         self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"white",2,"black",self.settings['confirm']['padx_popup'],self.settings['confirm']['pady_popup'])
