@@ -28,6 +28,15 @@ def findJsonByElemenyKey(object,key,value):
         counter += 1
     return None
 
+def findIndexByElemenyKey(object,key,value):
+    size = len(object)
+    counter = 0
+    while counter <= size:
+        if object[counter][key] and object[counter][key] == value:
+            return counter
+        counter += 1
+    return None
+
 def getNextValueInJsonByElementKey(object,key,value):
     size = len(object)
     counter = 0
@@ -182,3 +191,24 @@ def insertError(errStr,mainFolder):
     log = open(path, 'a')
     log.write(errStr)
     log.close()
+
+
+def destroyFile(path):
+    try:
+        os.remove(path)
+        return True
+    except OSError as e: # this would be "except OSError, e:" before Python 2.6
+        return e
+
+
+def getExtensionFromPath(path):
+    exploded = path.split('.')
+    return '.' + exploded[len(exploded) - 1]
+
+
+def moveFile(src,dst):
+    try:
+        os.rename(src,dst)
+        return True
+    except OSError as e:
+        return e

@@ -6,15 +6,16 @@ from functions import *
 import re
 
 class InsertBook:
-    def __init__(self,win,settings,db):
+    def __init__(self,win,settings,db,autoValues = {}):
         self.window = win
         self.db = db
+        self.sucess = StringVar() # trace
         self.settings = settings
         self.closeOnclick()
         self.addTitle()
-        self.addInputs()
+        self.addInputs(autoValues)
         self.addType()
-        self.addSerie()
+        self.addSerie(autoValues)
         self.addNextBook()
         self.addPrevBook()
         self.addCollectionElements()
@@ -30,11 +31,21 @@ class InsertBook:
         background='white',
         ).pack(pady=20)
 
-    def addInputs(self):
+    def addInputs(self,autoValues):
         fram = Label(self.window,background='white')
+
         self.name = StringVar()
+        if 'name' in autoValues:
+            self.name.set(autoValues['name'])
+
         self.author = StringVar()
+        if 'author' in autoValues:
+            self.author.set(autoValues['author'])
+
         self.year = StringVar()
+        if 'year' in autoValues:
+            self.year.set(str(autoValues['year']))
+
         self.pages = StringVar()
         self.lang = StringVar()
         self.oriLan = StringVar()
@@ -52,9 +63,17 @@ class InsertBook:
     def closeOnclick(self):
         btn = Button(self.window,
         text = 'X',
-        command = lambda : self.window.destroy()
+        command = self.killWindow
         )
         btn.pack(side=TOP, anchor=NE,padx=3,pady=3)
+
+
+    def justDissapear(self):
+        self.window.destroy()
+
+    def killWindow(self):
+        self.justDissapear()
+        self.sucess.set(0)
 
 
     def addNewLabelAndInput(self,prent,text,row,column,varName):
@@ -119,12 +138,13 @@ class InsertBook:
         line.pack(pady=7)
         self.isCollectionNextRow += 1
 
-    def addSerie(self):
+    def addSerie(self,autoValues):
         series = {}
         for serie in fetchAllSeries(self.db,self.settings):
             series[serie[1]] = serie[0]
         self.series = series
         self.isSerie = BooleanVar()
+
         tempFrame = Label(self.window,background='white')
         Checkbutton(tempFrame,
         text = 'Part Of Serie',
@@ -144,12 +164,21 @@ class InsertBook:
         Entry(self.serieFrame,textvariable = self.serieNumber,width=3).pack(side=LEFT)
         tempFrame.pack()
         self.serieFrame.pack_forget()
+        if 'serie' in autoValues and autoValues['serie'] and 'serie_num' in autoValues and autoValues['serie_num']:
+            self.isSerie.set(True)
+            self.serieFrame.pack()
+            self.serieVar.set(autoValues['serie'])
+            self.serieNumber.set(autoValues['serie_num'])
+
+
+
 
     def isSerieBind(self):
         if not self.isSerie.get():
             self.serieFrame.pack_forget()
         else:
             self.serieFrame.pack(pady=7)
+
 
     def addInsertButton(self):
         Button(self.window,
@@ -166,6 +195,9 @@ class InsertBook:
         else:
             insertNewBook(self.db,self.settings,vars)
             self.clearInputs()
+            if self.destoryAfter:
+                self.justDissapear()
+            self.sucess.set(vars['name'])
 
     def clearInputs(self):
         self.name.set('')

@@ -491,3 +491,15 @@ def fetchWishById(db,settings,id):
     rows = [db.fetchone()]
     columns = db.description
     return postgresResultToColumnRowJson(columns,rows)[0]
+
+
+def removeBookFromWishList(db,settings,id):
+    sql = '''
+    DELETE FROM ''' + settings['db']['wish_table'] + '''
+    WHERE id = %s;
+    '''
+    try:
+        db.execute(sql,[id])
+        return True
+    except Exception as err:
+        return err

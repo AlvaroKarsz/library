@@ -56,3 +56,10 @@ settings['icons']['has_been_ordered'] = settings['appDir'] + settings['icons']['
 settings['icons']['has_not_been_ordered'] = settings['appDir'] + settings['icons']['folder'] + 'p.png'
 
 settings['errLog'] = settings['appDir'] + 'p.log'
+
+
+settings['confirm'] = {}
+settings['confirm']['picWidth'] = 1
+settings['confirm']['picHeight'] = 1
+settings['confirm']['padx_popup'] = 1
+settings['confirm']['pady_popup'] = 1

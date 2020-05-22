@@ -14,6 +14,7 @@ from reads import Reads
 from series import Series
 from wishlist import Wishlist
 from tkinter import messagebox
+from confirmPic import Confirm
 
 class App:
     def __init__(self,win,settings,db):
@@ -42,6 +43,7 @@ class App:
         self.markRelevantLibrary()
         self.displyBooksThread()
         self.fitlerOnKeyUp()
+
 
     def filterYourself(self,event):
         if event.keycode != 13:
@@ -167,9 +169,7 @@ class App:
 
 
     def addPic(self,name,parent,bigSize = False):
-        path = name.replace(':','.').replace('/','.').lower()
-        path = self.picFolder + re.sub('\s+','',path)
-        path = getExtensionIfExist(path)
+        path = self.bookNameToPicName(name)
         path = path if path else self.settings['pics']['blank_pic']
         return self.postPic(path,parent,bigSize)
 
@@ -307,14 +307,78 @@ class App:
         flag =  markWishAsOrdered(self.db,self.settings,id)
         if flag == True:
             messagebox.showinfo('change saved',f'''Book status changed to "Ordered"''')
+            self.redirectPopUp(id) # reload with the new icon
         else :
-            messagebox.showerror(title='Error', message="Oppsss\nDB error.\nPlease read LOG for mofe info.")
             insertError(f"""DB error - {flag}""",self.settings['errLog'])
+            messagebox.showerror(title='Error', message="Oppsss\nDB error.\nPlease read LOG for mofe info.")
 
 
     def markThisBookAsArrived(self,id):
-        print('arrived')
-        print(id)
+        bookData = self.fetchById(self,id)
+        if not bookData:
+            insertError(f"""Error - Could not find the desired book by ID {id} """,self.settings['errLog'])
+            messagebox.showerror(title='Error', message="Oppsss\nError occured.\nPlease read LOG for mofe info.")
+            return
+
+        self.killOverlay()#remove the wishlist display
+        #open insert box and listen to tracer.sucess booleanvar
+        tracer = self.insertBookWindow(bookData)
+        _self = self #acess from another class object
+        tracer.sucess.trace("w", lambda self, *args: _self.inertFromWishlistFinish(id,bookData['name'],tracer.sucess))
+
+
+    def inertFromWishlistFinish(self,wishID,wishName,tracerVal):
+        newName = tracerVal.get()
+        if newName == '0':#action was cancelled, or error occured
+            return
+        #book was inserted - remove from wish list
+        flag = removeBookFromWishList(self.db,self.settings,wishID)
+
+        if flag != True:#db error
+            insertError(f"""DB error - {flag}""",self.settings['errLog'])
+            messagebox.showerror(title='Error', message="Oppsss\nDB error.\nCould not delete book from Wish list.\nPlease read LOG for mofe info.")
+
+        picPath = self.bookNameToPicName(wishName)
+        if not picPath: # no pic
+            self.removeItemFromData(wishID)
+            self.filter()#reload the pictures- one has been deleted
+            return
+
+        confirmation = self.popupConfirmPic(picPath,"Would you like to use this picture?","Yes","No")
+        _self = self #acess from another class object
+        confirmation.sucess.trace("w", lambda self, *args: _self.moveThisPic(confirmation.sucess,picPath,newName,wishID))
+
+
+    def moveThisPic(self,tracerVal,currentPicturePath,newBookName,wishID):
+        if not tracerVal.get():#user dont want to keep the picture, delete it
+            destroyFlag = destroyFile(currentPicturePath)
+            if destroyFlag != True:#error in destory
+                insertError(f"""OS error - {destroyFlag}""",self.settings['errLog'])
+                messagebox.showerror(title='Error', message="Oppsss\OS error.\nCould not delete Book Picture.\nPlease read LOG for mofe info.")
+            self.filter()#reload the pictures- one has been deleted
+            return
+
+        newPath = self.settings['pics']['picFolderPath'] + self.convertnameToPath(newBookName) + getExtensionFromPath(currentPicturePath)
+        moveFlag = moveFile(currentPicturePath,newPath)
+        if moveFlag != True:
+            insertError(f"""OS error - {moveFlag}""",self.settings['errLog'])
+            messagebox.showerror(title='Error', message="Oppsss\OS error.\nCould not move the Picture.\nPlease read LOG for mofe info.")
+        else:
+            messagebox.showinfo('Action Succeeded',f'''Picture Moved.''')
+        self.removeItemFromData(wishID)
+        self.filter()#reload the pictures- one has been deleted
+
+
+    def bookNameToPicName(self,bookName):
+        path = self.convertnameToPath(bookName)
+        path = self.picFolder + re.sub('\s+','',path)
+        path = getExtensionIfExist(path)
+        return path
+
+
+    def convertnameToPath(self,name):
+        path = name.replace(':','.').replace('/','.').lower()
+        return path
 
 
     def markThisBoodReaded(self,bookID):
@@ -779,9 +843,13 @@ class App:
         return c
 
 
-    def insertBookWindow(self):
+    def insertBookWindow(self,autoData = {}):
         self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"white",2,"black",self.settings['insertBook']['padx_popup'],self.settings['insertBook']['pady_popup'])
-        InsertBook(self.insertBookCanvas,self.settings,self.db)
+        return InsertBook(self.insertBookCanvas,self.settings,self.db,autoData)
+
+    def popupConfirmPic(self,path,text,okButton,cancelButton):
+        self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"white",2,"black",self.settings['confirm']['padx_popup'],self.settings['confirm']['pady_popup'])
+        return Confirm(self.insertBookCanvas,self.settings,path,text,okButton,cancelButton)
 
 
     def evalSortingFunction(self,key,reverseFlag):
@@ -894,3 +962,8 @@ class App:
 
     def updateTitle(self,title):
         self.titleWidget['text'] = title
+
+
+    def removeItemFromData(self,id):
+        index = findIndexByElemenyKey(self.data,'id',id)
+        del self.data[index]
