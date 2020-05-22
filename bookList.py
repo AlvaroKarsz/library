@@ -17,6 +17,8 @@ from series import Series
 from wishlist import Wishlist
 from tkinter import messagebox
 from confirmPic import Confirm
+from osFunctions import *
+
 
 class App:
     def __init__(self,win,settings,db):
@@ -818,9 +820,28 @@ class App:
 
         topNav.add_cascade(label="Display", menu=self.displayMenu)
         bckupMenu = Menu(topNav,tearoff=False,bg='white',font=('Arial',11))
-        bckupMenu.add_command(label="Backup DB Structure")
-        bckupMenu.add_command(label="Backup DB Data")
-        topNav.add_cascade(label="BackUps", menu=bckupMenu)
+        bckupMenu.add_command(label="Backup DB Structure",command = self.backupStructureDB)
+        bckupMenu.add_command(label="Backup DB Data", command = self.backupDataDB)
+        topNav.add_cascade(label="Advanced", menu=bckupMenu)
+
+
+    def backupDataDB(self):
+        res = backupDBdata()
+        if not res:
+            insertError(f"""DB error -Error saving DB data""",self.settings['errLog'])
+            messagebox.showerror(title='Error', message="Oppsss\nOS error.\nPlease read LOG for mofe info.")
+        else:
+            messagebox.showinfo('Sucess',f'''Backup Succeeded''')
+
+
+    def backupStructureDB(self):
+        res = backupDBstructure()
+        if not res:
+            insertError(f"""DB error -Error saving DB structure""",self.settings['errLog'])
+            messagebox.showerror(title='Error', message="Oppsss\nOS error.\nPlease read LOG for mofe info.")
+        else:
+            messagebox.showinfo('Sucess',f'''Backup Succeeded''')
+
 
 
     def loadNew(self,function,labelIndex):

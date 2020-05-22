@@ -1,5 +1,6 @@
 settings = {}
 settings['db'] = {}
+settings['db']['dir'] = "path"
 settings['db']['port'] = 1111
 settings['db']['db'] = 'name'
 settings['db']['host'] = 'host'
@@ -69,3 +70,9 @@ settings['confirm']['picWidth'] = 1
 settings['confirm']['picHeight'] = 1
 settings['confirm']['padx_popup'] = 1
 settings['confirm']['pady_popup'] = 1
+
+
+settings['backups'] = {}
+settings['backups']['dir'] = settings['appDir'] + 'f55/'
+settings['backups']['db_structure'] = settings['backups']['dir'] + 'n.txt'
+settings['backups']['db_data'] = settings['backups']['dir'] + 'n2.txt'
