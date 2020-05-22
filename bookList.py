@@ -8,6 +8,7 @@ import re
 from tkinter import font
 from threading import Thread
 from insertBook import InsertBook
+from insertWish import InsertWish
 from stories import Stories
 from books import Books
 from reads import Reads
@@ -787,7 +788,7 @@ class App:
         self.insertionsMenu = Menu(topNav,tearoff=False,bg='white',font=('Arial',11))
         self.insertionsMenu.add_command(label="Insert Book",command=self.insertBookWindow)
         self.insertionsMenu.add_command(label="Insert Serie")
-        self.insertionsMenu.add_command(label="Insert Wishlist")
+        self.insertionsMenu.add_command(label="Insert Wishlist", command=self.insertWishWindow)
         topNav.add_cascade(label="Insert", menu=self.insertionsMenu)
 
         self.displayVars = []
@@ -841,6 +842,11 @@ class App:
         padx=padx
         )
         return c
+
+
+    def insertWishWindow(self):
+        self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"white",2,"black",self.settings['insertWish']['padx_popup'],self.settings['insertWish']['pady_popup'])
+        InsertWish(self.insertBookCanvas,self.settings,self.db)
 
 
     def insertBookWindow(self,autoData = {},destoryAfter = False):

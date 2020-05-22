@@ -213,6 +213,8 @@ class InsertBook:
         self.isSerie.set(False)
         self.serieVar.set('')
         self.serieNumber.set('')
+        self.serieFrame.pack_forget()
+
 
     def checkVars(self,vars):
         if not vars['name']:

@@ -503,3 +503,22 @@ def removeBookFromWishList(db,settings,id):
         return True
     except Exception as err:
         return err
+
+def insertNewWish(db,settings,objs):
+    values = "(name,year,author"
+    arguments = [objs['name'],objs['year'],objs['author']]
+    if 'serie' in objs:
+        values += ",serie,serie_num"
+        arguments += [objs['serie']['id'],objs['serie']['number']]
+
+    values += ")"
+
+    sql = '''
+    INSERT INTO ''' + settings['db']['wish_table'] + values +  '''
+    VALUES(''' + addMultipleS(len(arguments)) + ''');
+    '''
+    try:
+        db.execute(sql,arguments)
+        return True
+    except Exception as err:
+        return err

@@ -39,6 +39,9 @@ settings['insertBook'] = {}
 settings['insertBook']['padx_popup'] = 1
 settings['insertBook']['pady_popup'] = 1
 
+settings['insertWish'] = {}
+settings['insertWish']['padx_popup'] = 1
+settings['insertWish']['pady_popup'] = 1
 
 settings['icons'] = {}
 settings['icons']['width'] = 1
