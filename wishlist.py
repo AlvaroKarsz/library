@@ -4,6 +4,7 @@ class Wishlist:
     def __init__(self,settings,db):
         self.settings = settings
         self.db = db
+        self.title = 'My Wish List'
         self.markAsReadedFlag = False
         self.picturesFolder = self.settings['pics']['wishFolderPath']
         self.sortOptions = ['ID, Lowest first','ID, Latest first','Book Name, ABC','Book Name, ZYX','Publication Year, Lowest first','Publication Year, Latest first']

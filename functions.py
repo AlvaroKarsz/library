@@ -2,6 +2,7 @@ import glob
 import random
 import re
 import datetime
+import os
 
 def decodePass(passw,separator):
     passw = passw.split(separator)
@@ -157,12 +158,27 @@ def dateForDB(date):
 
     return False
 
-def insertError(errStr,file):
+def insertError(errStr,mainFolder):
+    y = str(datetime.date.today().year)
+    m = str(datetime.date.today().month)
+    d = str(datetime.date.today().day)
+    path = mainFolder
+
+    if not os.path.exists(path + y):
+        os.makedirs(path + y)
+    path += y
+
+    if not os.path.exists(path + '/' + m):
+        os.makedirs(path + '/' + m)
+    path += '/' + m
+
+    path += '/' + d
+
     errStr = f'''******************************************************************************************
 {datetime.datetime.now()}
 
 {errStr}
 ******************************************************************************************\n'''
-    log = open(file, 'a')
+    log = open(path, 'a')
     log.write(errStr)
     log.close()

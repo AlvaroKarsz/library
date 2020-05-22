@@ -4,6 +4,7 @@ class Books:
     def __init__(self,settings,db):
         self.settings = settings
         self.db = db
+        self.title = 'My Books'
         self.markAsReadedFlag = True
         self.picturesFolder = self.settings['pics']['picFolderPath']
         self.sortOptions = ['ID, Lowest first','ID, Latest first','Book Name, ABC','Book Name, ZYX','Number of Pages, Lowest first','Number of Pages, Biggest first','Publication Year, Lowest first','Publication Year, Latest first']

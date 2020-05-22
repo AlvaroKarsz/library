@@ -48,7 +48,7 @@ class App:
         self.filter()
 
 
-    def filter(self):
+    def filter(self,justUpdateDataFlag = False):
         self.killOverlay()
         self.goUp()
         self.readFilters()
@@ -59,8 +59,9 @@ class App:
         self.updateBookCountIndicator()
         self.pagesLabel['text'] = "Page: 1/" + str(self.totalPages)
         self.updatePageNavigators()
-        self.displyBooksThread()
-        self.reCenterBooks()
+        if not justUpdateDataFlag:
+            self.displyBooksThread()
+            self.reCenterBooks()
 
 
     def displyBooksThread(self):
@@ -302,7 +303,7 @@ class App:
 
 
     def markThisBookAsOrdered(self,id):
-        flag =  markWishAsOrdered(self.db,self.settings,id)
+        flag =  markWishAsOrdered(self.db,self.settings,str(id)+'dd') 
         if flag == True:
             messagebox.showinfo('change saved',f'''Book status changed to "Ordered"''')
         else :
@@ -432,7 +433,8 @@ class App:
         main = Label(parent)
         main.pack(side=LEFT)
         parent.update()
-        Label(main,text='My Books',font=('Arial', 26)).pack(side=RIGHT)
+        self.titleWidget = Label(main,font=('Arial', 26))
+        self.titleWidget.pack(side=RIGHT)
         self.bookIndicatorLabel =  Label(self.header,
         text= f'''({str(self.booksCount)})''',
         font=('Arial', 16)
@@ -777,6 +779,7 @@ class App:
         self.picFolder = stories.picturesFolder
         self.sortOptions = stories.sortOptions
         self.sortTranslations = stories.sortTranslations
+        self.updateTitle(stories.title)
         self.fetchById = lambda self,id: Stories.fetchById(self.db,self.settings,id)
         self.reloadSortingTool()
 
@@ -792,6 +795,7 @@ class App:
         self.picFolder = books.picturesFolder
         self.sortOptions = books.sortOptions
         self.sortTranslations = books.sortTranslations
+        self.updateTitle(books.title)
         self.fetchById = lambda self,id: Books.fetchById(self.db,self.settings,id)
         self.reloadSortingTool(addDisplayFlag)
 
@@ -807,6 +811,7 @@ class App:
         self.picFolder = wish.picturesFolder
         self.sortOptions = wish.sortOptions
         self.sortTranslations = wish.sortTranslations
+        self.updateTitle(wish.title)
         self.fetchById = lambda self,id: Wishlist.fetchById(self.db,self.settings,id)
         self.reloadSortingTool()
 
@@ -822,6 +827,7 @@ class App:
         self.picFolder = reads.picturesFolder
         self.sortOptions = reads.sortOptions
         self.sortTranslations = reads.sortTranslations
+        self.updateTitle(reads.title)
         self.fetchById = lambda self,id: Reads.fetchById(self.db,self.settings,id)
         self.reloadSortingTool()
 
@@ -830,5 +836,7 @@ class App:
         self.sortInp['values'] = self.sortOptions
         self.sortInp.bind('<<ComboboxSelected>>',lambda a : self.sortBooks(self.sortTranslations[self.sortInp.current()] ))
         self.sortInp.set(self.sortOptions[0])
-        if not addDisplayFlag:
-            self.filter()
+        self.filter(addDisplayFlag)
+
+    def updateTitle(self,title):
+        self.titleWidget['text'] = title
