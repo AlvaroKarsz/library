@@ -172,7 +172,7 @@ def insertError(errStr,mainFolder):
         os.makedirs(path + '/' + m)
     path += '/' + m
 
-    path += '/' + d
+    path += '/' + d + '.log'
 
     errStr = f'''******************************************************************************************
 {datetime.datetime.now()}

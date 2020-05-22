@@ -303,7 +303,7 @@ class App:
 
 
     def markThisBookAsOrdered(self,id):
-        flag =  markWishAsOrdered(self.db,self.settings,str(id)+'dd') 
+        flag =  markWishAsOrdered(self.db,self.settings,id) 
         if flag == True:
             messagebox.showinfo('change saved',f'''Book status changed to "Ordered"''')
         else :
