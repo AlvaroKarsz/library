@@ -11,7 +11,7 @@ class InsertBook:
         self.db = db
         self.sucess = StringVar() # trace
         self.settings = settings
-        self.destoryAfter =
+        self.destoryAfter = destoryAfter
         self.closeOnclick()
         self.addTitle()
         self.addInputs(autoValues)
