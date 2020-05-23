@@ -358,17 +358,25 @@ class App:
             destroyFlag = destroyFile(currentPicturePath)
             if destroyFlag != True:#error in destory
                 insertError(f"""OS error - {destroyFlag}""",self.settings['errLog'])
-                messagebox.showerror(title='Error', message="Oppsss\OS error.\nCould not delete Book Picture.\nPlease read LOG for mofe info.")
-            self.filter()#reload the pictures- one has been deleted
-            return
-
-        newPath = self.settings['pics']['picFolderPath'] + convertnameToPath(newBookName) + getExtensionFromPath(currentPicturePath)
-        moveFlag = moveFile(currentPicturePath,newPath)
-        if moveFlag != True:
-            insertError(f"""OS error - {moveFlag}""",self.settings['errLog'])
-            messagebox.showerror(title='Error', message="Oppsss\OS error.\nCould not move the Picture.\nPlease read LOG for mofe info.")
+                messagebox.showerror(title='Error', message="Oppsss\nOS error.\nCould not delete Book Picture.\nPlease read LOG for mofe info.")
+            if messagebox.askyesno("Question","Would you like to add a picture?"):
+                filename = askopenfilename()
+                if filename:
+                    bookNameAsFile = convertnameToPath(vars['name']) + getExtensionFromPath(filename)
+                    flag = copyFile(filename,self.settings['pics']['wishFolderPath'] + bookNameAsFile)
+                    if flag != True:
+                        insertError(f"""OS error - {flag}""",self.settings['errLog'])
+                        messagebox.showerror(title='Error', message="Oppsss\nOS error.\nCould not copy the picture.\nPlease read LOG for mofe info.")
+                    else:
+                        messagebox.showinfo('Message',f'''Picture Copied.''')
         else:
-            messagebox.showinfo('Action Succeeded',f'''Picture Moved.''')
+            newPath = self.settings['pics']['picFolderPath'] + convertnameToPath(newBookName) + getExtensionFromPath(currentPicturePath)
+            moveFlag = moveFile(currentPicturePath,newPath)
+            if moveFlag != True:
+                insertError(f"""OS error - {moveFlag}""",self.settings['errLog'])
+                messagebox.showerror(title='Error', message="Oppsss\OS error.\nCould not move the Picture.\nPlease read LOG for mofe info.")
+            else:
+                messagebox.showinfo('Action Succeeded',f'''Picture Moved.''')
         self.removeItemFromData(wishID)
         self.filter()#reload the pictures- one has been deleted
 
@@ -1010,4 +1018,7 @@ class App:
 
     def removeItemFromData(self,id):
         index = findIndexByElemenyKey(self.data,'id',id)
-        del self.data[index]
+        if index != None:
+            del self.data[index]
+        else:
+            insertError(f"""Error - Could not find the desired book by ID {id} in loaded data.""",self.settings['errLog'])
