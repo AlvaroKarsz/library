@@ -33,7 +33,7 @@ def backupDBdata():
 
 
 def commitPushOS(commitMessage):
-    if emptyStr(commitMessage):
+    if not commitMessage or emptyStr(commitMessage):
         return False
     command = f'''{usefullCommands['gitAdd']} && {usefullCommands['gitCommit']} "{commitMessage}" && {usefullCommands['gitPush']}'''
     print(command)

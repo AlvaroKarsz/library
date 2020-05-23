@@ -836,7 +836,7 @@ class App:
 
     def commitAndPush(self):
         commitMsg = simpledialog.askstring("Commit Message", "Please Write your commit message:")
-        if emptyStr(commitMsg):
+        if not commitMsg or emptyStr(commitMsg):
             insertError(f"""GIT error -Error commiting, empty commit message""",self.settings['errLog'])
             messagebox.showerror(title='Error', message="Oppsss\nGIT error.\nPlease read LOG for mofe info.")
             return
