@@ -830,7 +830,21 @@ class App:
         bckupMenu = Menu(topNav,tearoff=False,bg='white',font=('Arial',11))
         bckupMenu.add_command(label="Backup DB Structure",command = self.backupStructureDB)
         bckupMenu.add_command(label="Backup DB Data", command = self.backupDataDB)
+        bckupMenu.add_command(label="Commit & Push", command = self.commitAndPush)
         topNav.add_cascade(label="Advanced", menu=bckupMenu)
+
+
+    def commitAndPush(self):
+        commitMsg = simpledialog.askstring("Commit Message", "Please Write your commit message:")
+        if emptyStr(commitMsg):
+            insertError(f"""GIT error -Error commiting, empty commit message""",self.settings['errLog'])
+            messagebox.showerror(title='Error', message="Oppsss\nGIT error.\nPlease read LOG for mofe info.")
+            return
+        res = commitPushOS(commitMsg)
+        if not res:
+            messagebox.showerror(title='Error', message="Oppsss\nGIT error.\nCould not commit and push.")
+        else:
+            messagebox.showinfo('Sucess',f'''All changes pushed to GitHub''')
 
 
     def backupDataDB(self):

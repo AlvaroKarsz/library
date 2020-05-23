@@ -227,3 +227,7 @@ def copyFile(src,dst):
         return True
     except shutil.Error as err:
         return err
+
+
+def emptyStr(str):
+    return str.isspace() or not str
