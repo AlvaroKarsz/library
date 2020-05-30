@@ -217,7 +217,7 @@ def moveFile(src,dst):
 
 
 def convertnameToPath(name):
-    path = name.replace(':','.').replace('/','.').lower()
+    path = name.replace(':','.').replace('/','.').replace('*','.').lower()
     return re.sub('\s+','',path)
 
 
