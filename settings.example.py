@@ -2,14 +2,14 @@ settings = {}
 settings['db'] = {}
 settings['db']['dir'] = "C:\/path"
 settings['db']['port'] = 1111
-settings['db']['db'] = 'books'
+settings['db']['db'] = 'books_db_name'
 settings['db']['host'] = '127.0.0.1'
 settings['db']['user'] = 'postgres'
 settings['db']['password'] = 'pass'
-settings['db']['books_table'] = 'my_books_db_name'
-settings['db']['series_table'] = 'series_db_name'
-settings['db']['stories_table'] = 'stories_db_name'
-settings['db']['wish_table'] = 'wish_list_db_name'
+settings['db']['books_table'] = 'my_books_table_name'
+settings['db']['series_table'] = 'series_table_name'
+settings['db']['stories_table'] = 'stories_table_name'
+settings['db']['wish_table'] = 'wish_list_table_name'
 
 settings['maxBooksFetch'] = 20
 
