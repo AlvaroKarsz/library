@@ -1,4 +1,5 @@
 import json
+from functions import *
 
 
 def fetchAllBooks(db,settings):
@@ -220,16 +221,33 @@ def markBookAsReaded(db,settings,bookID,date):
 
 
 def markWishAsOrdered(db,settings,bookID):
+    date = makeReadableTime()
     sql = '''
     UPDATE ''' + settings['db']['wish_table'] + '''
-        SET ordered = 't'
+        SET ordered = 't',
+        order_date = %s
     WHERE id = %s;
     '''
     try:
-        db.execute(sql,[bookID])
+        db.execute(sql,[date,bookID])
         return True
     except Exception as err:
         return err
+
+
+def markThisBookSecondOrder(db,settings,bookID):
+    date = makeReadableTime()
+    sql = '''
+    UPDATE ''' + settings['db']['wish_table'] + '''
+        SET order_date_2 = %s
+    WHERE id = %s;
+    '''
+    try:
+        db.execute(sql,[date,bookID])
+        return True
+    except Exception as err:
+        return err
+
 
 def fetchAllMySeries(db,settings):
     sql = '''
@@ -451,6 +469,26 @@ def fetchMyWishlist(db,settings):
         author,
         year
         FROM ''' + settings['db']['wish_table'] + '''
+        WHERE ordered='f'
+        ORDER BY
+        id;
+        '''
+    db.execute(sql)
+    rows = db.fetchall()
+    columns = db.description
+    return postgresResultToColumnRowJson(columns,rows)
+
+def fetchMyOrderedlist(db,settings):
+    sql = '''
+    SELECT
+        id,
+        name,
+        author,
+        year,
+        order_date,
+        order_date_2
+        FROM ''' + settings['db']['wish_table'] + '''
+        WHERE ordered='t'
         ORDER BY
         id;
         '''
@@ -484,6 +522,42 @@ def fetchWishById(db,settings,id):
         main.year,
         main.author,
         main.ordered,
+        main.serie_num,
+        series.name;
+        '''
+    db.execute(sql,[id])
+    rows = [db.fetchone()]
+    columns = db.description
+    return postgresResultToColumnRowJson(columns,rows)[0]
+
+def fetchOrderedById(db,settings,id):
+    sql = '''
+    SELECT
+        main.id AS id,
+        main.name AS name,
+        main.year AS year,
+        main.author AS author,
+        main.order_date AS order_date,
+        main.ordered AS ordered,
+        main.order_date_2 AS order_date_2,
+        main.serie_num AS serie_num,
+        series.name AS serie
+
+        FROM ''' + settings['db']['wish_table'] + ''' main
+
+        LEFT JOIN  ''' + settings['db']['series_table'] + ''' series
+        ON main.serie = series.id
+
+        WHERE main.id = %s
+        GROUP BY
+
+        main.id,
+        main.name,
+        main.year,
+        main.ordered,
+        main.author,
+        main.order_date,
+        main.order_date_2,
         main.serie_num,
         series.name;
         '''

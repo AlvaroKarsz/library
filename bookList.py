@@ -12,6 +12,7 @@ from insertWish import InsertWish
 from insertSerie import InsertSerie
 from stories import Stories
 from books import Books
+from ordered import Ordered
 from reads import Reads
 from series import Series
 from wishlist import Wishlist
@@ -288,7 +289,7 @@ class App:
                 toggle.bind('<Button-1>',lambda event: self.markThisBoodReaded(bookID))
 
 
-    def addOrderedStamp(self,parent,orderedFlag,bookID):
+    def addOrderedStamp(self,parent,orderedFlag,bookID,reorderFlag):
         string = "You've order this book" if orderedFlag else "You haven't order this book"
         stamp = Image.open(self.settings['icons']['has_been_ordered'] if orderedFlag else self.settings['icons']['has_not_been_ordered'])
         stamp = stamp.resize((self.settings['icons']['width'],self.settings['icons']['height']))
@@ -305,7 +306,22 @@ class App:
         self.styleRedirectText(toggle)
         toggle.pack(side=LEFT)
         toggle.bind('<Button-1>',lambda event: self.markThisBookAsOrdered(bookID) if not orderedFlag else self.markThisBookAsArrived(bookID))
+        if reorderFlag:
+            Label(labelParent,text=" or ",background='white',anchor='sw',font=('Arial',10)).pack(side=LEFT)
+            secondLabel = Label(labelParent,text="Mark as Purchased Again",background='white',anchor='sw',font=('Arial',10))
+            self.styleRedirectText(secondLabel)
+            secondLabel.pack(side=LEFT)
+            secondLabel.bind('<Button-1>',lambda event: self.markThisBookAsReordered(bookID))
 
+
+    def markThisBookAsReordered(self,id):
+        f = markThisBookSecondOrder(self.db,self.settings,id)
+        if f == True:
+            messagebox.showinfo('change saved',f'''Book saved as "Ordered Twice" on this date.''')
+            self.redirectPopUp(id) # reload with the new icon
+        else :
+            insertError(f"""DB error - {f}""",self.settings['errLog'])
+            messagebox.showerror(title='Error', message="Oppsss\nDB error.\nPlease read LOG for mofe info.")
 
     def markThisBookAsOrdered(self,id):
         flag =  markWishAsOrdered(self.db,self.settings,id)
@@ -415,7 +431,8 @@ class App:
             self.addReadStamp(selectedBookHeader,bookObj['read'],bookObj['id'])
 
         if 'ordered' in bookObj:
-            self.addOrderedStamp(selectedBookHeader,bookObj['ordered'],bookObj['id'])
+            secondOrderFlag = True if 'order_date_2' in bookObj and not bookObj['order_date_2'] else False
+            self.addOrderedStamp(selectedBookHeader,bookObj['ordered'],bookObj['id'],secondOrderFlag)
 
         Label(self.currentOverlay,
         text = bookObj['name'],
@@ -738,6 +755,12 @@ class App:
         if 'year' in bookO:
             self.postSingleBookLine('Publication Year: ' + str(bookO['year']),parent)
 
+        if 'order_date' in bookO:
+            self.postSingleBookLine('Purchased On: ' + bookO['order_date'],parent)
+
+        if 'order_date_2' in bookO and bookO['order_date_2']:
+            self.postSingleBookLine('Purchased Second Time On: ' + bookO['order_date_2'],parent)
+
         if 'parent_name' in bookO:
             self.postSingleBookLine('Part Of: ' + bookO['parent_name'],parent)
 
@@ -819,7 +842,11 @@ class App:
         self.displayVars.append(temp)
 
         temp = IntVar(self.window)
-        self.displayMenu.add_checkbutton(label="Display Reads", command = lambda : self.loadNew(self.loadReads,4), variable = temp)
+        self.displayMenu.add_checkbutton(label="Display Purchased Books", command = lambda : self.loadNew(self.loadOrdered,4), variable = temp)
+        self.displayVars.append(temp)
+
+        temp = IntVar(self.window)
+        self.displayMenu.add_checkbutton(label="Display Reads", command = lambda : self.loadNew(self.loadReads,5), variable = temp)
         self.displayVars.append(temp)
 
         temp = IntVar(self.window)
@@ -986,6 +1013,22 @@ class App:
         self.updateTitle(books.title)
         self.fetchById = lambda self,id: Books.fetchById(self.db,self.settings,id)
         self.reloadSortingTool(addDisplayFlag)
+
+
+    def loadOrdered(self):
+        self.emptyFilters()
+        wish = Ordered(self.settings,self.db)
+        self.data = wish.setData()
+        self.markReadedFlag = wish.markAsReadedFlag
+        self.booksCount = len(self.data)
+        self.totalBooks = self.booksCount
+        self.totalPages = roundUpDividation(self.booksCount, self.settings['maxBooksFetch']) or 1
+        self.picFolder = wish.picturesFolder
+        self.sortOptions = wish.sortOptions
+        self.sortTranslations = wish.sortTranslations
+        self.updateTitle(wish.title)
+        self.fetchById = lambda self,id: Ordered.fetchById(self.db,self.settings,id)
+        self.reloadSortingTool()
 
 
     def loadWish(self):

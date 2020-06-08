@@ -231,3 +231,7 @@ def copyFile(src,dst):
 
 def emptyStr(str):
     return str.isspace() or not str
+
+def makeReadableTime():
+    today = datetime.date.today()
+    return str(today.day) + '/' + str(today.month) + '/' + str(today.year)
