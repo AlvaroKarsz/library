@@ -1,78 +1,78 @@
 settings = {}
 settings['db'] = {}
-settings['db']['dir'] = "path"
+settings['db']['dir'] = "C:\/path"
 settings['db']['port'] = 1111
-settings['db']['db'] = 'name'
-settings['db']['host'] = 'host'
-settings['db']['user'] = 'username'
+settings['db']['db'] = 'books'
+settings['db']['host'] = '127.0.0.1'
+settings['db']['user'] = 'postgres'
 settings['db']['password'] = 'pass'
-settings['db']['books_table'] = 't1'
-settings['db']['series_table'] = 't2'
-settings['db']['stories_table'] = 't3'
-settings['db']['wish_table'] = 't4'
+settings['db']['books_table'] = 'my_books_db_name'
+settings['db']['series_table'] = 'series_db_name'
+settings['db']['stories_table'] = 'stories_db_name'
+settings['db']['wish_table'] = 'wish_list_db_name'
 
-
-settings['maxBooksFetch'] = 1
+settings['maxBooksFetch'] = 20
 
 settings['gui'] = {}
-settings['gui']['width'] = 1
-settings['gui']['height'] = 1
-settings['gui']['popup_pad_x'] = 1
-settings['gui']['popup_pad_y'] = 1
-settings['gui']['popup_font_size'] = 1
+settings['gui']['width'] = 1000
+settings['gui']['height'] = 900
+settings['gui']['popup_pad_x'] = 100
+settings['gui']['popup_pad_y'] = 10
+settings['gui']['popup_font_size'] = 13
 
-settings['booksDisplayPreRow'] = 1
+settings['booksDisplayPreRow'] = 4
 
-settings['appDir'] = 'C:/path'
+settings['appDir'] = 'C:/Users/app'
 settings['pics'] = {}
-settings['pics']['picFolderPath'] = settings['appDir'] + 'f1/'
-settings['pics']['wishFolderPath'] = settings['appDir'] + 'f2/'
-settings['pics']['storiesFolderPath'] = settings['appDir'] + 'f3/'
-settings['pics']['seriesFolderPath'] = settings['appDir'] + 'f4/'
-settings['pics']['width'] = 1
-settings['pics']['height'] = 1
-settings['pics']['width_big'] =  1
-settings['pics']['height_big'] =  1
-
-
+settings['pics']['picFolderPath'] = settings['appDir'] + 'pictures/'
+settings['pics']['wishFolderPath'] = settings['appDir'] + 'wishlist/'
+settings['pics']['storiesFolderPath'] = settings['appDir'] + 'stories/'
+settings['pics']['seriesFolderPath'] = settings['appDir'] + 'series/'
+settings['pics']['width'] = 180
+settings['pics']['height'] = 200
+settings['pics']['width_big'] =  220
+settings['pics']['height_big'] =  250
+settings['pics']['blank_pic'] =  settings['appDir'] + 'generalPics/blank.jpg'
 
 settings['insertBook'] = {}
-settings['insertBook']['padx_popup'] = 1
-settings['insertBook']['pady_popup'] = 1
-
-
-settings['insertSerie'] = {}
-settings['insertSerie']['padx_popup'] = 1
-settings['insertSerie']['pady_popup'] = 1
+settings['insertBook']['padx_popup'] = 100
+settings['insertBook']['pady_popup'] = 50
 
 
 settings['insertWish'] = {}
-settings['insertWish']['padx_popup'] = 1
-settings['insertWish']['pady_popup'] = 1
+settings['insertWish']['padx_popup'] = 200
+settings['insertWish']['pady_popup'] = 200
+
+
+settings['insertSerie'] = {}
+settings['insertSerie']['padx_popup'] = 200
+settings['insertSerie']['pady_popup'] = 270
+
 
 settings['icons'] = {}
-settings['icons']['width'] = 1
-settings['icons']['height'] = 1
-settings['icons']['folder'] = 'f/'
-settings['icons']['has_been_read'] = settings['appDir'] + settings['icons']['folder'] + 'p.jpg'
-settings['icons']['has_not_been_read'] = settings['appDir'] + settings['icons']['folder'] + 'p.jpg'
-settings['icons']['paperback'] = settings['appDir'] + settings['icons']['folder'] + 'p.png'
-settings['icons']['hardcover'] = settings['appDir'] + settings['icons']['folder'] + 'p.png'
-settings['icons']['hardcover_no_dj'] = settings['appDir'] + settings['icons']['folder'] + 'p.png'
-settings['icons']['has_been_ordered'] = settings['appDir'] + settings['icons']['folder'] + 'p.png'
-settings['icons']['has_not_been_ordered'] = settings['appDir'] + settings['icons']['folder'] + 'p.png'
+settings['icons']['width'] = 40
+settings['icons']['height'] = 40
+settings['icons']['folder'] = 'icons/'
+settings['icons']['has_been_read'] = settings['appDir'] + settings['icons']['folder'] + 'hasbeenread.jpg'
+settings['icons']['has_not_been_read'] = settings['appDir'] + settings['icons']['folder'] + 'hasnotbeenread.jpg'
+settings['icons']['paperback'] = settings['appDir'] + settings['icons']['folder'] + 'paperback.png'
+settings['icons']['hardcover'] = settings['appDir'] + settings['icons']['folder'] + 'hardcoverdj.png'
+settings['icons']['hardcover_no_dj'] = settings['appDir'] + settings['icons']['folder'] + 'hardcovernodj.png'
+settings['icons']['has_been_ordered'] = settings['appDir'] + settings['icons']['folder'] + 'order.png'
+settings['icons']['has_not_been_ordered'] = settings['appDir'] + settings['icons']['folder'] + 'not_order.png'
 
-settings['errLog'] = settings['appDir'] + 'p.log'
+
+settings['errLog'] = settings['appDir'] + 'logs/'
 
 
 settings['confirm'] = {}
-settings['confirm']['picWidth'] = 1
-settings['confirm']['picHeight'] = 1
-settings['confirm']['padx_popup'] = 1
-settings['confirm']['pady_popup'] = 1
+settings['confirm']['picWidth'] = 350
+settings['confirm']['picHeight'] = 450
+settings['confirm']['padx_popup'] = 100
+settings['confirm']['pady_popup'] = 50
 
 
 settings['backups'] = {}
-settings['backups']['dir'] = settings['appDir'] + 'f55/'
-settings['backups']['db_structure'] = settings['backups']['dir'] + 'n.txt'
-settings['backups']['db_data'] = settings['backups']['dir'] + 'n2.txt'
+settings['backups']['dir'] = settings['appDir'] + 'backups/'
+settings['backups']['db_structure'] = settings['backups']['dir'] + 'db_structure.txt'
+settings['backups']['db_data'] = settings['backups']['dir'] + 'db_data.txt'
