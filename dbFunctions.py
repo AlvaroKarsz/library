@@ -316,6 +316,7 @@ def fetchAllMyStories(db,settings):
         self.name,
         self.pages,
         parent.author,
+        parent.name AS parent_name,
         parent.year
         FROM ''' + settings['db']['stories_table'] + ''' self
         LEFT JOIN ''' + settings['db']['books_table'] + ''' parent
