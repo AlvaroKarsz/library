@@ -5,6 +5,8 @@ from dbFunctions import *
 from functions import *
 import re
 from tkinter.filedialog import askopenfilename
+import pandas as pd
+from threading import Thread
 
 
 class InsertBook:
@@ -103,43 +105,94 @@ class InsertBook:
         Checkbutton(topNav,
         text = 'Collection of stories',
         variable = self.isCollection,
-        command = lambda : self.isCollectionBind(btn)
+        command = lambda : self.isCollectionBind(btn,lab)
         ).pack(side=LEFT)
         btn = Button(topNav,
         text = "+",
         width=3,
         command = lambda : self.addNewCollectionEntry()
         )
+        lab = Label(topNav,
+        text='Import Csv/Excel',
+        background='white'
+        )
+        lab.bind('<Button-1>',lambda event: self.handleTableImport())
+
+        lab.configure(cursor="hand2")
+        fTemp = font.Font(lab, lab.cget("font"))
+        fTemp.configure(underline=True)
+        fTemp.configure(size=7)
+        lab.configure(font=fTemp)
+        lab.configure(foreground ='blue')
+
         self.isCollectionFrame = Label(fr,background='white')
         self.isCollectionNextRow = 0
         self.collectionArr = []
         topNav.pack()
         fr.pack()
 
-    def isCollectionBind(self,btn):
+
+    def handleTableImport(self):
+        filename = askopenfilename()
+        if not filename:
+            return
+        sheet =  'Sheet1'
+        df = pd.read_excel(io=filename, sheet_name=sheet)
+        nameColumn = df.columns[0]
+        pagesColumn = df.columns[1]
+        self.killAllChildren(self.isCollectionFrame)
+        self.isCollectionFrame.pack_forget()
+        self.isCollectionNextRow = 0
+        self.collectionArr = []
+        self.isCollectionFrame.pack()
+        thread = Thread(target = lambda: self.iterateExcelAndInsert(df))
+        thread.start()
+
+
+    def iterateExcelAndInsert(self,dfPointer):
+        nameColumn = dfPointer.columns[0]
+        pagesColumn = dfPointer.columns[1]
+        for i, j in dfPointer.iterrows():
+            self.addNewCollectionEntry([j[nameColumn],j[pagesColumn]])
+
+
+    def killAllChildren(self,widget):
+        for i in widget.winfo_children():
+            i.destroy()
+
+
+    def isCollectionBind(self,btn,label):
         if not self.isCollection.get():
-            for i in self.isCollectionFrame.winfo_children():
-                i.destroy()
+            self.killAllChildren(self.isCollectionFrame)
             self.isCollectionFrame.pack_forget()
             btn.pack_forget()
+            label.pack_forget()
             self.isCollectionNextRow = 0
             self.collectionArr = []
         else:
             btn.pack(side=LEFT)
+            label.pack(side=LEFT,padx=20)
             self.isCollectionFrame.pack()
             self.addNewCollectionEntry()
 
-    def addNewCollectionEntry(self):
+
+    def addNewCollectionEntry(self,defaultValues = None):
         line = Label(self.isCollectionFrame,background='white')
         a = StringVar()
         b = StringVar()
         self.collectionArr.append({'name':a,'pages':b})
         Label(line,text='Story Name:',background='white').pack(side=LEFT)
-        Entry(line,textvariable = a).pack(side=LEFT)
+        e1 = Entry(line,textvariable = a)
+        e1.pack(side=LEFT)
         Label(line,text='Pages:',background='white').pack(side=LEFT)
-        Entry(line,textvariable = b).pack(side=LEFT)
+        e2 = Entry(line,textvariable = b)
+        e2.pack(side=LEFT)
         line.pack(pady=7)
         self.isCollectionNextRow += 1
+        if defaultValues:
+            e1.insert(0,defaultValues[0])
+            e2.insert(0,defaultValues[1])
+
 
     def addSerie(self,autoValues):
         series = {}
@@ -174,8 +227,6 @@ class InsertBook:
             self.serieNumber.set(autoValues['serie_num'])
 
 
-
-
     def isSerieBind(self):
         if not self.isSerie.get():
             self.serieFrame.pack_forget()
@@ -188,6 +239,7 @@ class InsertBook:
         text = 'Save',
         command = self.checkOut
         ).pack()
+
 
     def checkOut(self):
         vars = self.getAllVars()
@@ -212,6 +264,7 @@ class InsertBook:
                         else:
                             messagebox.showinfo('Message',f'''Picture Copied.''')
             self.sucess.set(vars['name'])
+
 
     def clearInputs(self):
         self.name.set('')
