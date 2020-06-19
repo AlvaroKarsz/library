@@ -251,6 +251,22 @@ def markThisBookSecondOrder(db,settings,bookID):
         return err
 
 
+def markThisBookAsNotPurchased(db,settings,id):
+    sql = '''
+    UPDATE ''' + settings['db']['wish_table'] + '''
+        SET order_date_2 = NULL,
+        order_date = NULL,
+        ordered = 'f'
+    WHERE id = %s;
+    '''
+    try:
+        db.execute(sql,[id])
+        return True
+    except Exception as err:
+        return err
+
+
+
 def fetchAllMySeries(db,settings):
     sql = '''
     SELECT

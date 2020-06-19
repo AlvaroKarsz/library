@@ -307,6 +307,14 @@ class App:
         self.styleRedirectText(toggle)
         toggle.pack(side=LEFT)
         toggle.bind('<Button-1>',lambda event: self.markThisBookAsOrdered(bookID) if not orderedFlag else self.markThisBookAsArrived(bookID))
+
+        if orderedFlag:
+            Label(labelParent,text=" or ",background='white',anchor='sw',font=('Arial',10)).pack(side=LEFT)
+            cancelPurchaseMarkLabel = Label(labelParent,text="Cancel Purchased Mark",background='white',anchor='sw',font=('Arial',10))
+            self.styleRedirectText(cancelPurchaseMarkLabel)
+            cancelPurchaseMarkLabel.pack(side=LEFT)
+            cancelPurchaseMarkLabel.bind('<Button-1>',lambda event: self.cancelThisBookMarkPurchased(bookID))
+
         if reorderFlag:
             Label(labelParent,text=" or ",background='white',anchor='sw',font=('Arial',10)).pack(side=LEFT)
             secondLabel = Label(labelParent,text="Mark as Purchased Again",background='white',anchor='sw',font=('Arial',10))
@@ -316,6 +324,8 @@ class App:
 
 
     def markThisBookAsReordered(self,id):
+        if not messagebox.askyesno(title='Confirmation', message="Are you sure you want to mark this book as Purchased again?"):
+            return
         f = markThisBookSecondOrder(self.db,self.settings,id)
         if f == True:
             messagebox.showinfo('change saved',f'''Book saved as "Ordered Twice" on this date.''')
@@ -324,11 +334,25 @@ class App:
             insertError(f"""DB error - {f}""",self.settings['errLog'])
             messagebox.showerror(title='Error', message="Oppsss\nDB error.\nPlease read LOG for mofe info.")
 
+
+    def cancelThisBookMarkPurchased(self,id):
+        if not messagebox.askyesno(title='Confirmation', message="Are you sure you want to remove Purchased Mark?"):
+            return
+        f = markThisBookAsNotPurchased(self.db,self.settings,id)
+        if f == True:
+            self.reloadData() # reload with the new icon
+        else :
+            insertError(f"""DB error - {f}""",self.settings['errLog'])
+            messagebox.showerror(title='Error', message="Oppsss\nDB error.\nPlease read LOG for mofe info.")
+
+
     def markThisBookAsOrdered(self,id):
+        if not messagebox.askyesno(title='Confirmation', message="Are you sure you want to mark this book as Purchased?"):
+            return
         flag =  markWishAsOrdered(self.db,self.settings,id)
         if flag == True:
             messagebox.showinfo('change saved',f'''Book status changed to "Ordered"''')
-            self.redirectPopUp(id) # reload with the new icon
+            self.reloadData() # reload with the new icon
         else :
             insertError(f"""DB error - {flag}""",self.settings['errLog'])
             messagebox.showerror(title='Error', message="Oppsss\nDB error.\nPlease read LOG for mofe info.")
