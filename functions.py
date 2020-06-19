@@ -10,6 +10,7 @@ def decodePass(passw,separator):
     passw = passw.split(separator)
     return "".join(map(lambda a: chr(int(a)),passw))
 
+
 def centerWindow(window,width, height):
     screen_width = window.winfo_screenwidth()
     screen_height = window.winfo_screenheight()
@@ -17,9 +18,11 @@ def centerWindow(window,width, height):
     y = (screen_height/2) - (height/2)
     window.geometry('%dx%d+%d+%d' % (width, height, x, y))
 
+
 def getExtensionIfExist(fileNameWithoutExt):
     fileName = glob.glob(fileNameWithoutExt + '.*')
     return fileName[0].replace('\\','/') if len(fileName) > 0 else None
+
 
 def findJsonByElemenyKey(object,key,value):
     size = len(object)
@@ -30,6 +33,7 @@ def findJsonByElemenyKey(object,key,value):
         counter += 1
     return None
 
+
 def findIndexByElemenyKey(object,key,value):
     size = len(object)
     counter = 0
@@ -38,6 +42,7 @@ def findIndexByElemenyKey(object,key,value):
             return counter
         counter += 1
     return None
+
 
 def getNextValueInJsonByElementKey(object,key,value):
     size = len(object)
@@ -101,22 +106,27 @@ def includeInsensitive(whole,part):
         return True
     return True if part.lower() in whole.lower() else False
 
+
 def getRandomNumber():
     return random.randrange(-50000000, 50000000)
 
+
 def roundUpDividation(a,b):
     return -(-a // b)
+
 
 def clearEntry(entry):
     currentTextLength = len(entry.get())
     entry.delete(0,currentTextLength)
     entry.insert(0,'')
 
+
 def notEmptyEls(arr):
     for val in arr:
         if val :
             return True
     return False
+
 
 def dateForDB(date):
     if not date:
@@ -169,6 +179,7 @@ def dateForDB(date):
 
     return False
 
+
 def insertError(errStr,mainFolder):
     y = str(datetime.date.today().year)
     m = str(datetime.date.today().month)
@@ -193,6 +204,7 @@ def insertError(errStr,mainFolder):
     log = open(path, 'a')
     log.write(errStr)
     log.close()
+
 
 
 def destroyFile(path):
@@ -232,6 +244,16 @@ def copyFile(src,dst):
 def emptyStr(str):
     return str.isspace() or not str
 
+
 def makeReadableTime():
     today = datetime.date.today()
     return str(today.day) + '/' + str(today.month) + '/' + str(today.year)
+
+
+def postgresDateToHumanDate(date):
+    if not date:
+        return 'Unknown'
+    date = str(date)
+    date = date.split("-")
+    date.reverse()
+    return '/'.join(date)

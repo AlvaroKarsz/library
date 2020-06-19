@@ -1,6 +1,8 @@
 from settings import *
 from functions import *
 import os
+import re
+
 usefullCommands = {
 'dumpStructure':f'''pg_dump --dbname=postgresql://{settings['db']['user']}:{settings['db']['password']}@{settings['db']['host']}:{settings['db']['port']}/{settings['db']['db']} -s''',
 'dumpData':f'''pg_dump --dbname=postgresql://{settings['db']['user']}:{settings['db']['password']}@{settings['db']['host']}:{settings['db']['port']}/{settings['db']['db']} --column-inserts --data-only''',
@@ -13,6 +15,9 @@ usefullCommands = {
 def checkSuccess(res):
     return True if res == 0 else False
 
+def escapeGitMessage(message):
+    print( type(message))
+    return re.sub(r'\"','\\"',message) if message else ''
 
 def backupDBstructure():
     curentWD = os.getcwd()
@@ -35,7 +40,7 @@ def backupDBdata():
 def commitPushOS(commitMessage):
     if not commitMessage or emptyStr(commitMessage):
         return False
-    command = f'''{usefullCommands['gitAdd']} && {usefullCommands['gitCommit']} "{commitMessage}" && {usefullCommands['gitPush']}'''
+    command = f'''{usefullCommands['gitAdd']} && {usefullCommands['gitCommit']} "{escapeGitMessage(commitMessage)}" && {usefullCommands['gitPush']}'''
     print(command)
     res = os.system(command)
     return checkSuccess(res)

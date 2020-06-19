@@ -31,6 +31,7 @@ class App:
         self.canvas = None
         self.nextSum = True
         self.goNextBind = None
+        self.deleteById = None
         self.currentImageHodler = None
         self.goPrevBind = None
         self.nameValueFilter = ''
@@ -752,6 +753,9 @@ class App:
         if 'author' in bookO:
             self.postSingleBookLine('Author: ' + bookO['author'],parent)
 
+        if 'receive_date' in bookO:
+            self.postSingleBookLine('Mine Since: ' + postgresDateToHumanDate(bookO['receive_date']),parent)
+
         if 'year' in bookO:
             self.postSingleBookLine('Publication Year: ' + str(bookO['year']),parent)
 
@@ -1044,6 +1048,7 @@ class App:
         self.sortTranslations = wish.sortTranslations
         self.updateTitle(wish.title)
         self.fetchById = lambda self,id: Wishlist.fetchById(self.db,self.settings,id)
+        self.deleteById = lambda self,id: Wishlist.deleteById(self.db,self.settings,id)
         self.reloadSortingTool()
 
 

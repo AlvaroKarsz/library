@@ -17,3 +17,7 @@ class Wishlist:
 
     def fetchById(db,settings,id):
         return fetchWishById(db,settings,id)
+
+
+    def deleteById(db,settings,id):
+        return deleteFromWishList(db,settings,id)
