@@ -141,7 +141,7 @@ def fetchBookById(db,settings,id):
         my_books_main.type AS type,
         my_books_main.pages AS pages,
         my_books_main.read_order AS read,
-        my_books_main.receive_date AS receive_date,
+        my_books_main.listed_date AS listed_date,
         my_books_main.serie_num AS serie_num,
         series_table.name AS serie,
         my_books_entry1.id AS next_id,
@@ -188,7 +188,7 @@ def fetchBookById(db,settings,id):
         my_books_main.read_order,
         my_books_main.serie_num,
         series_table.name,
-        my_books_main.receive_date,
+        my_books_main.listed_date,
         my_books_entry1.id,
         my_books_entry1.name,
         my_books_entry1.author,
@@ -362,7 +362,7 @@ def fetchStoryById(db,settings,id):
         my_books_main.name AS parent_name,
         my_books_main.author AS author,
         my_books_main.language AS language,
-        my_books_main.receive_date AS receive_date,
+        my_books_main.listed_date AS listed_date,
         my_books_main.original_language AS o_language,
         my_books_main.read_order AS read,
         my_stories_entry1.id AS next_id,
@@ -403,7 +403,7 @@ def fetchStoryById(db,settings,id):
         my_books_main.year,
         my_books_main.author,
         my_books_main.language,
-        my_books_main.receive_date,
+        my_books_main.listed_date,
         my_books_main.original_language,
         my_books_main.read_order,
         my_stories_entry1.id,
@@ -428,7 +428,7 @@ def fetchReadById(db,settings,id):
         main.original_language AS o_language,
         main.isbn,
         main.type,
-        main.receive_date,
+        main.listed_date,
         main.pages,
         main.read_order AS read,
         main.read_date,
@@ -453,7 +453,7 @@ def fetchReadById(db,settings,id):
         main.name,
         main.year,
         main.author,
-        main.receive_date,
+        main.listed_date,
         main.language,
         main.original_language,
         main.isbn,
@@ -617,7 +617,7 @@ def insertNewSerie(db,settings,json):
 
 
 def deleteFromWishList(db,settings,id):
-    if not id or not id.isdigit():
+    if not id:
         return 'Error, wish list id is not a number'
     sql = '''
     DELETE FROM ''' + settings['db']['wish_table'] + '''

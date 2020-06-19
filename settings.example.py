@@ -52,6 +52,8 @@ settings['insertSerie']['pady_popup'] = 270
 settings['icons'] = {}
 settings['icons']['width'] = 40
 settings['icons']['height'] = 40
+settings['icons']['mini_width'] = 30
+settings['icons']['mini_height'] = 30
 settings['icons']['folder'] = 'icons/'
 settings['icons']['has_been_read'] = settings['appDir'] + settings['icons']['folder'] + 'hasbeenread.jpg'
 settings['icons']['has_not_been_read'] = settings['appDir'] + settings['icons']['folder'] + 'hasnotbeenread.jpg'
@@ -60,6 +62,7 @@ settings['icons']['hardcover'] = settings['appDir'] + settings['icons']['folder'
 settings['icons']['hardcover_no_dj'] = settings['appDir'] + settings['icons']['folder'] + 'hardcovernodj.png'
 settings['icons']['has_been_ordered'] = settings['appDir'] + settings['icons']['folder'] + 'order.png'
 settings['icons']['has_not_been_ordered'] = settings['appDir'] + settings['icons']['folder'] + 'not_order.png'
+settings['icons']['delete'] = settings['appDir'] + settings['icons']['folder'] + 'delete.png'
 
 
 settings['errLog'] = settings['appDir'] + 'logs/'

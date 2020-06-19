@@ -31,7 +31,6 @@ class App:
         self.canvas = None
         self.nextSum = True
         self.goNextBind = None
-        self.deleteById = None
         self.currentImageHodler = None
         self.goPrevBind = None
         self.nameValueFilter = ''
@@ -445,6 +444,54 @@ class App:
         self.addBookData(bookObj,self.currentOverlay)
 
 
+    def addDeleteOption(self,parent,id,name):
+        if not self.deleteById:
+            #no option to delete from this list
+            return
+
+        icon = Image.open(self.settings['icons']['delete'])
+        icon = icon.resize((self.settings['icons']['mini_width'] ,self.settings['icons']['mini_height']))
+        icon = ImageTk.PhotoImage(icon)
+        holder = Label(parent,background='white',anchor='n')
+        iconHolder = Label(holder,background='white', image = icon,anchor='n')
+        iconHolder.image = icon # keep a reference!
+        text = Label(holder,
+        text = "Delete Listing",
+        background='white',
+        font=('Arial',10),
+        anchor='n'
+        )
+        self.styleRedirectText(text)
+        holder.pack()
+        iconHolder.pack(side=LEFT)
+        text.pack(side=LEFT)
+        text.bind('<Button-1>',lambda event: self.deleteThisListing(id,name))
+
+
+    def deleteThisListing(self,id,name):
+        if not messagebox.askyesno("Confirmation","Are you sure you want to delete this listing?"):
+            return
+
+        flag = self.deleteById(self,id)
+        if flag != True:
+            insertError(f"""DB error - {flag}""",self.settings['errLog'])
+            messagebox.showerror(title='Error', message="Oppsss\nDB error.\nCould not delete this listing.\nPlease read LOG for mofe info.")
+            return
+        #deleted from DB, now delete picture if exists
+        path = self.bookNameToPicName(name)
+        if path:
+            #picture exists
+            flag = destroyFile(path)
+            if flag != True:
+                insertError(f"""OS error - {flag}""",self.settings['errLog'])
+                messagebox.showerror(title='Error', message="Oppsss\nOS error.\nFile deleted from DB, but could not delete Picture from folder.\nPlease read LOG for mofe info.")
+                return
+
+        messagebox.showinfo('Sucess',f'''Deletion Succeeded''')
+        self.reloadSortingTool()
+
+
+
     def makeTravelersWithPic(self,bookName,parent,bookID):
         self.currentImageHodler = Label(parent,background='white')
 
@@ -460,6 +507,8 @@ class App:
 
         self.currentImageHodler.pack(fill=X,padx=3,pady=0)
         self.currentImageHodler = None
+        self.addDeleteOption(parent,bookID,bookName)
+
 
 
     def postSingleBookLine(self,line,parent,returnValue = False):
@@ -753,8 +802,8 @@ class App:
         if 'author' in bookO:
             self.postSingleBookLine('Author: ' + bookO['author'],parent)
 
-        if 'receive_date' in bookO:
-            self.postSingleBookLine('Mine Since: ' + postgresDateToHumanDate(bookO['receive_date']),parent)
+        if 'listed_date' in bookO:
+            self.postSingleBookLine('Listed On: ' + postgresDateToHumanDate(bookO['listed_date']),parent)
 
         if 'year' in bookO:
             self.postSingleBookLine('Publication Year: ' + str(bookO['year']),parent)
@@ -984,6 +1033,10 @@ class App:
         self.sortTranslations = stories.sortTranslations
         self.updateTitle(stories.title)
         self.fetchById = lambda self,id: Stories.fetchById(self.db,self.settings,id)
+        if classHasMethod(Stories,'deleteById'):
+            self.deleteById = lambda self,id: Stories.deleteById(self.db,self.settings,id)
+        else:
+            self.deleteById = None
         self.reloadSortingTool()
 
 
@@ -1000,6 +1053,10 @@ class App:
         self.sortTranslations = series.sortTranslations
         self.updateTitle(series.title)
         self.fetchById = lambda self,id: Series.fetchById(self.db,self.settings,id)
+        if classHasMethod(Series,'deleteById'):
+            self.deleteById = lambda self,id: Series.deleteById(self.db,self.settings,id)
+        else:
+            self.deleteById = None
         self.reloadSortingTool()
 
 
@@ -1016,6 +1073,10 @@ class App:
         self.sortTranslations = books.sortTranslations
         self.updateTitle(books.title)
         self.fetchById = lambda self,id: Books.fetchById(self.db,self.settings,id)
+        if classHasMethod(Books,'deleteById'):
+            self.deleteById = lambda self,id: Books.deleteById(self.db,self.settings,id)
+        else:
+            self.deleteById = None
         self.reloadSortingTool(addDisplayFlag)
 
 
@@ -1032,6 +1093,10 @@ class App:
         self.sortTranslations = wish.sortTranslations
         self.updateTitle(wish.title)
         self.fetchById = lambda self,id: Ordered.fetchById(self.db,self.settings,id)
+        if classHasMethod(Ordered,'deleteById'):
+            self.deleteById = lambda self,id: Ordered.deleteById(self.db,self.settings,id)
+        else:
+            self.deleteById = None
         self.reloadSortingTool()
 
 
@@ -1048,7 +1113,10 @@ class App:
         self.sortTranslations = wish.sortTranslations
         self.updateTitle(wish.title)
         self.fetchById = lambda self,id: Wishlist.fetchById(self.db,self.settings,id)
-        self.deleteById = lambda self,id: Wishlist.deleteById(self.db,self.settings,id)
+        if classHasMethod(Wishlist,'deleteById'):
+            self.deleteById = lambda self,id: Wishlist.deleteById(self.db,self.settings,id)
+        else:
+            self.deleteById = None
         self.reloadSortingTool()
 
 
@@ -1064,6 +1132,10 @@ class App:
         self.sortOptions = reads.sortOptions
         self.sortTranslations = reads.sortTranslations
         self.updateTitle(reads.title)
+        if classHasMethod(Reads,'deleteById'):
+            self.deleteById = lambda self,id: Reads.deleteById(self.db,self.settings,id)
+        else:
+            self.deleteById = None
         self.fetchById = lambda self,id: Reads.fetchById(self.db,self.settings,id)
         self.reloadSortingTool()
 
@@ -1073,6 +1145,7 @@ class App:
         self.sortInp.bind('<<ComboboxSelected>>',lambda a : self.sortBooks(self.sortTranslations[self.sortInp.current()] ))
         self.sortInp.set(self.sortOptions[0])
         self.filter(addDisplayFlag)
+
 
     def updateTitle(self,title):
         self.titleWidget['text'] = title

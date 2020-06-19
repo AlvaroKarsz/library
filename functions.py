@@ -253,7 +253,13 @@ def makeReadableTime():
 def postgresDateToHumanDate(date):
     if not date:
         return 'Unknown'
+
     date = str(date)
     date = date.split("-")
     date.reverse()
     return '/'.join(date)
+
+
+def classHasMethod(classObject,methodName):
+    attr = getattr(classObject, methodName, None)
+    return callable(attr)
