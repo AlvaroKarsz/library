@@ -670,3 +670,17 @@ def markBookAsUnReadSql(db,settings,id):
         return True
     except Exception as err:
         return err
+
+
+def makeStats(db,settings):
+    sql = '''
+            SELECT
+                    SUM(CASE WHEN read_order IS NOT NULL THEN 1 ELSE 0 END) AS read_books,
+                    SUM(1) AS books,
+                    SUM(pages) AS pages,
+                    SUM(CASE WHEN  read_order IS NOT NULL THEN pages ELSE 0 END) AS read_pages
+            FROM ''' + settings['db']['books_table']
+    db.execute(sql)
+    rows = db.fetchall()
+    columns = db.description
+    return postgresResultToColumnRowJson(columns,rows)
