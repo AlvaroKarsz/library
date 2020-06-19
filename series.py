@@ -17,3 +17,6 @@ class Series:
 
     def fetchById(db,settings,id):
         return fetchSerieById(db,settings,id)
+
+    def deleteById(db,settings,id):
+        return deleteFromWSeriesList(db,settings,id)

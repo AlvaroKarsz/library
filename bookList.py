@@ -159,7 +159,6 @@ class App:
             if book['relevant']:
                 self.addBookView(book,counter)
                 counter += 1
-
         self.padTheRowWithBlankRows()
 
 
@@ -486,9 +485,9 @@ class App:
                 insertError(f"""OS error - {flag}""",self.settings['errLog'])
                 messagebox.showerror(title='Error', message="Oppsss\nOS error.\nFile deleted from DB, but could not delete Picture from folder.\nPlease read LOG for mofe info.")
                 return
-
+                
+        self.reloadData()
         messagebox.showinfo('Sucess',f'''Deletion Succeeded''')
-        self.reloadSortingTool()
 
 
 
@@ -1024,6 +1023,7 @@ class App:
         self.emptyFilters()
         stories = Stories(self.settings,self.db)
         self.data = stories.setData()
+        self.reloadData = self.loadStories
         self.markReadedFlag = stories.markAsReadedFlag
         self.booksCount = len(self.data)
         self.totalBooks = self.booksCount
@@ -1044,6 +1044,7 @@ class App:
         self.emptyFilters()
         series = Series(self.settings,self.db)
         self.data = series.setData()
+        self.reloadData = self.loadSeries
         self.markReadedFlag = series.markAsReadedFlag
         self.booksCount = len(self.data)
         self.totalBooks = self.booksCount
@@ -1064,6 +1065,7 @@ class App:
         self.emptyFilters()
         books = Books(self.settings,self.db)
         self.data = books.setData()
+        self.reloadData = self.loadBooks
         self.markReadedFlag = books.markAsReadedFlag
         self.booksCount = len(self.data)
         self.totalBooks = self.booksCount
@@ -1084,6 +1086,7 @@ class App:
         self.emptyFilters()
         wish = Ordered(self.settings,self.db)
         self.data = wish.setData()
+        self.reloadData = self.loadOrdered
         self.markReadedFlag = wish.markAsReadedFlag
         self.booksCount = len(self.data)
         self.totalBooks = self.booksCount
@@ -1104,6 +1107,7 @@ class App:
         self.emptyFilters()
         wish = Wishlist(self.settings,self.db)
         self.data = wish.setData()
+        self.reloadData = self.loadWish
         self.markReadedFlag = wish.markAsReadedFlag
         self.booksCount = len(self.data)
         self.totalBooks = self.booksCount
@@ -1124,6 +1128,7 @@ class App:
         self.emptyFilters()
         reads = Reads(self.settings,self.db)
         self.data = reads.setData()
+        self.reloadData = self.loadReads
         self.markReadedFlag = reads.markAsReadedFlag
         self.booksCount = len(self.data)
         self.totalBooks = self.booksCount

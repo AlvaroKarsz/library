@@ -30,7 +30,7 @@ class InsertSerie:
         fram = Label(self.window,background='white')
         self.name = StringVar()
         self.author = StringVar()
-        self.addNewLabelAndInput(fram,'Book Name',1,0,'name')
+        self.addNewLabelAndInput(fram,'Serie Name',1,0,'name')
         self.addNewLabelAndInput(fram,'Author Name',2,0,'author')
         fram.pack()
 

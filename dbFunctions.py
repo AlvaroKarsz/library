@@ -628,3 +628,17 @@ def deleteFromWishList(db,settings,id):
         return True
     except Exception as err:
         return err
+
+
+def deleteFromWSeriesList(db,settings,id):
+    if not id:
+        return 'Error, serie id is not a number'
+    sql = '''
+    DELETE FROM ''' + settings['db']['series_table'] + '''
+    WHERE id=%s;
+    '''
+    try:
+        db.execute(sql,[id])
+        return True
+    except Exception as err:
+        return err
