@@ -277,15 +277,17 @@ class App:
         stringLabel = Label(labelParent,text=string,background='white')
         labelParent.pack(side=LEFT)
         holder.pack(side=LEFT)
-        if readFlag:
-            stringLabel.pack(side=LEFT)
-        else:
-            stringLabel.pack()
-            if self.markReadedFlag:
-                toggle = Label(labelParent,text='Mark as readed',background='white',anchor='sw',font=('Arial',10))
-                self.styleRedirectText(toggle)
-                toggle.pack(side=LEFT)
-                toggle.bind('<Button-1>',lambda event: self.markThisBoodReaded(bookID))
+        stringLabel.pack()
+        if readFlag and self.markReadedFlag:
+            toggle = Label(labelParent,text='Mark as unread',background='white',anchor='sw',font=('Arial',10))
+            self.styleRedirectText(toggle)
+            toggle.pack(side=LEFT)
+            toggle.bind('<Button-1>',lambda event: self.markThisBookUnRead(bookID))
+        elif self.markReadedFlag:
+            toggle = Label(labelParent,text='Mark as readed',background='white',anchor='sw',font=('Arial',10))
+            self.styleRedirectText(toggle)
+            toggle.pack(side=LEFT)
+            toggle.bind('<Button-1>',lambda event: self.markThisBookReaded(bookID))
 
 
     def addOrderedStamp(self,parent,orderedFlag,bookID,reorderFlag):
@@ -403,7 +405,7 @@ class App:
         return path
 
 
-    def markThisBoodReaded(self,bookID):
+    def markThisBookReaded(self,bookID):
         date = simpledialog.askstring("Read Date", "When did you read this book?\n\nExamples:\nJan 2020 - Mar 2020\nFeb 2020")
         validDate = dateForDB(date)
         if not validDate:
@@ -415,6 +417,18 @@ class App:
             else:
                 messagebox.showinfo('Change saved',f'''This is the {readNum}th book you've read''')
                 self.redirectPopUp(bookID) # reload with the new icon
+
+
+    def markThisBookUnRead(self,bookID):
+        if not messagebox.askyesno(title='Confirmation', message = 'Are you sure you want to mark this book as Unread?'):
+            return
+        flag = markBookAsUnReadSql(self.db,self.settings,bookID)
+        if flag != True:
+            insertError(f"""DB error - {flag}""",self.settings['errLog'])
+            messagebox.showerror(title='Error', message="Oppps.\nCould not update DB.\nRead Logs.")
+        else:
+            self.redirectPopUp(bookID) # reload with the new icon
+
 
 
     def selectBookOnclick(self,id):
@@ -485,7 +499,7 @@ class App:
                 insertError(f"""OS error - {flag}""",self.settings['errLog'])
                 messagebox.showerror(title='Error', message="Oppsss\nOS error.\nFile deleted from DB, but could not delete Picture from folder.\nPlease read LOG for mofe info.")
                 return
-                
+
         self.reloadData()
         messagebox.showinfo('Sucess',f'''Deletion Succeeded''')
 

@@ -642,3 +642,15 @@ def deleteFromWSeriesList(db,settings,id):
         return True
     except Exception as err:
         return err
+
+def markBookAsUnReadSql(db,settings,id):
+    sql = '''
+    UPDATE ''' + settings['db']['books_table'] + '''
+    SET read_order = NULL, read_date = NULL
+    WHERE id = %s;
+    '''
+    try:
+        db.execute(sql,[id])
+        return True
+    except Exception as err:
+        return err
