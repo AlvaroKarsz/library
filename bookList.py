@@ -48,6 +48,7 @@ class App:
         self.markRelevantLibrary()
         self.displyBooksThread()
         self.fitlerOnKeyUp()
+        self.setBgColor(self.window,'black')
 
 
     def filterYourself(self,event):
@@ -131,8 +132,8 @@ class App:
 
     def createView(self):
         if not self.canvas:
-            self.canvas = Canvas(self.window)
-        self.booksView = Frame(self.canvas)
+            self.canvas = Canvas(self.window,bg='black',highlightthickness=0, highlightbackground='black')
+        self.booksView = Label(self.canvas)
         self.scroll = Scrollbar(self.window, orient="vertical", command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.scroll.set)
         self.scroll.pack(side="right", fill="y")
@@ -140,6 +141,8 @@ class App:
         self.canvas.create_window((4,4), window=self.booksView, anchor="nw",tags='mainF')
         self.canvas.bind("<Configure>", self.setCanvasSize)
         self.booksView.bind("<Configure>", self.onFrameConfigure)
+        self.setBgColor(self.booksView,'black')
+        self.setFgColor(self.booksView,'white')
 
 
     def setCanvasSize(self,event):
@@ -186,6 +189,9 @@ class App:
         img = ImageTk.PhotoImage(img)
         frame = Label(parent) if not self.currentImageHodler else self.currentImageHodler
         label = Label(frame, image = img,anchor='c')
+        self.setBgColor([frame,label],'black')
+        self.setFgColor([frame,label],'white')
+        self.addBorders(label)
         if not bigSize:
             label.configure(cursor="hand2")
         label.image = img # keep a reference!
@@ -199,10 +205,12 @@ class App:
 
     def addBookView(self,book,index):
         if index % self.perRow == 0:
-            self.currentRow = Frame(self.booksView)
+            self.currentRow = Label(self.booksView)
             self.currentRow.pack(fill=BOTH,expand=True)
+            self.setBgColor(self.currentRow,'black')
+            self.setFgColor(self.currentRow,'white')
 
-        bookView = Frame(self.currentRow)
+        bookView = Label(self.currentRow)
         title = Label(bookView,
         text = book['name'],
         anchor='c',
@@ -215,6 +223,8 @@ class App:
         bookView.pack(side=LEFT,fill=BOTH,expand=True)
         if img:
             img.bind("<Button-1>",lambda event :self.selectBookOnclick(book['id']))
+        self.setBgColor([bookView,title],'black')
+        self.setFgColor([bookView,title],'white')
 
 
     def padTheRowWithBlankRows(self):
@@ -227,11 +237,14 @@ class App:
 
 
     def addBlankRow(self):
-        Frame(self.currentRow,width = self.settings['pics']['width']).pack(side=LEFT,fill=BOTH,expand=True)
+        f = Frame(self.currentRow,width = self.settings['pics']['width'])
+        f.pack(side=LEFT,fill=BOTH,expand=True)
+        Label(f,background='black').pack(side=LEFT,fill=BOTH,expand=True)
+
 
 
     def createOverlay(self):
-        self.currentOverlay = self.makeOverlayAndPopUp(self.canvas,'white',2,"black",self.settings['gui']['popup_pad_x'],self.settings['gui']['popup_pad_y'])
+        self.currentOverlay = self.makeOverlayAndPopUp(self.canvas,'black',2,"white",self.settings['gui']['popup_pad_x'],self.settings['gui']['popup_pad_y'])
 
 
     def killOverlay(self):
@@ -245,11 +258,15 @@ class App:
 
 
     def addCloseButton(self,parent):
-        btn = Button(parent,
+        btn = Label(parent,
         text = 'X',
-        command = lambda : self.killOverlay()
+        font=('Arial',20,'bold'),
+        background='black',
+        foreground = 'white',
+        cursor = 'hand2'
         )
-        btn.pack(side=RIGHT, anchor=NE,padx=3,pady=3)
+        btn.pack(side=RIGHT, anchor=NE,padx=8,pady=5)
+        btn.bind('<Button-1>',lambda e: self.killOverlay())
 
 
     def postBookFormat(self,parent,type):
@@ -257,13 +274,15 @@ class App:
         pic = Image.open(self.settings['icons']['paperback'] if type == 'P' else self.settings['icons']['hardcover'] if type == 'H' else self.settings['icons']['hardcover_no_dj'])
         pic = pic.resize((self.settings['icons']['width'],self.settings['icons']['height']))
         pic = ImageTk.PhotoImage(pic)
-        hol1 = Label(parent,background='white')
-        hol2 = Label(hol1,image = pic,background='white')
+        hol1 = Label(parent)
+        hol2 = Label(hol1,image = pic)
         hol2.image = pic # keep a reference!
-        strL = Label(hol1,text=str,font=('Arial',self.settings['gui']['popup_font_size']),anchor="w",background ='white')
+        strL = Label(hol1,text=str,font=('Arial',self.settings['gui']['popup_font_size']),anchor="w")
         hol1.pack(fill=X,padx=15,pady=3)
         hol2.pack(side=LEFT)
         strL.pack(side=LEFT)
+        self.setBgColor([hol1,hol2,strL],'black')
+        self.setFgColor([hol1,hol2,strL],'white')
 
 
     def addReadStamp(self,parent,readFlag,bookID):
@@ -278,16 +297,22 @@ class App:
         labelParent.pack(side=LEFT)
         holder.pack(side=LEFT)
         stringLabel.pack()
+        self.setBgColor([labelParent,holder,stringLabel],'black')
+        self.setFgColor([labelParent,holder,stringLabel],'white')
         if readFlag and self.markReadedFlag:
             toggle = Label(labelParent,text='Mark as unread',background='white',anchor='sw',font=('Arial',10))
             self.styleRedirectText(toggle)
             toggle.pack(side=LEFT)
             toggle.bind('<Button-1>',lambda event: self.markThisBookUnRead(bookID))
+            self.setBgColor(toggle,'black')
+            self.setFgColor(toggle,'white')
         elif self.markReadedFlag:
             toggle = Label(labelParent,text='Mark as readed',background='white',anchor='sw',font=('Arial',10))
             self.styleRedirectText(toggle)
             toggle.pack(side=LEFT)
             toggle.bind('<Button-1>',lambda event: self.markThisBookReaded(bookID))
+            self.setBgColor(toggle,'black')
+            self.setFgColor(toggle,'white')
 
 
     def addOrderedStamp(self,parent,orderedFlag,bookID,reorderFlag):
@@ -307,17 +332,18 @@ class App:
         self.styleRedirectText(toggle)
         toggle.pack(side=LEFT)
         toggle.bind('<Button-1>',lambda event: self.markThisBookAsOrdered(bookID) if not orderedFlag else self.markThisBookAsArrived(bookID))
-
+        self.setBgColor([labelParent,holder,stringLabel,toggle],'black')
+        self.setFgColor([labelParent,holder,stringLabel,toggle],'white')
         if orderedFlag:
-            Label(labelParent,text=" or ",background='white',anchor='sw',font=('Arial',10)).pack(side=LEFT)
-            cancelPurchaseMarkLabel = Label(labelParent,text="Cancel Purchased Mark",background='white',anchor='sw',font=('Arial',10))
+            Label(labelParent,text=" or ",anchor='sw',font=('Arial',10),foreground='white',background='black').pack(side=LEFT)
+            cancelPurchaseMarkLabel = Label(labelParent,text="Cancel Purchased Mark",anchor='sw',font=('Arial',10),foreground='white',background='black')
             self.styleRedirectText(cancelPurchaseMarkLabel)
             cancelPurchaseMarkLabel.pack(side=LEFT)
             cancelPurchaseMarkLabel.bind('<Button-1>',lambda event: self.cancelThisBookMarkPurchased(bookID))
 
         if reorderFlag:
-            Label(labelParent,text=" or ",background='white',anchor='sw',font=('Arial',10)).pack(side=LEFT)
-            secondLabel = Label(labelParent,text="Mark as Purchased Again",background='white',anchor='sw',font=('Arial',10))
+            Label(labelParent,text=" or ",anchor='sw',font=('Arial',10),foreground='white',background='black').pack(side=LEFT)
+            secondLabel = Label(labelParent,text="Mark as Purchased Again",anchor='sw',font=('Arial',10),foreground='white',background='black')
             self.styleRedirectText(secondLabel)
             secondLabel.pack(side=LEFT)
             secondLabel.bind('<Button-1>',lambda event: self.markThisBookAsReordered(bookID))
@@ -462,7 +488,10 @@ class App:
         self.createOverlay()
         selectedBookHeader = Label(self.currentOverlay,background='white')
         selectedBookHeader.pack(side=TOP,fill=X,padx=3,pady=3)
+        self.setBgColor(selectedBookHeader,'black')
+        self.setFgColor(selectedBookHeader,'white')
         self.addCloseButton(selectedBookHeader)
+
 
         if 'read' in bookObj:
             self.addReadStamp(selectedBookHeader,bookObj['read'],bookObj['id'])
@@ -475,7 +504,8 @@ class App:
         text = bookObj['name'],
         font=('Arial', 22),
         anchor="n",
-        background ='white'
+        background ='black',
+        foreground='white'
         ).pack(fill=X,padx=3)
         self.makeTravelersWithPic(bookObj['name'],self.currentOverlay,id)
         self.addBookData(bookObj,self.currentOverlay)
@@ -489,12 +519,13 @@ class App:
         icon = Image.open(self.settings['icons']['delete'])
         icon = icon.resize((self.settings['icons']['mini_width'] ,self.settings['icons']['mini_height']))
         icon = ImageTk.PhotoImage(icon)
-        holder = Label(parent,background='white',anchor='n')
-        iconHolder = Label(holder,background='white', image = icon,anchor='n')
+        holder = Label(parent,anchor='n')
+        iconHolder = Label(holder, image = icon,anchor='n')
         iconHolder.image = icon # keep a reference!
         text = Label(holder,
         text = "Delete Listing",
-        background='white',
+        background='black',
+        foreground='white',
         font=('Arial',10),
         anchor='n'
         )
@@ -503,6 +534,8 @@ class App:
         iconHolder.pack(side=LEFT)
         text.pack(side=LEFT)
         text.bind('<Button-1>',lambda event: self.deleteThisListing(id,name))
+        self.setBgColor([holder,iconHolder],'black')
+        self.setFgColor([holder,iconHolder],'white')
 
 
     def deleteThisListing(self,id,name):
@@ -532,20 +565,21 @@ class App:
     def makeTravelersWithPic(self,bookName,parent,bookID):
         self.currentImageHodler = Label(parent,background='white')
 
-        prevB = Label(self.currentImageHodler,text='<< Prev.',font=('Arial',23),background='white',foreground = 'blue',cursor = 'hand2')
+        prevB = Label(self.currentImageHodler,text='<< Prev.',font=('Arial',23,'bold'),background='black',foreground = 'white',cursor = 'hand2')
         prevB.pack(side=LEFT,expand=True,padx=(0,100))
         prevB.bind('<Button-1>',lambda event: self.navigatePrevBook(bookID))
 
         self.addPic(bookName,parent,True)
 
-        nextB = Label(self.currentImageHodler,text='Next >>',font=('Arial',23),background='white',foreground = 'blue',cursor = 'hand2')
+        nextB = Label(self.currentImageHodler,text='Next >>',font=('Arial',23,'bold'),background='black',foreground = 'white',cursor = 'hand2')
         nextB.pack(side=RIGHT,expand=True,padx=(100,0))
         nextB.bind('<Button-1>',lambda event: self.navigateNextBook(bookID))
 
         self.currentImageHodler.pack(fill=X,padx=3,pady=0)
         self.currentImageHodler = None
         self.addDeleteOption(parent,bookID,bookName)
-
+        self.setBgColor(self.currentImageHodler,'black')
+        self.setFgColor(self.currentImageHodler,'white')
 
 
     def postSingleBookLine(self,line,parent,returnValue = False):
@@ -556,23 +590,26 @@ class App:
         background ='white'
         )
         label.pack(fill=X,padx=15,pady=3)
+        self.setBgColor(label,'black')
+        self.setFgColor(label,'white')
         if returnValue:
             return label
 
 
     def postStoriesList(self,stories,parent):
         label = self.postSingleBookLine('',parent,True)
-        Label(label,text='Collection: ',font=('Arial',self.settings['gui']['popup_font_size']),anchor="w",background ='white').pack(side=LEFT,pady=3)
-        storiesTag = Label(label,text = str(len(stories)) + ' Stories',font=('Arial',self.settings['gui']['popup_font_size']),anchor="w",background ='white')
+        Label(label,text='Collection: ',font=('Arial',self.settings['gui']['popup_font_size']),anchor="w",background ='black',foreground='white').pack(side=LEFT,pady=3)
+        storiesTag = Label(label,text = str(len(stories)) + ' Stories',font=('Arial',self.settings['gui']['popup_font_size']),anchor="w",background ='black',foreground='white')
         storiesTag.pack(side=LEFT,pady=3)
         self.styleRedirectText(storiesTag)
         storiesTag.bind('<Button-1>',lambda event: print(stories))
 
 
+
     def postSingleBookLineWithRedirect(self,line1,redirectline,parent,redirectId):
         label = self.postSingleBookLine('',parent,True)
-        Label(label,text = line1,font=('Arial',self.settings['gui']['popup_font_size']),anchor="w",background ='white').pack(side=LEFT,pady=3)
-        tag = Label(label,text = redirectline,font=('Arial',self.settings['gui']['popup_font_size']),anchor="w",background ='white')
+        Label(label,text = line1,font=('Arial',self.settings['gui']['popup_font_size']),anchor="w",background ='black',foreground='white').pack(side=LEFT,pady=3)
+        tag = Label(label,text = redirectline,font=('Arial',self.settings['gui']['popup_font_size']),anchor="w",background ='black',foreground='white')
         tag.pack(side=LEFT,pady=3)
         self.styleRedirectText(tag)
         tag.bind("<Button-1>",lambda event :self.redirectPopUp(redirectId))
@@ -582,8 +619,9 @@ class App:
         widget.configure(cursor="hand2")
         f = font.Font(widget, widget.cget("font"))
         f.configure(underline=True)
+        f.configure(weight='bold')
         widget.configure(font=f)
-        widget.configure(foreground ='blue')
+        widget.configure(foreground ='white')
 
 
     def redirectPopUp(self,redirectId):
@@ -616,15 +654,17 @@ class App:
         font=('Arial', 16)
         )
         self.bookIndicatorLabel.pack(side=LEFT,fill=X)
+        self.setBgColor([main,self.titleWidget,self.bookIndicatorLabel],'black')
+        self.setFgColor([main,self.titleWidget,self.bookIndicatorLabel],'white')
 
 
     def addHeader(self):
-        self.header = Frame(self.window)
+        self.header = Label(self.window)
         self.header.pack(side=TOP,fill=X, pady=(5,15))
 
         self.addSortingTool(self.header)
         self.addTitleAndCount(self.header)
-        searchBox = Frame(self.header)
+        searchBox = Label(self.header)
         searchBox.pack(side=LEFT,expand=True)
 
         searchHeader = Label(searchBox,anchor='ne')
@@ -633,6 +673,7 @@ class App:
         Label(searchHeader,
         text = 'Search:',
         font=('Arial', 14),
+        background='black',
         anchor="n"
         ).pack(side=LEFT,expand=True,fill=X)
 
@@ -646,28 +687,32 @@ class App:
         self.addFilterLine(searchBox,'Name: ',self.nameFilterStr)
         self.addFilterLine(searchBox,'Author: ',self.authorFilterStr)
         self.addPagesNavigator(searchBox)
+        self.setBgColor([self.header,searchBox,searchHeader,clearFilters],'black')
+        self.setFgColor([self.header,searchBox,searchHeader],'white')
 
 
     def addFilterLine(self,parent,title,entryName):
-        line = Frame(parent)
+        line = Label(parent)
         line.pack(fill=X,expand=True,pady=3)
         title = Label(line,text=title)
         entry = Entry(line)
         entry.pack(side=RIGHT)
         title.pack(side=RIGHT)
         setattr(self,entryName, entry)
+        self.setBgColor([line,title,entry],'black')
+        self.setFgColor([line,title,entry],'white')
 
 
     def addPagesNavigator(self,parent):
-        frame = Frame(parent)
-        self.goPrev = Label(frame,text='<<')
-        self.pagesLabel = Label(frame,text="Page: " + str(self.currPage) + "/" + str(self.totalPages))
+        label = Label(parent)
+        self.goPrev = Label(label,text='<<')
+        self.pagesLabel = Label(label,text="Page: " + str(self.currPage) + "/" + str(self.totalPages))
 
         if self.currPage > 1:#can be redirected back
             self.styleButtonEnableGUI(self.goPrev)
             self.goPrevBind = self.goPrev.bind('<Button-1>',self.goPrevPage)
 
-        self.goNext = Label(frame,text='>>')
+        self.goNext = Label(label,text='>>')
 
         if self.totalPages > self.currPage :#can be redirected forward
             self.styleButtonEnableGUI(self.goNext)
@@ -676,19 +721,25 @@ class App:
         self.goPrev.pack(side=LEFT)
         self.pagesLabel.pack(side=LEFT)
         self.goNext.pack(side=LEFT)
-        frame.pack()
+        label.pack()
+        self.setBgColor([label,self.pagesLabel,self.goNext,self.goPrev],'black')
+        self.setFgColor([label,self.pagesLabel],'white')
 
 
     def styleButtonEnableGUI(self,widget):
         widget.configure(cursor="hand2")
         f = font.Font(widget, widget.cget("font"))
-        widget.configure(foreground ='blue')
+        f.configure(weight='bold')
+        widget.configure(font = f)
+        self.setFgColor(widget,'white')
 
 
     def cancelButtonEnableGUI(self,widget):
         widget.configure(cursor=None)
         f = font.Font(widget, widget.cget("font"))
-        widget.configure(foreground ='black')
+        f.configure(weight='normal')
+        widget.configure(font=f)
+        self.setFgColor(widget,'grey')
 
 
     def goPrevPage(self,event):
@@ -1003,7 +1054,7 @@ class App:
     def insertSerieWindow(self):
         if self.currentOverlay:
             return
-        self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"white",2,"black",self.settings['insertSerie']['padx_popup'],self.settings['insertSerie']['pady_popup'])
+        self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"black",5,"white",self.settings['insertSerie']['padx_popup'],self.settings['insertSerie']['pady_popup'])
         self.currentOverlay = True
         trace = InsertSerie(self.insertBookCanvas,self.settings,self.db)
         _self = self #acess from another class object
@@ -1013,7 +1064,7 @@ class App:
     def insertWishWindow(self):
         if self.currentOverlay:
             return
-        self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"white",2,"black",self.settings['insertWish']['padx_popup'],self.settings['insertWish']['pady_popup'])
+        self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"black",2,"white",self.settings['insertWish']['padx_popup'],self.settings['insertWish']['pady_popup'])
         self.currentOverlay = True
         trace = InsertWish(self.insertBookCanvas,self.settings,self.db)
         _self = self #acess from another class object
@@ -1026,12 +1077,12 @@ class App:
     def insertBookWindow(self,autoData = {},destoryAfter = False):
         if self.currentOverlay:
             return
-        self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"white",2,"black",self.settings['insertBook']['padx_popup'],self.settings['insertBook']['pady_popup'])
+        self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"black",2,"white",self.settings['insertBook']['padx_popup'],self.settings['insertBook']['pady_popup'])
         return InsertBook(self.insertBookCanvas,self.settings,self.db,autoData,destoryAfter)
 
 
     def popupConfirmPic(self,path,text,okButton,cancelButton):
-        self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"white",2,"black",self.settings['confirm']['padx_popup'],self.settings['confirm']['pady_popup'])
+        self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"black",2,"white",self.settings['confirm']['padx_popup'],self.settings['confirm']['pady_popup'])
         return Confirm(self.insertBookCanvas,self.settings,path,text,okButton,cancelButton)
 
 
@@ -1047,7 +1098,7 @@ class App:
     def addSortingTool(self,parent):
         sortingLabel = Label(parent)
         sortingLabel.pack(side=LEFT,expand=True,fill=X)
-        Label(sortingLabel,text="Sort By:",font=('Arial', 14),anchor="n").pack(side=TOP)
+        Label(sortingLabel,text="Sort By:",font=('Arial', 14),anchor="n",background='black',foreground='white').pack(side=TOP)
         self.sortInp = Combobox(sortingLabel,
         values = [] ,
         width=25,
@@ -1055,6 +1106,8 @@ class App:
         )
         self.sortInp.pack(side=BOTTOM)
         self.sortInp.bind('<<ComboboxSelected>>',lambda a : self.sortBooks(optionTranslation[self.sortInp.current()] ))
+        self.setBgColor(sortingLabel,'black')
+        self.setFgColor(sortingLabel,'white')
 
 
     def loadStories(self):
@@ -1200,3 +1253,33 @@ class App:
             del self.data[index]
         else:
             insertError(f"""Error - Could not find the desired book by ID {id} in loaded data.""",self.settings['errLog'])
+
+
+    def setBgColor(self,widget,clr):
+        if not isArray(widget):
+            widget = [widget]
+
+        for wid in widget:
+            try:
+                wid.configure(background=clr)
+            except:
+                try:
+                    wid.configure(bg=clr)
+                except:
+                    continue
+
+
+    def setFgColor(self,widget,clr):
+        if not isArray(widget):
+            widget = [widget]
+        for wid in widget:
+            try:
+                wid.configure(foreground=clr)
+            except:
+                try:
+                    wid.configure(fg=clr)
+                except:
+                    continue
+
+    def addBorders(self,wid):
+        wid.configure(borderwidth=2, relief="raised")

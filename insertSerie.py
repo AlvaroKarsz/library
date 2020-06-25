@@ -22,12 +22,13 @@ class InsertSerie:
         Label(self.window,
         text = 'Insert New Books Serie',
         font=('Arial', 20),
-        background='white',
+        background='black',
+        foreground='white'
         ).pack(pady=20)
 
 
     def addInputs(self):
-        fram = Label(self.window,background='white')
+        fram = Label(self.window,background='black',foreground='white')
         self.name = StringVar()
         self.author = StringVar()
         self.addNewLabelAndInput(fram,'Serie Name',1,0,'name')
@@ -36,11 +37,15 @@ class InsertSerie:
 
 
     def closeOnclick(self):
-        btn = Button(self.window,
+        btn = Label(self.window,
         text = 'X',
-        command = self.killWindow
+        font=('Arial',20,'bold'),
+        background='black',
+        foreground = 'white',
+        cursor = 'hand2'
         )
-        btn.pack(side=TOP, anchor=NE,padx=3,pady=3)
+        btn.pack(side=TOP, anchor=NE,padx=8,pady=5)
+        btn.bind('<Button-1>',lambda e: self.killWindow())
 
 
     def killWindow(self):
@@ -49,8 +54,8 @@ class InsertSerie:
 
 
     def addNewLabelAndInput(self,prent,text,row,column,varName):
-        innerFrame = Label(prent,background='white')
-        label = Label(innerFrame,text=text,background='white')
+        innerFrame = Label(prent,background='black',foreground='white')
+        label = Label(innerFrame,text=text,background='black',foreground='white')
         label.pack(side=LEFT)
         entry = Entry(innerFrame,textvariable = getattr(self, varName))
         entry.pack(side=RIGHT)
@@ -58,7 +63,7 @@ class InsertSerie:
 
 
     def addCheckBoxGroup(self,parent,optionJson):
-        innerFrame = Label(parent,background='white')
+        innerFrame = Label(parent,background='black',foreground='white')
         self.type = StringVar()
         self.type.set(False)
         for cBox in optionJson:
@@ -67,12 +72,16 @@ class InsertSerie:
 
 
 
-
     def addInsertButton(self):
-        Button(self.window,
+        btn = Label(self.window,
         text = 'Save',
-        command = self.checkOut
-        ).pack()
+        font=('Arial',16,'bold'),
+        background='black',
+        foreground = 'white',
+        cursor = 'hand2'
+        )
+        btn.pack()
+        btn.bind('<Button-1>',lambda e: self.checkOut())
 
 
     def checkOut(self):

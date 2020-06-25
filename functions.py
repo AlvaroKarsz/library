@@ -263,3 +263,7 @@ def postgresDateToHumanDate(date):
 def classHasMethod(classObject,methodName):
     attr = getattr(classObject, methodName, None)
     return callable(attr)
+
+
+def isArray(a):
+    return hasattr(a, "__len__")
