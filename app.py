@@ -4,5 +4,7 @@ from bookList import App
 from tkinter import *
 
 window = Tk()
+window.iconbitmap(default=settings['icons']['trasparent'])
+window.title('My Library')
 App(window,settings,db)
 window.mainloop()

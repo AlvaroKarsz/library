@@ -63,6 +63,7 @@ settings['icons']['hardcover_no_dj'] = settings['appDir'] + settings['icons']['f
 settings['icons']['has_been_ordered'] = settings['appDir'] + settings['icons']['folder'] + 'order.png'
 settings['icons']['has_not_been_ordered'] = settings['appDir'] + settings['icons']['folder'] + 'not_order.png'
 settings['icons']['delete'] = settings['appDir'] + settings['icons']['folder'] + 'delete.png'
+settings['icons']['trasparent'] = settings['appDir'] + settings['icons']['folder'] + 'trasparent.ico'
 
 
 settings['errLog'] = settings['appDir'] + 'logs/'
