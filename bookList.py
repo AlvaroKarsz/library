@@ -1064,7 +1064,7 @@ class App:
     def insertWishWindow(self):
         if self.currentOverlay:
             return
-        self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"black",2,"white",self.settings['insertWish']['padx_popup'],self.settings['insertWish']['pady_popup'])
+        self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"black",5,"white",self.settings['insertWish']['padx_popup'],self.settings['insertWish']['pady_popup'])
         self.currentOverlay = True
         trace = InsertWish(self.insertBookCanvas,self.settings,self.db)
         _self = self #acess from another class object
@@ -1077,7 +1077,7 @@ class App:
     def insertBookWindow(self,autoData = {},destoryAfter = False):
         if self.currentOverlay:
             return
-        self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"black",2,"white",self.settings['insertBook']['padx_popup'],self.settings['insertBook']['pady_popup'])
+        self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"black",5,"white",self.settings['insertBook']['padx_popup'],self.settings['insertBook']['pady_popup'])
         return InsertBook(self.insertBookCanvas,self.settings,self.db,autoData,destoryAfter)
 
 

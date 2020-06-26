@@ -43,6 +43,10 @@ settings['insertWish'] = {}
 settings['insertWish']['padx_popup'] = 200
 settings['insertWish']['pady_popup'] = 200
 
+settings['settings_popup'] = {}
+settings['insertBook']['padx'] = 100
+settings['insertBook']['pady'] = 50
+
 
 settings['insertSerie'] = {}
 settings['insertSerie']['padx_popup'] = 200
