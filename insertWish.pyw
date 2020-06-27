@@ -12,6 +12,7 @@ class InsertWish:
         self.db = db
         self.sucess = BooleanVar()
         self.settings = settings
+        self.setCheckboxStyle()
         self.closeOnclick()
         self.addTitle()
         self.addInputs()
@@ -23,12 +24,13 @@ class InsertWish:
         Label(self.window,
         text = 'Insert New Wish Book',
         font=('Arial', 20),
-        background='white',
+        background='black',
+        foreground='white'
         ).pack(pady=20)
 
 
     def addInputs(self):
-        fram = Label(self.window,background='white')
+        fram = Label(self.window,background='black',foreground='white')
 
         self.name = StringVar()
 
@@ -42,11 +44,15 @@ class InsertWish:
 
 
     def closeOnclick(self):
-        btn = Button(self.window,
+        btn = Label(self.window,
         text = 'X',
-        command = self.killWindow
+        font=('Arial',20,'bold'),
+        background='black',
+        foreground = 'white',
+        cursor = 'hand2'
         )
-        btn.pack(side=TOP, anchor=NE,padx=3,pady=3)
+        btn.pack(side=TOP, anchor=NE,padx=8,pady=5)
+        btn.bind('<Button-1>',lambda e: self.killWindow())
 
 
     def killWindow(self):
@@ -55,8 +61,8 @@ class InsertWish:
 
 
     def addNewLabelAndInput(self,prent,text,row,column,varName):
-        innerFrame = Label(prent,background='white')
-        label = Label(innerFrame,text=text,background='white')
+        innerFrame = Label(prent,background='black',foreground='white')
+        label = Label(innerFrame,text=text,background='black',foreground='white')
         label.pack(side=LEFT)
         entry = Entry(innerFrame,textvariable = getattr(self, varName))
         entry.pack(side=RIGHT)
@@ -64,7 +70,7 @@ class InsertWish:
 
 
     def addCheckBoxGroup(self,parent,optionJson):
-        innerFrame = Label(parent,background='white')
+        innerFrame = Label(parent,background='black',foreground='white')
         self.type = StringVar()
         self.type.set(False)
         for cBox in optionJson:
@@ -79,22 +85,24 @@ class InsertWish:
         self.series = series
         self.isSerie = BooleanVar()
 
-        tempFrame = Label(self.window,background='white')
-        Checkbutton(tempFrame,
+        tempFrame = Label(self.window,background='black',foreground='white')
+        checkB = Checkbutton(tempFrame,
         text = 'Part Of Serie',
+        style='Red.TCheckbutton',
         variable = self.isSerie,
         command = lambda : self.isSerieBind()
-        ).pack()
+        )
+        checkB.pack()
         self.serieVar = StringVar()
         self.serieNumber = StringVar()
         self.serieVar.set(list(series)[0])
-        self.serieFrame = Label(tempFrame,background='white')
+        self.serieFrame = Label(tempFrame,background='black',foreground='white')
         self.serieFrame.pack()
         Combobox(self.serieFrame,
         textvariable = self.serieVar,
         values = [*series.keys()],
         state="readonly").pack(side=LEFT,padx=5)
-        Label(self.serieFrame,text = 'Number',background='white').pack(side=LEFT)
+        Label(self.serieFrame,text = 'Number',background='black',foreground='white').pack(side=LEFT)
         Entry(self.serieFrame,textvariable = self.serieNumber,width=3).pack(side=LEFT)
         tempFrame.pack()
         self.serieFrame.pack_forget()
@@ -108,10 +116,15 @@ class InsertWish:
 
 
     def addInsertButton(self):
-        Button(self.window,
+        btn = Label(self.window,
         text = 'Save',
-        command = self.checkOut
-        ).pack()
+        font=('Arial',16,'bold'),
+        background='black',
+        foreground = 'white',
+        cursor = 'hand2'
+        )
+        btn.pack()
+        btn.bind('<Button-1>',lambda e: self.checkOut())
 
 
     def checkOut(self):
@@ -178,3 +191,8 @@ class InsertWish:
             res['serie']['id'] = self.series[self.serieVar.get().strip()]
             res['serie']['number'] = self.serieNumber.get().strip()
         return res
+
+
+    def setCheckboxStyle(self):
+        s = Style()
+        s.configure('Red.TCheckbutton', foreground='white',background='black')

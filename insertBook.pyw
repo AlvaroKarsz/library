@@ -16,6 +16,7 @@ class InsertBook:
         self.sucess = StringVar() # trace
         self.settings = settings
         self.destoryAfter = destoryAfter
+        self.setCheckboxStyle()
         self.closeOnclick()
         self.addTitle()
         self.addInputs(autoValues)
@@ -33,11 +34,12 @@ class InsertBook:
         Label(self.window,
         text = 'Insert New Book',
         font=('Arial', 20),
-        background='white',
+        background='black',
+        foreground='white',
         ).pack(pady=20)
 
     def addInputs(self,autoValues):
-        fram = Label(self.window,background='white')
+        fram = Label(self.window,background='black',foreground='white')
 
         self.name = StringVar()
         if 'name' in autoValues:
@@ -66,11 +68,15 @@ class InsertBook:
 
 
     def closeOnclick(self):
-        btn = Button(self.window,
+        btn = Label(self.window,
         text = 'X',
-        command = self.killWindow
+        font=('Arial',20,'bold'),
+        background='black',
+        foreground = 'white',
+        cursor = 'hand2'
         )
-        btn.pack(side=TOP, anchor=NE,padx=3,pady=3)
+        btn.pack(side=TOP, anchor=NE,padx=8,pady=5)
+        btn.bind('<Button-1>',lambda e: self.killWindow())
 
 
     def justDissapear(self):
@@ -82,50 +88,58 @@ class InsertBook:
 
 
     def addNewLabelAndInput(self,prent,text,row,column,varName):
-        innerFrame = Label(prent,background='white')
-        label = Label(innerFrame,text=text,background='white')
+        innerFrame = Label(prent,background='black',foreground='white')
+        label = Label(innerFrame,text=text,background='black',foreground='white')
         label.pack(side=LEFT)
         entry = Entry(innerFrame,textvariable = getattr(self, varName))
         entry.pack(side=RIGHT)
         innerFrame.pack(pady=5,fill=X)
 
+
     def addCheckBoxGroup(self,parent,optionJson):
-        innerFrame = Label(parent,background='white')
+        innerFrame = Label(parent,background='black',foreground='white')
         self.type = StringVar()
         self.type.set(False)
         for cBox in optionJson:
-            Checkbutton(innerFrame,onvalue = cBox['value'],text = cBox['text'],variable = self.type).pack(side=LEFT,padx=7,pady=5)
+            Checkbutton(innerFrame,onvalue = cBox['value'],text = cBox['text'],variable = self.type,style='Red.TCheckbutton').pack(side=LEFT,padx=7,pady=5)
         innerFrame.pack()
 
 
     def addCollectionElements(self):
-        fr = Label(self.window,background='white')
-        topNav = Label(fr,background='white')
+        fr = Label(self.window,background='black',foreground='white')
+        topNav = Label(fr,background='black',foreground='white')
         self.isCollection = BooleanVar()
         Checkbutton(topNav,
         text = 'Collection of stories',
         variable = self.isCollection,
+        style='Red.TCheckbutton',
         command = lambda : self.isCollectionBind(btn,lab)
         ).pack(side=LEFT)
-        btn = Button(topNav,
+
+        btn = Label(topNav,
         text = "+",
         width=3,
-        command = lambda : self.addNewCollectionEntry()
+        font=('Arial',16,'bold'),
+        background='black',
+        foreground = 'white',
+        cursor = 'hand2'
         )
+        btn.bind('<Button-1>',lambda e: self.addNewCollectionEntry())
+
         lab = Label(topNav,
         text='Import Csv/Excel',
-        background='white'
+        background='black',foreground='white'
         )
         lab.bind('<Button-1>',lambda event: self.handleTableImport())
 
         lab.configure(cursor="hand2")
         fTemp = font.Font(lab, lab.cget("font"))
-        fTemp.configure(underline=True)
+        fTemp.configure(weight='bold')
         fTemp.configure(size=7)
         lab.configure(font=fTemp)
-        lab.configure(foreground ='blue')
 
-        self.isCollectionFrame = Label(fr,background='white')
+
+        self.isCollectionFrame = Label(fr,background='black',foreground='white')
         self.isCollectionNextRow = 0
         self.collectionArr = []
         topNav.pack()
@@ -177,14 +191,14 @@ class InsertBook:
 
 
     def addNewCollectionEntry(self,defaultValues = None):
-        line = Label(self.isCollectionFrame,background='white')
+        line = Label(self.isCollectionFrame,background='black',foreground='white')
         a = StringVar()
         b = StringVar()
         self.collectionArr.append({'name':a,'pages':b})
-        Label(line,text='Story Name:',background='white').pack(side=LEFT)
+        Label(line,text='Story Name:',background='black',foreground='white').pack(side=LEFT)
         e1 = Entry(line,textvariable = a)
         e1.pack(side=LEFT)
-        Label(line,text='Pages:',background='white').pack(side=LEFT)
+        Label(line,text='Pages:',background='black',foreground='white').pack(side=LEFT)
         e2 = Entry(line,textvariable = b)
         e2.pack(side=LEFT)
         line.pack(pady=7)
@@ -201,22 +215,23 @@ class InsertBook:
         self.series = series
         self.isSerie = BooleanVar()
 
-        tempFrame = Label(self.window,background='white')
+        tempFrame = Label(self.window,background='black',foreground='white')
         Checkbutton(tempFrame,
         text = 'Part Of Serie',
         variable = self.isSerie,
+        style='Red.TCheckbutton',
         command = lambda : self.isSerieBind()
         ).pack()
         self.serieVar = StringVar()
         self.serieNumber = StringVar()
         self.serieVar.set(list(series)[0])
-        self.serieFrame = Label(tempFrame,background='white')
+        self.serieFrame = Label(tempFrame,background='black',foreground='white')
         self.serieFrame.pack()
         Combobox(self.serieFrame,
         textvariable = self.serieVar,
         values = [*series.keys()],
         state="readonly").pack(side=LEFT,padx=5)
-        Label(self.serieFrame,text = 'Number',background='white').pack(side=LEFT)
+        Label(self.serieFrame,text = 'Number',background='black',foreground='white').pack(side=LEFT)
         Entry(self.serieFrame,textvariable = self.serieNumber,width=3).pack(side=LEFT)
         tempFrame.pack()
         self.serieFrame.pack_forget()
@@ -235,10 +250,15 @@ class InsertBook:
 
 
     def addInsertButton(self):
-        Button(self.window,
+        btn = Label(self.window,
         text = 'Save',
-        command = self.checkOut
-        ).pack()
+        font=('Arial',16,'bold'),
+        background='black',
+        foreground = 'white',
+        cursor = 'hand2'
+        )
+        btn.pack()
+        btn.bind('<Button-1>',lambda e: self.checkOut())
 
 
     def checkOut(self):
@@ -362,10 +382,11 @@ class InsertBook:
         for book in getBookNames(self.db,self.settings):
             books[book[1]] = book[0]
         self.books = books
-        tempF = Label(self.window,background='white')
+        tempF = Label(self.window,background='black',foreground='white')
         self.isFollowed = BooleanVar()
         Checkbutton(tempF,
         text = 'Is Followed',
+        style='Red.TCheckbutton',
         variable = self.isFollowed,
         command = lambda : self.isFollowedBind()
         ).pack()
@@ -389,10 +410,11 @@ class InsertBook:
 
     def addPrevBook(self):
         self.isPreceded = BooleanVar()
-        fr = Label(self.window,background='white')
+        fr = Label(self.window,background='black',foreground='white')
         Checkbutton(fr,
         text = 'Is Preceded',
         variable = self.isPreceded,
+        style='Red.TCheckbutton',
         command = lambda : self.isPrecededBind()
         ).pack()
         self.precededVar = StringVar()
@@ -413,3 +435,8 @@ class InsertBook:
             self.precededFrame.pack_forget()
         else:
             self.precededFrame.pack(pady=7)
+
+
+    def setCheckboxStyle(self):
+        s = Style()
+        s.configure('Red.TCheckbutton', foreground='white',background='black')

@@ -699,8 +699,8 @@ class App:
         entry.pack(side=RIGHT)
         title.pack(side=RIGHT)
         setattr(self,entryName, entry)
-        self.setBgColor([line,title,entry],'black')
-        self.setFgColor([line,title,entry],'white')
+        self.setBgColor([line,title],'black')
+        self.setFgColor([line,title],'white')
 
 
     def addPagesNavigator(self,parent):
