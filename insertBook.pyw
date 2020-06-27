@@ -17,6 +17,7 @@ class InsertBook:
         self.settings = settings
         self.destoryAfter = destoryAfter
         self.setCheckboxStyle()
+        self.setFrameStyle()
         self.closeOnclick()
         self.addTitle()
         self.addInputs(autoValues)
@@ -25,7 +26,7 @@ class InsertBook:
         self.addNextBook()
         self.addPrevBook()
         self.addCollectionElements()
-        self.addInsertButton()
+
 
     def addType(self):
         self.addCheckBoxGroup(self.window,[{'value':'H','text':'Hard Cover','row':8,'column':0},{'value':'P','text':'Paper Back','row':8,'column':1},{'value':'HN','text':'Hardcover No Dust Jacket','row':8,'column':2}])
@@ -137,13 +138,14 @@ class InsertBook:
         fTemp.configure(weight='bold')
         fTemp.configure(size=7)
         lab.configure(font=fTemp)
-
-
-        self.isCollectionFrame = Label(fr,background='black',foreground='white')
-        self.isCollectionNextRow = 0
-        self.collectionArr = []
         topNav.pack()
         fr.pack()
+
+        #self.isCollectionFrame = Label(fr,background='black',foreground='white')
+        self.createView()
+        self.isCollectionNextRow = 0
+        self.collectionArr = []
+
 
 
     def handleTableImport(self):
@@ -155,10 +157,10 @@ class InsertBook:
         nameColumn = df.columns[0]
         pagesColumn = df.columns[1]
         self.killAllChildren(self.isCollectionFrame)
-        self.isCollectionFrame.pack_forget()
+        #self.isCollectionFrame.pack_forget()
         self.isCollectionNextRow = 0
         self.collectionArr = []
-        self.isCollectionFrame.pack()
+        #self.isCollectionFrame.pack()
         thread = Thread(target = lambda: self.iterateExcelAndInsert(df))
         thread.start()
 
@@ -173,12 +175,19 @@ class InsertBook:
     def killAllChildren(self,widget):
         for i in widget.winfo_children():
             i.destroy()
+        self.removeEmptySpaceInElement(widget)
+
+
+    def removeEmptySpaceInElement(self,element):
+        Frame(element,style='Red.TFrame').pack()
+        #pack empty frame after destorying all
+
 
 
     def isCollectionBind(self,btn,label):
         if not self.isCollection.get():
             self.killAllChildren(self.isCollectionFrame)
-            self.isCollectionFrame.pack_forget()
+            #self.isCollectionFrame.pack_forget()
             btn.pack_forget()
             label.pack_forget()
             self.isCollectionNextRow = 0
@@ -186,7 +195,7 @@ class InsertBook:
         else:
             btn.pack(side=LEFT)
             label.pack(side=LEFT,padx=20)
-            self.isCollectionFrame.pack()
+            #self.isCollectionFrame.pack()
             self.addNewCollectionEntry()
 
 
@@ -206,6 +215,7 @@ class InsertBook:
         if defaultValues:
             e1.insert(0,defaultValues[0])
             e2.insert(0,defaultValues[1])
+        self.scrollDown()
 
 
     def addSerie(self,autoValues):
@@ -249,15 +259,15 @@ class InsertBook:
             self.serieFrame.pack(pady=7)
 
 
-    def addInsertButton(self):
-        btn = Label(self.window,
+    def addInsertButton(self,p):
+        btn = Label(p,
         text = 'Save',
         font=('Arial',16,'bold'),
         background='black',
         foreground = 'white',
         cursor = 'hand2'
         )
-        btn.pack()
+        btn.pack(pady=(2,10))
         btn.bind('<Button-1>',lambda e: self.checkOut())
 
 
@@ -440,3 +450,35 @@ class InsertBook:
     def setCheckboxStyle(self):
         s = Style()
         s.configure('Red.TCheckbutton', foreground='white',background='black')
+
+
+    def setFrameStyle(self):
+        st = Style()
+        st.configure('Red.TFrame', foreground='white',background='black')
+
+
+    def createView(self):
+        self.canvas = Canvas(self.window,bg='black',highlightthickness=0, highlightbackground='black')
+        mainP = Label(self.canvas,background='black',foreground='white')
+        self.isCollectionFrame = Label(mainP,background='black',foreground='white')
+        self.isCollectionFrame.pack()
+        self.scroll = Scrollbar(self.window, orient="vertical", command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=self.scroll.set)
+        self.scroll.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.canvas.create_window((4,4), window=mainP, anchor="nw",tags='mainF')
+        self.canvas.bind("<Configure>", self.setCanvasSize)
+        self.isCollectionFrame.bind("<Configure>", self.onFrameConfigure)
+        self.addInsertButton(mainP)
+
+
+    def setCanvasSize(self,event):
+        self.canvas.itemconfig('mainF', width=self.canvas.winfo_width())
+
+
+    def onFrameConfigure(self, event):
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+
+    def scrollDown(self):
+        self.canvas.yview_moveto('1')
