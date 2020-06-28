@@ -4,6 +4,7 @@ import re
 import datetime
 import os
 import shutil
+import requests
 
 
 def decodePass(passw,separator):
@@ -109,6 +110,12 @@ def includeInsensitive(whole,part):
 
 def getRandomNumber():
     return random.randrange(-50000000, 50000000)
+
+
+def getRandomStr(len):
+    return ''.join([random.choice('qazxswedcvfrQAZXSWEDCV9876FRTGBNHYUJMKIO0L1P2t3g4b5nhyujmkiolp') for _ in range(len)])
+
+
 
 
 def roundUpDividation(a,b):
@@ -267,3 +274,19 @@ def classHasMethod(classObject,methodName):
 
 def isArray(a):
     return hasattr(a, "__len__")
+
+
+def fetchPic(isbn,settings):
+    url = settings['api']['covers'] + isbn + '-L.jpg'
+    res = requests.get(url = url)
+    if res.status_code != 200:
+        insertError(f"""Fetch error - bad status code from http request\nurl: {url}\nstatus code: {res.status_code}\nresponse: {res.text}""",settings['errLog'])
+        return False
+
+    path = settings['tmp'] + getRandomStr(35) + '.jpg'
+    try:
+        open(path, 'wb').write(res.content)
+    except OSError as e:
+        insertError(f"""OS error - Could not create tmp file\nerror: {e}""",settings['errLog'])
+        return False
+    return path

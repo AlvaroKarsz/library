@@ -23,6 +23,7 @@ settings['gui']['popup_font_size'] = 13
 settings['booksDisplayPreRow'] = 4
 
 settings['appDir'] = 'C:/Users/app'
+settings['tmp'] = settings['appDir'] + 'tmp/'
 settings['pics'] = {}
 settings['pics']['picFolderPath'] = settings['appDir'] + 'pictures/'
 settings['pics']['wishFolderPath'] = settings['appDir'] + 'wishlist/'
@@ -41,7 +42,7 @@ settings['insertBook']['pady_popup'] = 50
 
 settings['insertWish'] = {}
 settings['insertWish']['padx_popup'] = 200
-settings['insertWish']['pady_popup'] = 200
+settings['insertWish']['pady_popup'] = 180
 
 settings['settings_popup'] = {}
 settings['insertBook']['padx'] = 100
@@ -84,3 +85,6 @@ settings['backups'] = {}
 settings['backups']['dir'] = settings['appDir'] + 'backups/'
 settings['backups']['db_structure'] = settings['backups']['dir'] + 'db_structure.txt'
 settings['backups']['db_data'] = settings['backups']['dir'] + 'db_data.txt'
+
+settings['api'] = {}
+settings['api']['covers'] = 'http://covers.openlibrary.org/b/isbn/'

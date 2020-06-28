@@ -4,7 +4,7 @@ from PIL import ImageTk, Image
 
 
 class Confirm:
-    def __init__(self,win,settings,picPath,string,okBtn1Text,cancelBtn2Text):
+    def __init__(self,win,settings,picPath,string=None,okBtn1Text=None,cancelBtn2Text=None):
         self.window = win
         self.settings = settings
         self.sucess = BooleanVar() # trace
@@ -14,15 +14,30 @@ class Confirm:
         self.addButtons(okBtn1Text,cancelBtn2Text)
 
     def addButtons(self,okText,cancelText):
-        label = Label(self.window,background='white')
-        Button(label,
+        if not okText or not cancelText:
+            return
+        label = Label(self.window,background='black',foreground='white')
+
+        okBtn = Label(label,
         text = okText,
-        command = lambda:self.killWindow(True)
-        ).pack(side=LEFT, anchor=SE,padx=60,pady=3)
-        Button(label,
+        font=('Arial',16,'bold'),
+        background='black',
+        foreground = 'white',
+        cursor = 'hand2'
+        )
+        okBtn.pack(side=LEFT, anchor=SE,padx=60,pady=3)
+        okBtn.bind('<Button-1>',lambda e: self.killWindow(True))
+
+        noBtn = Label(label,
         text = cancelText,
-        command = self.killWindow
-        ).pack(side=LEFT, anchor=SW,padx=60,pady=3)
+        font=('Arial',16,'bold'),
+        background='black',
+        foreground = 'white',
+        cursor = 'hand2'
+        )
+        noBtn.pack(side=LEFT, anchor=SW,padx=60,pady=3)
+        noBtn.bind('<Button-1>',lambda e: self.killWindow())
+
         label.pack(side=BOTTOM,pady=15)
 
 
@@ -30,8 +45,8 @@ class Confirm:
         img = Image.open(path)
         img = img.resize((self.settings['confirm']['picWidth'],self.settings['confirm']['picHeight']))
         img = ImageTk.PhotoImage(img)
-        frame = Label(self.window)
-        label = Label(frame, image = img,anchor='c')
+        frame = Label(self.window,background='black',foreground='white')
+        label = Label(frame, image = img,anchor='c',background='black',foreground='white')
         label.image = img # keep a reference!
         label.pack()
         frame.pack()#dont pack here- pack in travelers function
@@ -39,19 +54,25 @@ class Confirm:
 
 
     def addText(self,text):
+        if not text:
+            return
         Label(self.window,
         text = text,
         font=('Arial', 20),
-        background='white',
+        background='black',foreground='white'
         ).pack(pady=20)
 
 
     def closeOnclick(self):
-        btn = Button(self.window,
+        btn = Label(self.window,
         text = 'X',
-        command = self.killWindow
+        font=('Arial',20,'bold'),
+        background='black',
+        foreground = 'white',
+        cursor = 'hand2'
         )
-        btn.pack(side=TOP, anchor=NE,padx=3,pady=3)
+        btn.pack(side=TOP, anchor=NE,padx=8,pady=5)
+        btn.bind('<Button-1>',lambda e: self.killWindow())
 
 
     def killWindow(self,sucess=False):

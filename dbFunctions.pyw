@@ -526,6 +526,7 @@ def fetchWishById(db,settings,id):
     SELECT
         main.id AS id,
         main.name AS name,
+        main.isbn AS isbn,
         main.year AS year,
         main.author AS author,
         main.ordered AS ordered,
@@ -558,6 +559,7 @@ def fetchOrderedById(db,settings,id):
     SELECT
         main.id AS id,
         main.name AS name,
+        main.isbn AS isbn,
         main.year AS year,
         main.author AS author,
         main.order_date AS order_date,
@@ -602,8 +604,8 @@ def removeBookFromWishList(db,settings,id):
         return err
 
 def insertNewWish(db,settings,objs):
-    values = "(name,year,author"
-    arguments = [objs['name'],objs['year'],objs['author']]
+    values = "(name,year,author,isbn"
+    arguments = [objs['name'],objs['year'],objs['author'],objs['isbn']]
     if 'serie' in objs:
         values += ",serie,serie_num"
         arguments += [objs['serie']['id'],objs['serie']['number']]

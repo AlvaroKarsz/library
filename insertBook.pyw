@@ -58,6 +58,8 @@ class InsertBook:
         self.lang = StringVar()
         self.oriLan = StringVar()
         self.isbn = StringVar()
+        if 'isbn' in autoValues:
+            self.isbn.set(str(autoValues['isbn']))
         self.addNewLabelAndInput(fram,'Book Name',1,0,'name')
         self.addNewLabelAndInput(fram,'Author Name',2,0,'author')
         self.addNewLabelAndInput(fram,'Publication Year',3,0,'year')

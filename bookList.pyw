@@ -254,7 +254,8 @@ class App:
 
 
     def killWidget(self,widget):
-        widget.destroy()
+        if widget:
+            widget.destroy()
 
 
     def addCloseButton(self,parent):
@@ -558,7 +559,6 @@ class App:
                 return
 
         self.reloadData()
-        messagebox.showinfo('Sucess',f'''Deletion Succeeded''')
 
 
 
@@ -1066,7 +1066,7 @@ class App:
             return
         self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"black",5,"white",self.settings['insertWish']['padx_popup'],self.settings['insertWish']['pady_popup'])
         self.currentOverlay = True
-        trace = InsertWish(self.insertBookCanvas,self.settings,self.db)
+        trace = InsertWish(self.insertBookCanvas,self.settings,self.db,self.canvas)
         _self = self #acess from another class object
         trace.sucess.trace("w", _self.removeOverlayFlag)#remove overlay indicator to allow another popups
 

@@ -4,11 +4,13 @@ from tkinter.ttk import *
 from dbFunctions import *
 from functions import *
 from tkinter.filedialog import askopenfilename
+from confirmPic import Confirm
 import re
 
 class InsertWish:
-    def __init__(self,win,settings,db):
+    def __init__(self,win,settings,db,rootWindow):
         self.window = win
+        self.rootWindow = rootWindow
         self.db = db
         self.sucess = BooleanVar()
         self.settings = settings
@@ -33,13 +35,14 @@ class InsertWish:
         fram = Label(self.window,background='black',foreground='white')
 
         self.name = StringVar()
-
         self.author = StringVar()
-
         self.year = StringVar()
-        self.addNewLabelAndInput(fram,'Book Name',1,0,'name')
-        self.addNewLabelAndInput(fram,'Author Name',2,0,'author')
-        self.addNewLabelAndInput(fram,'Publication Year',3,0,'year')
+        self.isbn = StringVar()
+
+        self.addNewLabelAndInput(fram,'Book Name','name')
+        self.addNewLabelAndInput(fram,'Author Name','author')
+        self.addNewLabelAndInput(fram,'Publication Year','year')
+        self.addNewLabelAndInput(fram,'ISBN','isbn')
         fram.pack()
 
 
@@ -60,7 +63,7 @@ class InsertWish:
         self.sucess.set(True)
 
 
-    def addNewLabelAndInput(self,prent,text,row,column,varName):
+    def addNewLabelAndInput(self,prent,text,varName):
         innerFrame = Label(prent,background='black',foreground='white')
         label = Label(innerFrame,text=text,background='black',foreground='white')
         label.pack(side=LEFT)
@@ -133,29 +136,71 @@ class InsertWish:
         if check != True:
             messagebox.showerror(title='Error', message=check)
             return
-        else:
-            flag = insertNewWish(self.db,self.settings,vars)
-            if flag != True:
-                insertError(f"""DB error - {flag}""",self.settings['errLog'])
-                messagebox.showerror(title='Error', message="Oppsss\nDB error.\nPlease read LOG for mofe info.")
-            else:
-                messagebox.showinfo('Message',f'''New Wish Book Saved.''')
-                self.clearInputs()
-                if messagebox.askyesno("Question","Would you like to add a picture?"):
-                    filename = askopenfilename()
-                    if filename:
-                        bookNameAsFile = convertnameToPath(vars['name']) + getExtensionFromPath(filename)
-                        flag = copyFile(filename,self.settings['pics']['wishFolderPath'] + bookNameAsFile)
-                        if flag != True:
-                            insertError(f"""OS error - {flag}""",self.settings['errLog'])
-                            messagebox.showerror(title='Error', message="Oppsss\nOS error.\nCould not copy the picture.\nPlease read LOG for mofe info.")
-                        else:
-                            messagebox.showinfo('Message',f'''Picture Copied.''')
 
+        flag = insertNewWish(self.db,self.settings,vars)
+        if flag != True:
+            insertError(f"""DB error - {flag}""",self.settings['errLog'])
+            messagebox.showerror(title='Error', message="Oppsss\nDB error.\nPlease read LOG for mofe info.")
+            return
+
+        messagebox.showinfo('Message',f'''New Wish Book Saved.''')
+        self.clearInputs()
+        fileApiPath = fetchPic(vars['isbn'],self.settings)
+        if fileApiPath: #cover was fetched
+            confirmation = self.popupConfirmPic(fileApiPath,"Would you like to use this picture?","Yes","No")
+            _self = self #acess from another class object
+            confirmation.sucess.trace("w", lambda self, *args: _self.apiPictureResponse(confirmation.sucess,vars['name'],fileApiPath))
+        else: # could not fetch cover from api, ask if want to upload new pic
+            self.askOperatorToUploadPic(vars['name'])
+
+
+    def apiPictureResponse(self,responseTrack,bookName,bookApiPath):
+        self.displayMainWindow()
+        if responseTrack.get():#user want to keep the picture
+            copyFlag = self.copyPicture(bookName,bookApiPath)
+            if not copyFlag: #could not copy - delete the file
+                self.destoryPicture(bookApiPath)
+        else: #not want to use the api cover, maybe want a pic from PC
+            self.destoryPicture(bookApiPath)
+            self.askOperatorToUploadPic(bookName)
+
+
+
+
+    def killWidget(self,wid):
+        if wid:
+            wid.destroy()
+
+
+    def askOperatorToUploadPic(self,bookName):
+        if messagebox.askyesno("Question","Would you like to add a picture?"):
+            filename = askopenfilename()
+            if filename:
+                self.copyPicture(bookName,filename)
+
+
+    def destoryPicture(self,path):
+        destoryFlag = destroyFile(path)
+        if path != True: #could not destory - update log
+            insertError(f"""OS error - could not delete a file\nPath: {path}\nError: {destoryFlag}""",self.settings['errLog'])
+
+
+
+    def copyPicture(self,bookName,filePath):
+        bookNameAsFile = convertnameToPath(bookName) + getExtensionFromPath(filePath)
+        flag = copyFile(filePath,self.settings['pics']['wishFolderPath'] + bookNameAsFile)
+        if flag != True:
+            insertError(f"""OS error - {flag}""",self.settings['errLog'])
+            messagebox.showerror(title='Error', message="Oppsss\nOS error.\nCould not copy the picture.\nPlease read LOG for mofe info.")
+            return True
+        else:
+            messagebox.showinfo('Message',f'''Picture Copied.''')
+            return False
 
 
     def clearInputs(self):
         self.name.set('')
+        self.isbn.set('')
         self.author.set('')
         self.year.set('')
         self.isSerie.set(False)
@@ -163,6 +208,10 @@ class InsertWish:
 
 
     def checkVars(self,vars):
+        if not vars['isbn']:
+            return 'Empty ISBN'
+        if not re.match('^[0-9a-zA-Z]+$',vars['isbn']):
+            return 'Invalid ISBN'
         if not vars['name']:
             return 'Empty Name'
         if not vars['author']:
@@ -186,6 +235,7 @@ class InsertWish:
         res['name'] = self.name.get().strip()
         res['author'] = self.author.get().strip()
         res['year'] = self.year.get().strip()
+        res['isbn'] = self.isbn.get().strip()
         if self.isSerie.get():
             res['serie'] = {}
             res['serie']['id'] = self.series[self.serieVar.get().strip()]
@@ -196,3 +246,35 @@ class InsertWish:
     def setCheckboxStyle(self):
         s = Style()
         s.configure('Red.TCheckbutton', foreground='white',background='black')
+
+
+    def popupConfirmPic(self,path,str,yesBtn,noBtn):
+        self.hideMainWindow()
+        canvas = self.makeOverlayAndPopUp(self.rootWindow,"black",2,"white",self.settings['confirm']['padx_popup'],self.settings['confirm']['pady_popup'])
+        return Confirm(canvas,self.settings,path,str,yesBtn,noBtn)
+
+
+    def makeOverlayAndPopUp(self,parent,color='white',borderThicknes = 2, borderColor = "black",padx=0,pady=0):
+        c = Canvas(parent,bg=color,highlightthickness=borderThicknes, highlightbackground=borderColor)
+        c.pack(
+        side="top",
+        fill="both",
+        expand=True,
+        pady=pady,
+        padx=padx
+        )
+        return c
+
+
+    def hideMainWindow(self):
+        self.window.pack_forget()
+
+
+    def displayMainWindow(self):
+        self.window.pack(
+        side="top",
+        fill="both",
+        expand=True,
+        padx=self.settings['insertWish']['padx_popup'],
+        pady=self.settings['insertWish']['pady_popup']
+        )
