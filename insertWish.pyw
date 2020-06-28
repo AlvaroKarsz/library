@@ -210,7 +210,7 @@ class InsertWish:
     def checkVars(self,vars):
         if not vars['isbn']:
             return 'Empty ISBN'
-        if not re.match('^[0-9a-zA-Z]+$',vars['isbn']):
+        if not re.match('^[0-9a-zA-Z\-]+$',vars['isbn']):
             return 'Invalid ISBN'
         if not vars['name']:
             return 'Empty Name'

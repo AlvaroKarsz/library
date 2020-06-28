@@ -333,6 +333,8 @@ class InsertBook:
             return 'Empty Original Language'
         if not vars['isbn']:
             return 'Empty ISBN'
+        if not re.match('^[0-9a-zA-Z\-]+$',vars['isbn']):
+            return 'Invalid ISBN'
         if not vars['type'] or vars['type'] == '0':
             return 'Empty Type'
         if 'next' in vars and not vars['next']:
