@@ -68,9 +68,6 @@ def updateBookById(db,settings,json,id):
         db.execute(sql,args)
 
 
-
-
-
 def insertNewBook(db,settings,json):
     values = "(name,year,author,original_language,language,isbn,type,pages"
     arguments = [json['name'],json['year'],json['author'],json['oriLan'],json['lang'],json['isbn'],json['type'],json['pages']]
@@ -685,6 +682,29 @@ def insertNewWish(db,settings,objs):
         return True
     except Exception as err:
         return err
+
+
+def updateWishById(db,settings,json,id):
+    sql = '''
+    UPDATE  ''' + settings['db']['wish_table'] + '''
+    SET
+    name = %s,
+    year = %s,
+    author = %s,
+    isbn = %s
+    '''
+    args = [json['name'],json['year'],json['author'],json['isbn']]
+    if 'serie' in json:
+        sql += ''',serie = %s ,serie_num = %s'''
+        args += [json['serie']['id'],json['serie']['number']]
+
+    sql += '''
+    WHERE id = %s;'''
+    args +=[id]
+    db.execute(sql,args)
+
+
+
 
 def insertNewSerie(db,settings,json):
         sql = '''

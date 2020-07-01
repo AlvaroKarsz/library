@@ -17,7 +17,7 @@ settings['gui'] = {}
 settings['gui']['width'] = 1000
 settings['gui']['height'] = 900
 settings['gui']['popup_pad_x'] = 100
-settings['gui']['popup_pad_y'] = 10
+settings['gui']['popup_pad_y'] = 2
 settings['gui']['popup_font_size'] = 13
 
 settings['booksDisplayPreRow'] = 4

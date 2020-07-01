@@ -9,7 +9,7 @@ class Series:
         self.picturesFolder = self.settings['pics']['seriesFolderPath']
         self.sortOptions = ['ID, Lowest first','ID, Latest first','Serie Name, ABC','Serie Name, ZYX','Owned Books, Biggest First','Owned Books, Lowest First','Readed Books, Biggest First','Readed Books, Lowest First','Wished Books, Biggest First','Wished Books, Lowest First']
         self.sortTranslations = [['id',False],['id',True],['name',False],['name',True],['books',True],['books',False],['books_read',True],['books_read',False],['wish_books',True],['wish_books',False]]
-
+        self.updateOption = None
 
     def setData(self):
         return fetchAllMySeries(self.db,self.settings)

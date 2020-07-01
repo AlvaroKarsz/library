@@ -9,7 +9,7 @@ class Reads:
         self.picturesFolder = self.settings['pics']['picFolderPath']
         self.sortOptions = ['Read Order','Read Order, Reverse','ID, Lowest first','ID, Latest first','Book Name, ABC','Book Name, ZYX','Number of Pages, Lowest first','Number of Pages, Biggest first','Publication Year, Lowest first','Publication Year, Latest first']
         self.sortTranslations = [['read',False],['read',True],['id',False],['id',True],['name',False],['name',True],['pages',False],['pages',True],['year',False],['year',True]]
-
+        self.updateOption = None
 
     def setData(self):
         return fetchMyReadList(self.db,self.settings)

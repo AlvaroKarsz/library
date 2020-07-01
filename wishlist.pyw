@@ -9,6 +9,7 @@ class Wishlist:
         self.picturesFolder = self.settings['pics']['wishFolderPath']
         self.sortOptions = ['ID, Lowest first','ID, Latest first','Book Name, ABC','Book Name, ZYX','Publication Year, Lowest first','Publication Year, Latest first']
         self.sortTranslations = [['id',False],['id',True],['name',False],['name',True],['year',False],['year',True]]
+        self.updateOption = 2
 
 
     def setData(self):
@@ -21,3 +22,7 @@ class Wishlist:
 
     def deleteById(db,settings,id):
         return deleteFromWishList(db,settings,id)
+
+
+    def updateById(db,settings,json,id):
+        return updateWishById(db,settings,json,id)

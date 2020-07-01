@@ -527,7 +527,7 @@ class App:
         anchor='n'
         )
         self.styleRedirectText(text)
-        holder.pack()
+        holder.pack(pady=3)
         iconHolder.pack(side=LEFT)
         text.pack(side=LEFT)
         text.bind('<Button-1>',lambda event: self.deleteThisListing(id,name))
@@ -557,7 +557,7 @@ class App:
         anchor='n'
         )
         self.styleRedirectText(text)
-        holder.pack()
+        holder.pack(pady=3)
         iconHolder.pack(side=LEFT)
         text.pack(side=LEFT)
         text.bind('<Button-1>',lambda event: self.alterBookInfo(json,id))
@@ -566,7 +566,11 @@ class App:
 
     def alterBookInfo(self,json,id):
         self.killOverlay()#remove the wishlist display
-        self.insertBookWindow(json,True,id,self.updateById)
+
+        if self.updateOption == 1: #book inserter window
+            self.insertBookWindow(json,True,id,self.updateById)
+        elif self.updateOption == 2: #wish inserter window
+            self.insertWishWindow(json,True,id,self.updateById)
 
 
     def deleteThisListing(self,id,name):
@@ -1111,6 +1115,14 @@ class App:
         return InsertBook(self.insertBookCanvas,self.settings,self.db,autoData,destoryAfter,bookId,hook)
 
 
+    def insertWishWindow(self,autoData = {},destoryAfter = False,wishId = False,hook = False):
+        if self.currentOverlay:
+            return
+        self.insertWishCanvas = self.makeOverlayAndPopUp(self.canvas,"black",5,"white",self.settings['insertWish']['padx_popup'],self.settings['insertWish']['pady_popup'])
+        return InsertWish(self.insertWishCanvas,self.settings,self.db,self.canvas,autoData,destoryAfter,wishId,hook)
+
+
+
     def popupConfirmPic(self,path,text,okButton,cancelButton):
         self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"black",2,"white",self.settings['confirm']['padx_popup'],self.settings['confirm']['pady_popup'])
         return Confirm(self.insertBookCanvas,self.settings,path,text,okButton,cancelButton)
@@ -1160,6 +1172,7 @@ class App:
             self.deleteById = None
         if classHasMethod(Stories,'updateById'):
             self.updateById = lambda self,json,id: Stories.updateById(self.db,self.settings,json,id)
+            self.updateOption = stories.updateOption
         else:
             self.updateById = None
         self.reloadSortingTool()
@@ -1185,6 +1198,7 @@ class App:
             self.deleteById = None
         if classHasMethod(Series,'updateById'):
             self.updateById = lambda self,json,id: Series.updateById(self.db,self.settings,json,id)
+            self.updateOption = series.updateOption
         else:
             self.updateById = None
         self.reloadSortingTool()
@@ -1210,6 +1224,7 @@ class App:
             self.deleteById = None
         if classHasMethod(Books,'updateById'):
             self.updateById = lambda self,json,id: Books.updateById(self.db,self.settings,json,id)
+            self.updateOption = books.updateOption
         else:
             self.updateById = None
         self.reloadSortingTool(addDisplayFlag)
@@ -1235,6 +1250,7 @@ class App:
             self.deleteById = None
         if classHasMethod(Ordered,'updateById'):
             self.updateById = lambda self,json,id: Ordered.updateById(self.db,self.settings,json,id)
+            self.updateOption = wish.updateOption
         else:
             self.updateById = None
         self.reloadSortingTool()
@@ -1260,6 +1276,7 @@ class App:
             self.deleteById = None
         if classHasMethod(Wishlist,'updateById'):
             self.updateById = lambda self,json,id: Wishlist.updateById(self.db,self.settings,json,id)
+            self.updateOption = wish.updateOption
         else:
             self.updateById = None
         self.reloadSortingTool()
@@ -1284,6 +1301,7 @@ class App:
             self.deleteById = None
         if classHasMethod(Reads,'updateById'):
             self.updateById = lambda self,json,id: Reads.updateById(self.db,self.settings,json,id)
+            self.updateOption = reads.updateOption
         else:
             self.updateById = None
         self.fetchById = lambda self,id: Reads.fetchById(self.db,self.settings,id)

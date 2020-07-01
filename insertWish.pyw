@@ -8,17 +8,20 @@ from confirmPic import Confirm
 import re
 
 class InsertWish:
-    def __init__(self,win,settings,db,rootWindow):
+    def __init__(self,win,settings,db,rootWindow,autoValues = {},destoryAfter = False,updateID = False, hook = False):
         self.window = win
         self.rootWindow = rootWindow
         self.db = db
         self.sucess = BooleanVar()
         self.settings = settings
+        self.destoryAfter = destoryAfter
+        self.hook = hook
+        self.updateID = updateID
         self.setCheckboxStyle()
         self.closeOnclick()
         self.addTitle()
-        self.addInputs()
-        self.addSerie()
+        self.addInputs(autoValues)
+        self.addSerie(autoValues)
         self.addInsertButton()
 
 
@@ -31,13 +34,24 @@ class InsertWish:
         ).pack(pady=20)
 
 
-    def addInputs(self):
+    def addInputs(self,autoValues):
         fram = Label(self.window,background='black',foreground='white')
 
         self.name = StringVar()
+        if 'name' in autoValues:
+            self.name.set(autoValues['name'])
+
         self.author = StringVar()
+        if 'author' in autoValues:
+            self.author.set(autoValues['author'])
+
         self.year = StringVar()
+        if 'year' in autoValues:
+            self.year.set(autoValues['year'])
+
         self.isbn = StringVar()
+        if 'isbn' in autoValues:
+            self.isbn.set(autoValues['isbn'])
 
         self.addNewLabelAndInput(fram,'Book Name','name')
         self.addNewLabelAndInput(fram,'Author Name','author')
@@ -81,7 +95,7 @@ class InsertWish:
         innerFrame.pack()
 
 
-    def addSerie(self):
+    def addSerie(self,autoValues):
         series = {}
         for serie in fetchAllSeries(self.db,self.settings):
             series[serie[1]] = serie[0]
@@ -109,6 +123,11 @@ class InsertWish:
         Entry(self.serieFrame,textvariable = self.serieNumber,width=3).pack(side=LEFT)
         tempFrame.pack()
         self.serieFrame.pack_forget()
+        if 'serie' in autoValues and autoValues['serie'] and 'serie_num' in autoValues and autoValues['serie_num']:
+            self.isSerie.set(True)
+            self.serieFrame.pack()
+            self.serieVar.set(autoValues['serie'])
+            self.serieNumber.set(autoValues['serie_num'])
 
 
     def isSerieBind(self):
@@ -137,21 +156,28 @@ class InsertWish:
             messagebox.showerror(title='Error', message=check)
             return
 
-        flag = insertNewWish(self.db,self.settings,vars)
-        if flag != True:
-            insertError(f"""DB error - {flag}""",self.settings['errLog'])
-            messagebox.showerror(title='Error', message="Oppsss\nDB error.\nPlease read LOG for mofe info.")
-            return
+        if self.hook:
+            self.hook(self,vars,self.updateID)
+            #if set - remove the window
+            if self.destoryAfter:
+                self.justDissapear()
 
-        messagebox.showinfo('Message',f'''New Wish Book Saved.''')
-        self.clearInputs()
-        fileApiPath = fetchPic(vars['isbn'],self.settings)
-        if fileApiPath: #cover was fetched
-            confirmation = self.popupConfirmPic(fileApiPath,"Would you like to use this picture?","Yes","No")
-            _self = self #acess from another class object
-            confirmation.sucess.trace("w", lambda self, *args: _self.apiPictureResponse(confirmation.sucess,vars['name'],fileApiPath))
-        else: # could not fetch cover from api, ask if want to upload new pic
-            self.askOperatorToUploadPic(vars['name'])
+        else:
+            flag = insertNewWish(self.db,self.settings,vars)
+            if flag != True:
+                insertError(f"""DB error - {flag}""",self.settings['errLog'])
+                messagebox.showerror(title='Error', message="Oppsss\nDB error.\nPlease read LOG for mofe info.")
+                return
+
+            messagebox.showinfo('Message',f'''New Wish Book Saved.''')
+            self.clearInputs()
+            fileApiPath = fetchPic(vars['isbn'],self.settings)
+            if fileApiPath: #cover was fetched
+                confirmation = self.popupConfirmPic(fileApiPath,"Would you like to use this picture?","Yes","No")
+                _self = self #acess from another class object
+                confirmation.sucess.trace("w", lambda self, *args: _self.apiPictureResponse(confirmation.sucess,vars['name'],fileApiPath))
+            else: # could not fetch cover from api, ask if want to upload new pic
+                self.askOperatorToUploadPic(vars['name'])
 
 
     def apiPictureResponse(self,responseTrack,bookName,bookApiPath):
@@ -171,7 +197,10 @@ class InsertWish:
         if wid:
             wid.destroy()
 
+    def justDissapear(self):
+        self.window.destroy()
 
+        
     def askOperatorToUploadPic(self,bookName):
         if messagebox.askyesno("Question","Would you like to add a picture?"):
             filename = askopenfilename()
