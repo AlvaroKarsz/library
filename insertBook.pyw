@@ -10,9 +10,11 @@ from threading import Thread
 
 
 class InsertBook:
-    def __init__(self,win,settings,db,autoValues = {},destoryAfter = False):
+    def __init__(self,win,settings,db,autoValues = {},destoryAfter = False,updateID = False, hook = False):
         self.window = win
         self.db = db
+        self.updateID = updateID
+        self.hook = hook
         self.sucess = StringVar() # trace
         self.settings = settings
         self.destoryAfter = destoryAfter
@@ -21,19 +23,19 @@ class InsertBook:
         self.closeOnclick()
         self.addTitle()
         self.addInputs(autoValues)
-        self.addType()
+        self.addType(autoValues)
         self.addSerie(autoValues)
-        self.addNextBook()
-        self.addPrevBook()
-        self.addCollectionElements()
+        self.addNextBook(autoValues)
+        self.addPrevBook(autoValues)
+        self.addCollectionElements(autoValues)
 
 
-    def addType(self):
-        self.addCheckBoxGroup(self.window,[{'value':'H','text':'Hard Cover','row':8,'column':0},{'value':'P','text':'Paper Back','row':8,'column':1},{'value':'HN','text':'Hardcover No Dust Jacket','row':8,'column':2}])
+    def addType(self,autoValues = {}):
+        self.addCheckBoxGroup(self.window,[{'value':'H','text':'Hard Cover','row':8,'column':0},{'value':'P','text':'Paper Back','row':8,'column':1},{'value':'HN','text':'Hardcover No Dust Jacket','row':8,'column':2}],autoValues)
 
     def addTitle(self):
         Label(self.window,
-        text = 'Insert New Book',
+        text = 'Insert New Book' if not self.updateID else f'''Alter Book {self.updateID}''',
         font=('Arial', 20),
         background='black',
         foreground='white',
@@ -55,8 +57,17 @@ class InsertBook:
             self.year.set(str(autoValues['year']))
 
         self.pages = StringVar()
+        if 'pages' in autoValues:
+            self.pages.set(str(autoValues['pages']))
+
         self.lang = StringVar()
+        if 'language' in autoValues:
+            self.lang.set(str(autoValues['language']))
+
         self.oriLan = StringVar()
+        if 'o_language' in autoValues:
+            self.oriLan.set(str(autoValues['o_language']))
+
         self.isbn = StringVar()
         if 'isbn' in autoValues:
             self.isbn.set(str(autoValues['isbn']))
@@ -99,16 +110,20 @@ class InsertBook:
         innerFrame.pack(pady=5,fill=X)
 
 
-    def addCheckBoxGroup(self,parent,optionJson):
+    def addCheckBoxGroup(self,parent,optionJson,autoValues):
         innerFrame = Label(parent,background='black',foreground='white')
         self.type = StringVar()
-        self.type.set(False)
+        if 'type' in autoValues:
+            self.type.set(str(autoValues['type']))
+        else:
+            self.type.set(False)
+
         for cBox in optionJson:
             Checkbutton(innerFrame,onvalue = cBox['value'],text = cBox['text'],variable = self.type,style='Red.TCheckbutton').pack(side=LEFT,padx=7,pady=5)
         innerFrame.pack()
 
 
-    def addCollectionElements(self):
+    def addCollectionElements(self,autoValues = {}):
         fr = Label(self.window,background='black',foreground='white')
         topNav = Label(fr,background='black',foreground='white')
         self.isCollection = BooleanVar()
@@ -148,6 +163,15 @@ class InsertBook:
         self.isCollectionNextRow = 0
         self.collectionArr = []
 
+        if 'stories' in autoValues:
+            if autoValues['stories'] and notEmptyEls(autoValues['stories']):
+                self.isCollection.set(True)
+                Thread(target = lambda: self.insertAutoValuesCollection(autoValues['stories'])).start()
+
+
+    def insertAutoValuesCollection(self,values):
+        for entry in values:
+            self.addNewCollectionEntry([entry['name'],entry['pages']])
 
 
     def handleTableImport(self):
@@ -280,7 +304,11 @@ class InsertBook:
             messagebox.showerror(title='Error', message=check)
             return
         else:
-            insertNewBook(self.db,self.settings,vars)
+            if not self.hook:
+                insertNewBook(self.db,self.settings,vars)
+            else:
+                self.hook(self,vars,self.updateID)
+
             self.clearInputs()
             if self.destoryAfter:
                 self.justDissapear()
@@ -342,7 +370,7 @@ class InsertBook:
         if 'prev' in vars:
             if not vars['prev']:
                 return 'Bad Preceded by Book'
-            if previousBookAlreadyHaveFollow(self.db,self.settings,vars['prev']):
+            if previousBookAlreadyHaveFollow(self.db,self.settings,vars['prev'],self.updateID):
                 return 'Preceded Book have a Different Follow'
         if 'serie' in vars:
             if not vars['serie']['id']:
@@ -391,7 +419,7 @@ class InsertBook:
 
         return res
 
-    def addNextBook(self):
+    def addNextBook(self,autoValues = {}):
         books = {}
         for book in getBookNames(self.db,self.settings):
             books[book[1]] = book[0]
@@ -415,6 +443,18 @@ class InsertBook:
         state="readonly").pack()
         self.followedFrame.pack_forget()
         tempF.pack()
+        if 'next_name' in autoValues and autoValues['next_name']:
+            self.isFollowed.set(True)
+            self.followedFrame.pack(pady=7)
+            self.followedVar.set(self.getBookFullInfoFromNameAndAuthor(books,autoValues['next_name'] + ' - ' + autoValues['next_author']))
+
+
+    def getBookFullInfoFromNameAndAuthor(self,json,needle):
+        for key in json:
+            if needle in key: 
+                return key
+        return ''
+
 
     def isFollowedBind(self):
         if not self.isFollowed.get():
@@ -422,7 +462,7 @@ class InsertBook:
         else:
             self.followedFrame.pack(pady=7)
 
-    def addPrevBook(self):
+    def addPrevBook(self,autoValues = {}):
         self.isPreceded = BooleanVar()
         fr = Label(self.window,background='black',foreground='white')
         Checkbutton(fr,
@@ -443,6 +483,11 @@ class InsertBook:
         combo.pack()
         self.precededFrame.pack_forget()
         fr.pack()
+        if 'prev_name' in autoValues and autoValues['prev_name']:
+            self.isPreceded.set(True)
+            self.precededFrame.pack(pady=7)
+            self.precededVar.set(self.getBookFullInfoFromNameAndAuthor(self.books,autoValues['prev_name'] + ' - ' + autoValues['prev_author']))
+
 
     def isPrecededBind(self):
         if not self.isPreceded.get():

@@ -508,15 +508,11 @@ class App:
         background ='black',
         foreground='white'
         ).pack(fill=X,padx=3)
-        self.makeTravelersWithPic(bookObj['name'],self.currentOverlay,id)
+        self.makeTravelersWithPic(bookObj['name'],self.currentOverlay,id,bookObj)
         self.addBookData(bookObj,self.currentOverlay)
 
 
-    def addDeleteOption(self,parent,id,name):
-        if not self.deleteById:
-            #no option to delete from this list
-            return
-
+    def deleteListing(self,parent,id,name):
         icon = Image.open(self.settings['icons']['delete'])
         icon = icon.resize((self.settings['icons']['mini_width'] ,self.settings['icons']['mini_height']))
         icon = ImageTk.PhotoImage(icon)
@@ -537,6 +533,40 @@ class App:
         text.bind('<Button-1>',lambda event: self.deleteThisListing(id,name))
         self.setBgColor([holder,iconHolder],'black')
         self.setFgColor([holder,iconHolder],'white')
+
+
+    def addListingOptions(self,parent,id,name,json):
+        if self.updateById:
+            self.addEditOption(parent,json,id)
+        if self.deleteById:
+            self.deleteListing(parent,id,name)
+
+
+    def addEditOption(self,parent,json,id):
+        icon = Image.open(self.settings['icons']['alter'])
+        icon = icon.resize((self.settings['icons']['mini_width'] ,self.settings['icons']['mini_height']))
+        icon = ImageTk.PhotoImage(icon)
+        holder = Label(parent,anchor='n')
+        iconHolder = Label(holder, image = icon,anchor='n')
+        iconHolder.image = icon # keep a reference!
+        text = Label(holder,
+        text = "Alter Listing",
+        background='black',
+        foreground='white',
+        font=('Arial',10),
+        anchor='n'
+        )
+        self.styleRedirectText(text)
+        holder.pack()
+        iconHolder.pack(side=LEFT)
+        text.pack(side=LEFT)
+        text.bind('<Button-1>',lambda event: self.alterBookInfo(json,id))
+        self.setBgColor([holder,iconHolder],'black')
+        self.setFgColor([holder,iconHolder],'white')
+
+    def alterBookInfo(self,json,id):
+        self.killOverlay()#remove the wishlist display
+        self.insertBookWindow(json,True,id,self.updateById)
 
 
     def deleteThisListing(self,id,name):
@@ -562,7 +592,7 @@ class App:
 
 
 
-    def makeTravelersWithPic(self,bookName,parent,bookID):
+    def makeTravelersWithPic(self,bookName,parent,bookID,json):
         self.currentImageHodler = Label(parent,background='white')
 
         prevB = Label(self.currentImageHodler,text='<< Prev.',font=('Arial',23,'bold'),background='black',foreground = 'white',cursor = 'hand2')
@@ -577,7 +607,7 @@ class App:
 
         self.currentImageHodler.pack(fill=X,padx=3,pady=0)
         self.currentImageHodler = None
-        self.addDeleteOption(parent,bookID,bookName)
+        self.addListingOptions(parent,bookID,bookName,json)
         self.setBgColor(self.currentImageHodler,'black')
         self.setFgColor(self.currentImageHodler,'white')
 
@@ -1074,11 +1104,11 @@ class App:
         self.currentOverlay = None
 
 
-    def insertBookWindow(self,autoData = {},destoryAfter = False):
+    def insertBookWindow(self,autoData = {},destoryAfter = False,bookId = False, hook = False):
         if self.currentOverlay:
             return
         self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"black",5,"white",self.settings['insertBook']['padx_popup'],self.settings['insertBook']['pady_popup'])
-        return InsertBook(self.insertBookCanvas,self.settings,self.db,autoData,destoryAfter)
+        return InsertBook(self.insertBookCanvas,self.settings,self.db,autoData,destoryAfter,bookId,hook)
 
 
     def popupConfirmPic(self,path,text,okButton,cancelButton):
@@ -1128,6 +1158,10 @@ class App:
             self.deleteById = lambda self,id: Stories.deleteById(self.db,self.settings,id)
         else:
             self.deleteById = None
+        if classHasMethod(Stories,'updateById'):
+            self.updateById = lambda self,json,id: Stories.updateById(self.db,self.settings,json,id)
+        else:
+            self.updateById = None
         self.reloadSortingTool()
 
 
@@ -1149,6 +1183,10 @@ class App:
             self.deleteById = lambda self,id: Series.deleteById(self.db,self.settings,id)
         else:
             self.deleteById = None
+        if classHasMethod(Series,'updateById'):
+            self.updateById = lambda self,json,id: Series.updateById(self.db,self.settings,json,id)
+        else:
+            self.updateById = None
         self.reloadSortingTool()
 
 
@@ -1170,6 +1208,10 @@ class App:
             self.deleteById = lambda self,id: Books.deleteById(self.db,self.settings,id)
         else:
             self.deleteById = None
+        if classHasMethod(Books,'updateById'):
+            self.updateById = lambda self,json,id: Books.updateById(self.db,self.settings,json,id)
+        else:
+            self.updateById = None
         self.reloadSortingTool(addDisplayFlag)
 
 
@@ -1191,6 +1233,10 @@ class App:
             self.deleteById = lambda self,id: Ordered.deleteById(self.db,self.settings,id)
         else:
             self.deleteById = None
+        if classHasMethod(Ordered,'updateById'):
+            self.updateById = lambda self,json,id: Ordered.updateById(self.db,self.settings,json,id)
+        else:
+            self.updateById = None
         self.reloadSortingTool()
 
 
@@ -1212,6 +1258,10 @@ class App:
             self.deleteById = lambda self,id: Wishlist.deleteById(self.db,self.settings,id)
         else:
             self.deleteById = None
+        if classHasMethod(Wishlist,'updateById'):
+            self.updateById = lambda self,json,id: Wishlist.updateById(self.db,self.settings,json,id)
+        else:
+            self.updateById = None
         self.reloadSortingTool()
 
 
@@ -1232,6 +1282,10 @@ class App:
             self.deleteById = lambda self,id: Reads.deleteById(self.db,self.settings,id)
         else:
             self.deleteById = None
+        if classHasMethod(Reads,'updateById'):
+            self.updateById = lambda self,json,id: Reads.updateById(self.db,self.settings,json,id)
+        else:
+            self.updateById = None
         self.fetchById = lambda self,id: Reads.fetchById(self.db,self.settings,id)
         self.reloadSortingTool()
 

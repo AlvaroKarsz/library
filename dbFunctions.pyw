@@ -10,6 +10,67 @@ def fetchAllSeries(db,settings):
     db.execute("SELECT * FROM " + settings['db']['series_table'] + ";")
     return  db.fetchall()
 
+
+def updateBookById(db,settings,json,id):
+    #update main table
+    args = [json['name'],json['year'],json['author'],json['oriLan'],json['lang'],json['isbn'],json['type'],json['pages']]
+    sql = '''
+    UPDATE ''' + settings['db']['books_table'] + '''
+    SET
+    name = %s,
+    year = %s,
+    author = %s,
+    original_language = %s,
+    language = %s,
+    isbn = %s,
+    type = %s,
+    pages = %s
+    '''
+    if 'next' in json:
+        sql += ''',next = %s'''
+        args.append(json['next'])
+
+    if 'serie' in json:
+        sql += ",serie = %s,serie_num = %s"
+        args += [json['serie']['id'],json['serie']['number']]
+
+    if 'collection' in json:
+        sql += ",collection = %s"
+        args.append(True)
+
+    sql += '''
+    WHERE id = %s
+    '''
+    args.append(id)
+    db.execute(sql,args)
+
+    #update prev if exists
+    if 'prev' in json:
+        sql = '''
+        UPDATE ''' + settings['db']['books_table'] + '''
+        SET next = %s
+        WHERE id = %s
+        '''
+        args = [id,json['prev']]
+        db.execute(sql,args)
+
+    #delete prev. collection
+    sql = '''DELETE FROM ''' + settings['db']['stories_table'] +  ''' WHERE parent = %s;'''
+    db.execute(sql,[id])
+
+    #update collection
+    if 'collection' in json:
+        sql = '''
+            INSERT INTO ''' + settings['db']['stories_table'] + '''
+            (name,pages,parent) VALUES  ''' + jsonToValues(len(json['collection']),3) + ''';'''
+        json['collection'] = addValueToEachJson(json['collection'],'id',id)
+        args = convertJsonToFlatArray(json['collection'])
+        db.execute(sql,args)
+
+
+
+
+
 def insertNewBook(db,settings,json):
     values = "(name,year,author,original_language,language,isbn,type,pages"
     arguments = [json['name'],json['year'],json['author'],json['oriLan'],json['lang'],json['isbn'],json['type'],json['pages']]
@@ -51,6 +112,7 @@ def insertNewBook(db,settings,json):
         args = [id,json['prev']]
         db.execute(sql,args)
 
+
 def jsonToValues(totalArguments,numOfArgumentsEach):
     return (("(" + addMultipleS(numOfArgumentsEach) + "),") * totalArguments)[:-1]
 
@@ -87,15 +149,17 @@ def getBookNames(db,settings):
     db.execute(sql);
     return db.fetchall()
 
-def previousBookAlreadyHaveFollow(db,settings,previuos):
+
+def previousBookAlreadyHaveFollow(db,settings,previuos,currentID):
     sql = '''
     SELECT EXISTS(
         SELECT 1 FROM ''' + settings['db']['books_table'] + '''
-        WHERE id = %s AND next IS NOT NULL
+        WHERE id = %s AND next IS NOT NULL AND next != %s
     );
     '''
-    db.execute(sql,[previuos]);
+    db.execute(sql,[previuos,currentID]);
     return db.fetchone()[0]
+
 
 def buildJsonFromSingleRow(columns,row):
     i = 0

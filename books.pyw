@@ -17,3 +17,7 @@ class Books:
 
     def fetchById(db,settings,id):
         return fetchBookById(db,settings,id)
+
+
+    def updateById(db,settings,json,id):
+        return updateBookById(db,settings,json,id)
