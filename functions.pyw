@@ -277,7 +277,7 @@ def isArray(a):
 
 
 def fetchPic(isbn,settings):
-    url = settings['api']['covers'] + isbn + '-L.jpg?default=false' #default=false so if picture not exists, return 404
+    url = settings['api']['openLibrary']['covers'] + isbn + '-L.jpg?default=false' #default=false so if picture not exists, return 404
     res = requests.get(url = url)
     if res.status_code != 200:
         insertError(f"""Fetch error - bad status code from http request\nurl: {url}\nstatus code: {res.status_code}\nresponse: {res.text}""",settings['errLog'])
@@ -306,11 +306,48 @@ def fetchRating(isbn,settings):
         insertError(f"""bad response from goodreads api rating - bad status code from http request\nurl: {url}\npayload:{payload}\nstatus code: {res.status_code}\nresponse: {res}""",settings['errLog'])
         return False
 
-    return {'rating':res['books'][0]['average_rating'], 'count':str(res['books'][0]['work_reviews_count'])}
+    return {'rating':res['books'][0]['average_rating'], 'count':'{:,}'.format(res['books'][0]['work_reviews_count'])}
 
 
-def getIsbn():
-    return
-    payload = {'key': 'krRAkSxWhKqYoLSrdqNCQ', 'title':'carrie','format':'json'}
-    res = requests.get(url = 'https://www.goodreads.com/book/title.json',params=payload)
-    print(res.text)
+def getIsbn(title,settings):
+    payload = {'key': settings['api']['goodreads']['key'], 'title':title,'format':'json'}
+    url = settings['api']['goodreads']['isbnByTitle']
+    res = requests.get(url = url,params=payload)
+    if res.status_code != 200:
+        insertError(f"""Fetch error - bad status code from http request\nurl: {url}\npayload:{payload}\nstatus code: {res.status_code}\nresponse: {res.text}""",settings['errLog'])
+        return False
+    res = str(res.content)
+    res = re.search('isbn\=[0-9]+',res)
+    if not res:
+        return False
+
+    res = res.group(0)
+
+    if not res:
+        return False
+
+    return res.replace('isbn=','')
+
+
+def getDataFromIsbn(isbn,settings):
+    url = settings['api']['openLibrary']['data'] + isbn
+    res = requests.get(url = url)
+
+    if res.status_code != 200:
+        insertError(f"""Fetch error - bad status code from http request\nurl: {url}\nstatus code: {res.status_code}\nresponse: {res.text}""",settings['errLog'])
+        return False
+
+    res = json.loads(res.content)
+    jsonKey = f'''ISBN:{isbn}'''
+
+    if jsonKey not in res: #empty
+        return False
+
+    authors = ''
+
+    for author in res[jsonKey]['authors']:
+        authors += author['name'] + ' and '
+
+    authors = authors[:-5] #remove last ' and '
+
+    return {'name': res[jsonKey]['title'] , 'author':authors, 'year':re.sub('[^0-9]','',res[jsonKey]['publish_date'].split('-')[0].split(' ')[0].strip())}

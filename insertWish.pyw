@@ -6,6 +6,8 @@ from functions import *
 from tkinter.filedialog import askopenfilename
 from confirmPic import Confirm
 import re
+from threading import Thread
+
 
 class InsertWish:
     def __init__(self,win,settings,db,rootWindow,autoValues = {},destoryAfter = False,updateID = False, hook = False):
@@ -23,6 +25,8 @@ class InsertWish:
         self.addInputs(autoValues)
         self.addSerie(autoValues)
         self.addInsertButton()
+        self.addGetIsbnFromTitleLabel()
+        self.addGetDataFromIsbnLabel()
 
 
     def addTitle(self):
@@ -58,6 +62,82 @@ class InsertWish:
         self.addNewLabelAndInput(fram,'Publication Year','year')
         self.addNewLabelAndInput(fram,'ISBN','isbn')
         fram.pack()
+
+
+    def addGetDataFromIsbnLabel(self):
+        l = Label(self.window,
+        background='black',
+        foreground='white'
+        )
+        l.pack(fill=X,expand=True,padx=5)
+        self.dataFetcher = Label(l,
+        background='black',
+        foreground='white',
+        font=('Arial',9,'bold'),
+        cursor = 'hand2',
+        text='Search Data from ISBN'
+        )
+        self.dataFetcher.pack(side=RIGHT,padx=7)
+        self.dataFetcher.bind('<Button-1>',self.fetchDataFromIsbn)
+
+
+    def fetchDataFromIsbn(self,event):
+        isbn = self.isbn.get()
+        if isbn:
+            self.dataFetcher.pack_forget()
+            threadId = getRandomStr(50) #random string
+            self.fetchDataThreadId = threadId
+            #fetch as thread - if not the pack_forget will occur after the fetch - gui takes time..
+            thread = Thread(target = lambda: self.fetchDataThread(threadId,isbn))
+            thread.daemon = True # kill if window is closed
+            thread.start()
+
+
+    def fetchDataThread(self,threadId,isbn):
+        data = getDataFromIsbn(isbn,self.settings)
+        if self.fetchDataThreadId == threadId and data : # still relevant and the isbn was found
+            self.name.set(data['name'])
+            self.author.set(data['author'])
+            self.year.set(data['year'])
+        self.dataFetcher.pack(side=RIGHT,padx=7)
+
+
+    def addGetIsbnFromTitleLabel(self):
+        l = Label(self.window,
+        background='black',
+        foreground='white'
+        )
+        l.pack(fill=X,expand=True,padx=5)
+
+        self.isbnFetcher = Label(l,
+        background='black',
+        foreground='white',
+        font=('Arial',9,'bold'),
+        cursor = 'hand2',
+        text='Search ISBN from Name'
+        )
+        self.isbnFetcher.pack(side=RIGHT,padx=7)
+        self.isbnFetcher.bind('<Button-1>',self.fetchIsbnFromTitle)
+
+
+    def fetchIsbnFromTitle(self,event):
+        title = self.name.get()
+        if title:
+            self.isbnFetcher.pack_forget()
+            threadId = getRandomStr(50) #random string
+            self.fetchIsbnThreadId = threadId
+            #fetch as thread - if not the pack_forget will occur after the fetch - gui takes time..
+            thread = Thread(target = lambda: self.fetchIsbnThread(threadId,title))
+            thread.daemon = True # kill if window is closed
+            thread.start()
+
+
+
+    def fetchIsbnThread(self,thrdId,title):
+        isbn = getIsbn(title,self.settings)
+        if self.fetchIsbnThreadId == thrdId and isbn : # still relevant and the isbn was found
+            self.isbn.set(isbn)
+        self.isbnFetcher.pack(side=RIGHT,padx=7)
 
 
     def closeOnclick(self):
@@ -145,7 +225,7 @@ class InsertWish:
         foreground = 'white',
         cursor = 'hand2'
         )
-        btn.pack()
+        btn.pack(pady=(5,0))
         btn.bind('<Button-1>',lambda e: self.checkOut())
 
 
