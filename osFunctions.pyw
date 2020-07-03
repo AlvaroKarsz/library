@@ -16,7 +16,6 @@ def checkSuccess(res):
     return True if res == 0 else False
 
 def escapeGitMessage(message):
-    print( type(message))
     return re.sub(r'\"','\\"',message) if message else ''
 
 def backupDBstructure():
@@ -41,6 +40,5 @@ def commitPushOS(commitMessage):
     if not commitMessage or emptyStr(commitMessage):
         return False
     command = f'''{usefullCommands['gitAdd']} && {usefullCommands['gitCommit']} "{escapeGitMessage(commitMessage)}" && {usefullCommands['gitPush']}'''
-    print(command)
     res = os.system(command)
     return checkSuccess(res)
