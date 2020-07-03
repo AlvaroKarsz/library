@@ -25,8 +25,7 @@ class InsertWish:
         self.addInputs(autoValues)
         self.addSerie(autoValues)
         self.addInsertButton()
-        self.addGetIsbnFromTitleLabel()
-        self.addGetDataFromIsbnLabel()
+        self.addAutoFillLabel()
 
 
     def addTitle(self):
@@ -64,80 +63,59 @@ class InsertWish:
         fram.pack()
 
 
-    def addGetDataFromIsbnLabel(self):
+    def addAutoFillLabel(self):
         l = Label(self.window,
         background='black',
         foreground='white'
         )
         l.pack(fill=X,expand=True,padx=5)
-        self.dataFetcher = Label(l,
+        self.autoFetcherLabel = Label(l,
         background='black',
         foreground='white',
         font=('Arial',9,'bold'),
         cursor = 'hand2',
-        text='Search Data from ISBN'
+        text='Auto Fill'
         )
-        self.dataFetcher.pack(side=RIGHT,padx=7)
-        self.dataFetcher.bind('<Button-1>',self.fetchDataFromIsbn)
+        self.autoFetcherLabel.pack()
+        self.autoFetcherLabel.bind('<Button-1>',self.autoFillCallback)
 
 
-    def fetchDataFromIsbn(self,event):
+    def autoFillCallback(self,event):
         isbn = self.isbn.get()
+        name = self.name.get()
+
+        if isbn or name:
+            self.autoFetcherLabel.pack_forget()
+            threadId = getRandomStr(50) #random string
+            self.autoFetchThreadID = threadId
+            #fetch as thread - if not the pack_forget will occur after the fetch - gui takes time..
+            thread = Thread(target = lambda: self.autoFetchThread(threadId,isbn,name))
+            thread.daemon = True # kill if window is closed
+            thread.start()
+
+
+    def autoFetchThread(self,threadId,isbn,name):
+        #priority to isbn, if isbn is not set - go by name
         if isbn:
-            self.dataFetcher.pack_forget()
-            threadId = getRandomStr(50) #random string
-            self.fetchDataThreadId = threadId
-            #fetch as thread - if not the pack_forget will occur after the fetch - gui takes time..
-            thread = Thread(target = lambda: self.fetchDataThread(threadId,isbn))
-            thread.daemon = True # kill if window is closed
-            thread.start()
+            #fetch by isbn
+            data = getDataFromIsbn(isbn,self.settings)
+            if self.autoFetchThreadID == threadId and data : # still relevant and the isbn was found
+                self.name.set(data['name'])
+                self.author.set(data['author'])
+                self.year.set(data['year'])
+        else:
+            #fetch isbn by title, then get data
+            isbn = getIsbn(name,self.settings)
+            if self.autoFetchThreadID == threadId and isbn : # still relevant and the isbn was found
+            #now fetch data from isbn
+                data = getDataFromIsbn(isbn,self.settings)
+                if self.autoFetchThreadID == threadId and data : # still relevant and the isbn was found
+                    self.name.set(data['name'])
+                    self.author.set(data['author'])
+                    self.year.set(data['year'])
+                    self.isbn.set(isbn)
 
-
-    def fetchDataThread(self,threadId,isbn):
-        data = getDataFromIsbn(isbn,self.settings)
-        if self.fetchDataThreadId == threadId and data : # still relevant and the isbn was found
-            self.name.set(data['name'])
-            self.author.set(data['author'])
-            self.year.set(data['year'])
-        self.dataFetcher.pack(side=RIGHT,padx=7)
-
-
-    def addGetIsbnFromTitleLabel(self):
-        l = Label(self.window,
-        background='black',
-        foreground='white'
-        )
-        l.pack(fill=X,expand=True,padx=5)
-
-        self.isbnFetcher = Label(l,
-        background='black',
-        foreground='white',
-        font=('Arial',9,'bold'),
-        cursor = 'hand2',
-        text='Search ISBN from Name'
-        )
-        self.isbnFetcher.pack(side=RIGHT,padx=7)
-        self.isbnFetcher.bind('<Button-1>',self.fetchIsbnFromTitle)
-
-
-    def fetchIsbnFromTitle(self,event):
-        title = self.name.get()
-        if title:
-            self.isbnFetcher.pack_forget()
-            threadId = getRandomStr(50) #random string
-            self.fetchIsbnThreadId = threadId
-            #fetch as thread - if not the pack_forget will occur after the fetch - gui takes time..
-            thread = Thread(target = lambda: self.fetchIsbnThread(threadId,title))
-            thread.daemon = True # kill if window is closed
-            thread.start()
-
-
-
-    def fetchIsbnThread(self,thrdId,title):
-        isbn = getIsbn(title,self.settings)
-        if self.fetchIsbnThreadId == thrdId and isbn : # still relevant and the isbn was found
-            self.isbn.set(isbn)
-        self.isbnFetcher.pack(side=RIGHT,padx=7)
+        self.autoFetcherLabel.pack()
 
 
     def closeOnclick(self):
