@@ -629,6 +629,41 @@ class App:
         if returnValue:
             return label
 
+    def addRatingToBook(self,isbn,parent):
+        label = Label(parent,
+        text = f'''Goodreads rating: Fetching...''',
+        font=('Arial',self.settings['gui']['popup_font_size']),
+        anchor="w",
+        background ='white'
+        )
+        label.pack(fill=X,padx=15,pady=3)
+        self.setBgColor(label,'black')
+        self.setFgColor(label,'white')
+
+        threadId = getRandomStr(50) #random string
+        self.ratingThreadId = threadId
+        thread = Thread(target = lambda: self.fetchRatingThread(threadId,isbn,label))
+        self.killThreadWhenWindowIsClosed(thread)
+        thread.start()
+
+
+    def fetchRatingThread(self,threadId,isbn,parent):
+        str = ''
+        ratingJson = fetchRating(isbn,self.settings)
+
+        if self.ratingThreadId != threadId: #not relevant
+            return
+
+        if not ratingJson:
+            str = 'Goodreads rating: Unknown'
+        else:
+            str = f'''Goodreads rating: {ratingJson['rating']}/5 ({ratingJson['count']})'''
+
+        if self.ratingThreadId != threadId: #not relevant
+            return
+        parent.configure(text=str)
+
+
 
     def postStoriesList(self,stories,parent):
         label = self.postSingleBookLine('',parent,True)
@@ -918,8 +953,9 @@ class App:
 
 
     def addBookData(self,bookO,parent):
-        if 'id' in bookO:
-            self.postSingleBookLine('ID: ' + str(bookO['id']),parent)
+
+        if 'isbn' in bookO:
+            self.addRatingToBook(bookO['isbn'],parent)
 
         if 'author' in bookO:
             self.postSingleBookLine('Author: ' + bookO['author'],parent)

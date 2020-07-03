@@ -89,3 +89,7 @@ settings['backups']['db_data'] = settings['backups']['dir'] + 'db_data.txt'
 
 settings['api'] = {}
 settings['api']['covers'] = 'http://covers.openlibrary.org/b/isbn/'
+settings['api']['goodreads'] = {}
+settings['api']['goodreads']['key'] = 'key'
+settings['api']['goodreads']['secret'] = 'secret'
+settings['api']['goodreads']['ratingByIsbnsArray'] = 'https://www.goodreads.com/book/review_counts.json'

@@ -398,7 +398,7 @@ class InsertBook:
         res['pages'] = self.pages.get().strip()
         res['lang'] = self.lang.get().strip()
         res['oriLan'] = self.oriLan.get().strip()
-        res['isbn'] = self.isbn.get().strip()
+        res['isbn'] = self.isbn.get().strip().replace('-','')
         res['type'] = self.type.get().strip()
         if self.isFollowed.get():
             res['next'] = self.books[self.followedVar.get().strip()]
@@ -451,7 +451,7 @@ class InsertBook:
 
     def getBookFullInfoFromNameAndAuthor(self,json,needle):
         for key in json:
-            if needle in key: 
+            if needle in key:
                 return key
         return ''
 

@@ -5,7 +5,7 @@ import datetime
 import os
 import shutil
 import requests
-
+import json
 
 def decodePass(passw,separator):
     passw = passw.split(separator)
@@ -290,3 +290,27 @@ def fetchPic(isbn,settings):
         insertError(f"""OS error - Could not create tmp file\nerror: {e}""",settings['errLog'])
         return False
     return path
+
+
+def fetchRating(isbn,settings):
+    payload = {'key': settings['api']['goodreads']['key'], 'isbns':isbn, 'format':'json'}
+    url = settings['api']['goodreads']['ratingByIsbnsArray']
+    res = requests.get(url = url ,params=payload)
+    if res.status_code != 200:
+        insertError(f"""Fetch error - bad status code from http request\nurl: {url}\npayload:{payload}\nstatus code: {res.status_code}\nresponse: {res.text}""",settings['errLog'])
+        return False
+
+    res = json.loads(res.content)
+
+    if 'books' not in res or len(res['books']) != 1 or 'average_rating' not in res['books'][0] or 'work_reviews_count' not in res['books'][0]:
+        insertError(f"""bad response from goodreads api rating - bad status code from http request\nurl: {url}\npayload:{payload}\nstatus code: {res.status_code}\nresponse: {res}""",settings['errLog'])
+        return False
+
+    return {'rating':res['books'][0]['average_rating'], 'count':str(res['books'][0]['work_reviews_count'])}
+
+
+def getIsbn():
+    return
+    payload = {'key': 'krRAkSxWhKqYoLSrdqNCQ', 'title':'carrie','format':'json'}
+    res = requests.get(url = 'https://www.goodreads.com/book/title.json',params=payload)
+    print(res.text)

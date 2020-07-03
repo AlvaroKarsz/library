@@ -200,7 +200,7 @@ class InsertWish:
     def justDissapear(self):
         self.window.destroy()
 
-        
+
     def askOperatorToUploadPic(self,bookName):
         if messagebox.askyesno("Question","Would you like to add a picture?"):
             filename = askopenfilename()
@@ -264,7 +264,7 @@ class InsertWish:
         res['name'] = self.name.get().strip()
         res['author'] = self.author.get().strip()
         res['year'] = self.year.get().strip()
-        res['isbn'] = self.isbn.get().strip()
+        res['isbn'] = self.isbn.get().strip().replace('-','')
         if self.isSerie.get():
             res['serie'] = {}
             res['serie']['id'] = self.series[self.serieVar.get().strip()]
