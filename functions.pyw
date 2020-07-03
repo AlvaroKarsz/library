@@ -277,7 +277,7 @@ def isArray(a):
 
 
 def fetchPic(isbn,settings):
-    url = settings['api']['covers'] + isbn + '-L.jpg'
+    url = settings['api']['covers'] + isbn + '-L.jpg?default=false' #default=false so if picture not exists, return 404
     res = requests.get(url = url)
     if res.status_code != 200:
         insertError(f"""Fetch error - bad status code from http request\nurl: {url}\nstatus code: {res.status_code}\nresponse: {res.text}""",settings['errLog'])
