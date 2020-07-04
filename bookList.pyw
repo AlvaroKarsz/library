@@ -273,7 +273,7 @@ class App:
     def postBookFormat(self,parent,type):
         str = "Paperback" if type == 'P' else 'Hardcover with dust jacket' if type == 'H' else 'Hardcover without dust jacket'
         pic = Image.open(self.settings['icons']['paperback'] if type == 'P' else self.settings['icons']['hardcover'] if type == 'H' else self.settings['icons']['hardcover_no_dj'])
-        pic = pic.resize((self.settings['icons']['width'],self.settings['icons']['height']))
+        pic = pic.resize((self.settings['icons']['width_cover'],self.settings['icons']['height_cover']))
         pic = ImageTk.PhotoImage(pic)
         hol1 = Label(parent)
         hol2 = Label(hol1,image = pic)
