@@ -86,7 +86,6 @@ class InsertBook:
             #fetch isbn by title, then get data
             isbn = improvedGetIsbn(name,author,self.settings)
             if self.autoFetchThreadID == threadId and isbn : # still relevant and the isbn was found
-                self.isbn.set(isbn)    
             #now fetch data from isbn
                 data = getDataFromIsbn(isbn,self.settings)
                 if self.autoFetchThreadID == threadId and data : # still relevant and the isbn was found

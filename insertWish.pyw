@@ -110,7 +110,6 @@ class InsertWish:
 
             if self.autoFetchThreadID == threadId and isbn : # still relevant and the isbn was found
             #now fetch data from isbn
-                self.isbn.set(isbn)
                 data = getDataFromIsbn(isbn,self.settings)
                 if self.autoFetchThreadID == threadId and data : # still relevant and the isbn was found
                     self.name.set(data['name'])

@@ -309,8 +309,8 @@ def fetchRating(isbn,settings):
     return {'rating':res['books'][0]['average_rating'], 'count':'{:,}'.format(res['books'][0]['work_reviews_count'])}
 
 
-def getIsbn(title,settings):
-    payload = {'key': settings['api']['goodreads']['key'], 'title':title,'format':'json'}
+def getIsbn(title,author,settings):
+    payload = {'key': settings['api']['goodreads']['key'], 'title':title + ' ' + author,'format':'json'}
     url = settings['api']['goodreads']['isbnByTitle']
     res = requests.get(url = url,params=payload)
     if res.status_code != 200:
@@ -364,6 +364,7 @@ def getIsbn13FromResponse(arr):
 
 
 def improvedGetIsbn(title,author,settings):
+    return getIsbn(title,author, settings)
     url = settings['api']['googleBooksApi']['search'] + title + ' ' + author
     res = requests.get(url = url)
     if res.status_code != 200:
