@@ -651,7 +651,7 @@ class App:
         str = ''
         ratingJson = fetchRating(isbn,self.settings)
 
-        if self.ratingThreadId != threadId: #not relevant
+        if self.ratingThreadId != threadId or not parent: #not relevant
             return
 
         if not ratingJson:
@@ -659,7 +659,7 @@ class App:
         else:
             str = f'''Goodreads rating: {ratingJson['rating']}/5 ({ratingJson['count']})'''
 
-        if self.ratingThreadId != threadId: #not relevant
+        if self.ratingThreadId != threadId or not parent: #not relevant
             return
         parent.configure(text=str)
 

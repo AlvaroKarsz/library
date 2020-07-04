@@ -329,6 +329,29 @@ def getIsbn(title,settings):
     return res.replace('isbn=','')
 
 
+def getPublicationYearFromApiResponse(str):
+    str = re.search('[0-9]{4}',str)
+    if str:
+        str = str.group(0)
+
+    return str
+
+def getCollectionFromApiResponse(res):
+    collectionVals = None
+    if 'table_of_contents' in res:
+        if len(res['table_of_contents']) == 1:
+            #different format - example => Contents: Rita Hayworth and Shawshank redemption - Apt pupil - The body - The breathing method - Afterword.
+            collectionVals = res['table_of_contents'][0]['title'].replace('Contents:','').replace(' - Afterword','').split(' - ')
+        else: #normal case
+            collectionVals = []
+            for collection in res['table_of_contents']:
+                collectionVals += [collection['title']]
+
+        collectionVals = map(lambda val: re.sub(r'\.$','',re.sub(r'\-\-$','',val.strip()).strip()),collectionVals)
+
+    return collectionVals
+
+
 def getDataFromIsbn(isbn,settings):
     url = settings['api']['openLibrary']['data'] + isbn
     res = requests.get(url = url)
@@ -343,11 +366,17 @@ def getDataFromIsbn(isbn,settings):
     if jsonKey not in res: #empty
         return False
 
+    bookName = res[jsonKey]['title'] if 'title' in res[jsonKey] else ''
     authors = ''
 
-    for author in res[jsonKey]['authors']:
-        authors += author['name'] + ' and '
+    if 'authors' in res[jsonKey]:
+        for author in res[jsonKey]['authors']:
+            authors += author['name'] + ' and '
 
-    authors = authors[:-5] #remove last ' and '
+    authors = authors[:-5] if authors else authors #remove last ' and '
 
-    return {'name': res[jsonKey]['title'] , 'author':authors, 'year':re.sub('[^0-9]','',res[jsonKey]['publish_date'].split('-')[0].split(' ')[0].strip())}
+    bookYear = getPublicationYearFromApiResponse(res[jsonKey]['publish_date']) if 'publish_date' in res[jsonKey] else ''
+    bookPages = res[jsonKey]['number_of_pages'] if 'number_of_pages' in res[jsonKey] else ''
+    collectionVals = getCollectionFromApiResponse(res[jsonKey])
+
+    return {'name': bookName , 'author':authors, 'year':bookYear,'pages':bookPages,'collection':collectionVals}

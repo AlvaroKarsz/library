@@ -22,12 +22,82 @@ class InsertBook:
         self.setFrameStyle()
         self.closeOnclick()
         self.addTitle()
+        self.addAutoFillLabel()
         self.addInputs(autoValues)
         self.addType(autoValues)
         self.addSerie(autoValues)
         self.addNextBook(autoValues)
         self.addPrevBook(autoValues)
         self.addCollectionElements(autoValues)
+
+
+
+    def addAutoFillLabel(self):
+        l = Label(self.window,
+        background='black',
+        foreground='white'
+        )
+        l.pack(fill=X,expand=True,padx=5)
+        self.autoFetcherLabel = Label(l,
+        background='black',
+        foreground='white',
+        font=('Arial',9,'bold'),
+        cursor = 'hand2',
+        text='Auto Fill'
+        )
+        self.autoFetcherLabel.pack(pady=1)
+        self.autoFetcherLabel.bind('<Button-1>',self.autoFillCallback)
+
+
+    def autoFillCallback(self,event):
+        isbn = self.isbn.get()
+        name = self.name.get()
+
+        if isbn or name:
+            self.autoFetcherLabel.pack_forget()
+            threadId = getRandomStr(50) #random string
+            self.autoFetchThreadID = threadId
+            #fetch as thread - if not the pack_forget will occur after the fetch - gui takes time..
+            thread = Thread(target = lambda: self.autoFetchThread(threadId,isbn,name))
+            thread.daemon = True # kill if window is closed
+            thread.start()
+
+
+    def autoFetchThread(self,threadId,isbn,name):
+        #clear the collection table (from prev. ones)
+        self.killAllChildren(self.isCollectionFrame)
+        self.isCollectionNextRow = 0
+        self.collectionArr = []
+        self.isCollection.set(False)
+
+        #priority to isbn, if isbn is not set - go by name
+        if isbn:
+            #fetch by isbn
+            data = getDataFromIsbn(isbn,self.settings)
+            if self.autoFetchThreadID == threadId and data : # still relevant and the isbn was found
+                self.name.set(data['name'])
+                self.author.set(data['author'])
+                self.year.set(data['year'])
+                self.pages.set(data['pages'])
+                if data['collection']:
+                    self.autoFillCollection(data['collection'])
+        else:
+            #fetch isbn by title, then get data
+            isbn = getIsbn(name,self.settings)
+            if self.autoFetchThreadID == threadId and isbn : # still relevant and the isbn was found
+            #now fetch data from isbn
+                data = getDataFromIsbn(isbn,self.settings)
+                if self.autoFetchThreadID == threadId and data : # still relevant and the isbn was found
+                    self.name.set(data['name'])
+                    self.author.set(data['author'])
+                    self.year.set(data['year'])
+                    self.pages.set(data['pages'])
+                    self.isbn.set(isbn)
+                    if data['collection']:
+                        self.autoFillCollection(data['collection'])
+
+        self.autoFetcherLabel.pack(pady=1)
+
 
 
     def addType(self,autoValues = {}):
@@ -39,7 +109,7 @@ class InsertBook:
         font=('Arial', 20),
         background='black',
         foreground='white',
-        ).pack(pady=20)
+        ).pack(pady=(20,0))
 
     def addInputs(self,autoValues):
         fram = Label(self.window,background='black',foreground='white')
@@ -167,6 +237,12 @@ class InsertBook:
             if autoValues['stories'] and notEmptyEls(autoValues['stories']):
                 self.isCollection.set(True)
                 Thread(target = lambda: self.insertAutoValuesCollection(autoValues['stories'])).start()
+
+
+    def autoFillCollection(self,vals):
+        self.isCollection.set(True)
+        for name in vals:
+            self.addNewCollectionEntry([name,''])
 
 
     def insertAutoValuesCollection(self,values):

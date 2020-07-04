@@ -151,10 +151,13 @@ def previousBookAlreadyHaveFollow(db,settings,previuos,currentID):
     sql = '''
     SELECT EXISTS(
         SELECT 1 FROM ''' + settings['db']['books_table'] + '''
-        WHERE id = %s AND next IS NOT NULL AND next != %s
-    );
-    '''
-    db.execute(sql,[previuos,currentID]);
+        WHERE id = %s AND next IS NOT NULL '''
+    args = [previuos]
+    if currentID:
+        sql += ''' AND next != %s '''
+        args += [currentID]
+    sql += '''  );'''
+    db.execute(sql,args);
     return db.fetchone()[0]
 
 
