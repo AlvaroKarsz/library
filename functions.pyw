@@ -329,6 +329,72 @@ def getIsbn(title,settings):
     return res.replace('isbn=','')
 
 
+def stringIncludes2WaysInsensitive(s1,s2):
+    return s1.lower() in s2.lower() or s2.lower() in s1.lower()
+
+
+def arrayIncludesPartInsensitive(needle,arr):
+    #convert to array(if its not one)
+    arr = arr if isArray(arr) else [arr]
+
+    for val in arr:
+        if stringIncludes2WaysInsensitive(val,needle):
+            return True
+    return False
+
+
+def getIsbn13FromResponse(arr):
+    #convert to array(if its not one)
+    arr = arr if isArray(arr) else [arr]
+    isbn10 = False
+    isbn13 = False
+
+    for isbnDict in arr:
+        if 'type' not in isbnDict or 'identifier' not in isbnDict:
+            continue #invalid
+
+        if stringIncludes2WaysInsensitive('13',isbnDict['type']):
+            isbn13 = isbnDict['identifier']
+            break #isbn13 was found - now break
+
+        elif stringIncludes2WaysInsensitive('10',isbnDict['type']):
+            isbn10 = isbnDict['identifier']
+
+    return isbn13 if isbn13 else isbn10
+
+
+def improvedGetIsbn(title,author,settings):
+    url = settings['api']['googleBooksApi']['search'] + title + ' ' + author
+    res = requests.get(url = url)
+    if res.status_code != 200:
+        insertError(f"""Fetch error - bad status code from http request\nurl: {url}\nstatus code: {res.status_code}\nresponse: {res.text}""",settings['errLog'])
+        return False
+    res = json.loads(res.content)
+    resultVal = False
+    tempHolderVal = False
+    if 'totalItems' in res and res['totalItems'] > 0 and 'items' in res and isArray(res['items']):
+        for item in res['items']:
+            #iterate the results
+            if 'volumeInfo' not in item:
+                continue #invalid - go to next iteration
+
+            if 'title' not in item['volumeInfo'] or 'authors' not in item['volumeInfo'] or 'industryIdentifiers' not in item['volumeInfo']:
+                continue #invalid - go to next iteration
+
+            if stringIncludes2WaysInsensitive(title,item['volumeInfo']['title']):
+                #title match - get the isbn from dict
+                tempHolderVal = getIsbn13FromResponse(item['volumeInfo']['industryIdentifiers'])
+                if not tempHolderVal:
+                    continue #isbn not found in dict
+                #isbn found - keep it in returned value
+                resultVal = tempHolderVal
+                if author and arrayIncludesPartInsensitive(author,item['volumeInfo']['authors']):
+                    break #best match - title and author, exit loop and return value
+
+    #return response if found - if not try goodreads api
+    return resultVal if resultVal else  getIsbn(title, settings)
+
+
 def getPublicationYearFromApiResponse(str):
     str = re.search('[0-9]{4}',str)
     if str:

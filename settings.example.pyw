@@ -87,6 +87,7 @@ settings['backups']['dir'] = settings['appDir'] + 'backups/'
 settings['backups']['db_structure'] = settings['backups']['dir'] + 'db_structure.txt'
 settings['backups']['db_data'] = settings['backups']['dir'] + 'db_data.txt'
 
+
 settings['api'] = {}
 settings['api']['openLibrary'] = {}
 settings['api']['openLibrary']['covers'] = 'http://covers.openlibrary.org/b/isbn/'
@@ -98,3 +99,7 @@ settings['api']['goodreads']['key'] = 'key'
 settings['api']['goodreads']['secret'] = 'secret'
 settings['api']['goodreads']['ratingByIsbnsArray'] = 'https://www.goodreads.com/book/review_counts.json'
 settings['api']['goodreads']['isbnByTitle'] = 'https://www.goodreads.com/book/title.json'
+
+
+settings['api']['googleBooksApi'] = {}
+settings['api']['googleBooksApi']['search'] = 'https://www.googleapis.com/books/v1/volumes?maxResults=20&orderBy=relevance&printType=BOOKS&q='

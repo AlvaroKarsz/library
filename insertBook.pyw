@@ -52,18 +52,19 @@ class InsertBook:
     def autoFillCallback(self,event):
         isbn = self.isbn.get()
         name = self.name.get()
+        author = self.author.get()
 
         if isbn or name:
             self.autoFetcherLabel.pack_forget()
             threadId = getRandomStr(50) #random string
             self.autoFetchThreadID = threadId
             #fetch as thread - if not the pack_forget will occur after the fetch - gui takes time..
-            thread = Thread(target = lambda: self.autoFetchThread(threadId,isbn,name))
+            thread = Thread(target = lambda: self.autoFetchThread(threadId,isbn,name,author))
             thread.daemon = True # kill if window is closed
             thread.start()
 
 
-    def autoFetchThread(self,threadId,isbn,name):
+    def autoFetchThread(self,threadId,isbn,name,author):
         #clear the collection table (from prev. ones)
         self.killAllChildren(self.isCollectionFrame)
         self.isCollectionNextRow = 0
@@ -83,8 +84,9 @@ class InsertBook:
                     self.autoFillCollection(data['collection'])
         else:
             #fetch isbn by title, then get data
-            isbn = getIsbn(name,self.settings)
+            isbn = improvedGetIsbn(name,author,self.settings)
             if self.autoFetchThreadID == threadId and isbn : # still relevant and the isbn was found
+                self.isbn.set(isbn)    
             #now fetch data from isbn
                 data = getDataFromIsbn(isbn,self.settings)
                 if self.autoFetchThreadID == threadId and data : # still relevant and the isbn was found
