@@ -388,7 +388,7 @@ def improvedGetIsbn(title,author,settings):
                     continue #isbn not found in dict
                 #isbn found - keep it in returned value
                 resultVal = tempHolderVal
-                if author and arrayIncludesPartInsensitive(author,item['volumeInfo']['authors']):
+                if not author or arrayIncludesPartInsensitive(author,item['volumeInfo']['authors']):
                     break #best match - title and author, exit loop and return value
 
     #return response if found - if not try goodreads api
