@@ -336,6 +336,15 @@ def getPublicationYearFromApiResponse(str):
 
     return str
 
+def thisCollectionNameIsStringDict(v):
+    v = v.strip()
+    return v.startswith('{') and v.endswith('}')
+
+
+def invalidCollectionJsonToValidCollectionJson(str):
+    return str.replace("\'", "\"")
+
+
 def getCollectionFromApiResponse(res):
     collectionVals = None
     if 'table_of_contents' in res:
@@ -347,7 +356,9 @@ def getCollectionFromApiResponse(res):
             for collection in res['table_of_contents']:
                 collectionVals += [collection['title']]
 
+
         collectionVals = map(lambda val: re.sub(r'\.$','',re.sub(r'\-\-$','',val.strip()).strip()),collectionVals)
+        collectionVals = map(lambda val: json.loads(invalidCollectionJsonToValidCollectionJson(val))['title'] if thisCollectionNameIsStringDict(val) else val,collectionVals)
 
     return collectionVals
 
