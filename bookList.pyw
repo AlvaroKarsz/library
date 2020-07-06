@@ -49,6 +49,7 @@ class App:
         self.displyBooksThread()
         self.fitlerOnKeyUp()
         self.setBgColor(self.window,'black')
+        self.reactToMouseWheel()
 
 
     def filterYourself(self,event):
@@ -1388,5 +1389,10 @@ class App:
                 except:
                     continue
 
+
     def addBorders(self,wid):
         wid.configure(borderwidth=2, relief="raised")
+
+
+    def reactToMouseWheel(self):
+        self.window.bind_all("<MouseWheel>", lambda evt: self.canvas.yview_scroll(int(-1*(evt.delta/120)), "units"))
