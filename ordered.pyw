@@ -9,7 +9,7 @@ class Ordered:
         self.picturesFolder = self.settings['pics']['wishFolderPath']
         self.sortOptions = ['ID, Lowest first','ID, Latest first','Purchased First','Purchased Last','Book Name, ABC','Book Name, ZYX','Publication Year, Lowest first','Publication Year, Latest first']
         self.sortTranslations = [['id',False],['id',True],['order_date',False],['order_date',True],['name',False],['name',True],['year',False],['year',True]]
-        self.updateOption = None
+        self.updateOption = 2
 
 
     def setData(self):
@@ -18,3 +18,7 @@ class Ordered:
 
     def fetchById(db,settings,id):
         return fetchOrderedById(db,settings,id)
+
+
+    def updateById(db,settings,json,id):
+        return updateWishById(db,settings,json,id)

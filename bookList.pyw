@@ -564,13 +564,18 @@ class App:
         self.setBgColor([holder,iconHolder],'black')
         self.setFgColor([holder,iconHolder],'white')
 
+
     def alterBookInfo(self,json,id):
         self.killOverlay()#remove the wishlist display
 
         if self.updateOption == 1: #book inserter window
             self.insertBookWindow(json,True,id,self.updateById)
+
         elif self.updateOption == 2: #wish inserter window
             self.insertWishWindow(json,True,id,self.updateById)
+
+        elif self.updateOption == 3: #serie
+            self.insertSerieWindow(json,True,id,self.updateById)
 
 
     def deleteThisListing(self,id,name):
@@ -1121,24 +1126,6 @@ class App:
         return c
 
 
-    def insertSerieWindow(self):
-        if self.currentOverlay:
-            return
-        self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"black",5,"white",self.settings['insertSerie']['padx_popup'],self.settings['insertSerie']['pady_popup'])
-        self.currentOverlay = True
-        trace = InsertSerie(self.insertBookCanvas,self.settings,self.db)
-        _self = self #acess from another class object
-        trace.sucess.trace("w", _self.removeOverlayFlag)#remove overlay indicator to allow another popups
-
-
-    def insertWishWindow(self):
-        if self.currentOverlay:
-            return
-        self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"black",5,"white",self.settings['insertWish']['padx_popup'],self.settings['insertWish']['pady_popup'])
-        self.currentOverlay = True
-        trace = InsertWish(self.insertBookCanvas,self.settings,self.db,self.canvas)
-        _self = self #acess from another class object
-        trace.sucess.trace("w", _self.removeOverlayFlag)#remove overlay indicator to allow another popups
 
     def removeOverlayFlag(self,*args):
         self.currentOverlay = None
@@ -1156,6 +1143,18 @@ class App:
             return
         self.insertWishCanvas = self.makeOverlayAndPopUp(self.canvas,"black",5,"white",self.settings['insertWish']['padx_popup'],self.settings['insertWish']['pady_popup'])
         return InsertWish(self.insertWishCanvas,self.settings,self.db,self.canvas,autoData,destoryAfter,wishId,hook)
+
+
+    def insertSerieWindow(self,autoData = {},destoryAfter = False,wishId = False,hook = False):
+        if self.currentOverlay:
+            return
+        self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"black",5,"white",self.settings['insertSerie']['padx_popup'],self.settings['insertSerie']['pady_popup'])
+        #self.currentOverlay = True
+        #trace =
+        return InsertSerie(self.insertBookCanvas,self.settings,self.db,autoData,destoryAfter,wishId,hook)
+        #_self = self #acess from another class object
+        #trace.sucess.trace("w", _self.removeOverlayFlag)#remove overlay indicator to allow another popups
+
 
 
 

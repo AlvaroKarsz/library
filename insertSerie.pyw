@@ -7,14 +7,17 @@ from tkinter.filedialog import askopenfilename
 import re
 
 class InsertSerie:
-    def __init__(self,win,settings,db):
+    def __init__(self,win,settings,db,autoValues = {},destoryAfter = False,updateID = False, hook = False):
         self.window = win
         self.db = db
         self.sucess = BooleanVar()
         self.settings = settings
+        self.destoryAfter = destoryAfter
+        self.hook = hook
+        self.updateID = updateID
         self.closeOnclick()
         self.addTitle()
-        self.addInputs()
+        self.addInputs(autoValues)
         self.addInsertButton()
 
 
@@ -27,12 +30,19 @@ class InsertSerie:
         ).pack(pady=20)
 
 
-    def addInputs(self):
+    def addInputs(self,autoValues):
         fram = Label(self.window,background='black',foreground='white')
         self.name = StringVar()
         self.author = StringVar()
         self.addNewLabelAndInput(fram,'Serie Name',1,0,'name')
         self.addNewLabelAndInput(fram,'Author Name',2,0,'author')
+
+        if 'author' in autoValues:
+            self.author.set(autoValues['author'])
+
+        if 'name' in autoValues:
+            self.name.set(autoValues['name'])
+
         fram.pack()
 
 
@@ -90,6 +100,13 @@ class InsertSerie:
         if check != True:
             messagebox.showerror(title='Error', message=check)
             return
+
+        if self.hook:
+            self.hook(self,vars,self.updateID)
+            #if set - remove the window
+            if self.destoryAfter:
+                self.justDissapear()
+
         else:
             flag = insertNewSerie(self.db,self.settings,vars)
             if flag != True:
@@ -108,6 +125,12 @@ class InsertSerie:
                             messagebox.showerror(title='Error', message="Oppsss\nOS error.\nCould not copy the picture.\nPlease read LOG for mofe info.")
                         else:
                             messagebox.showinfo('Message',f'''Picture Copied.''')
+
+
+
+    def justDissapear(self):
+        self.window.destroy()
+
 
 
     def clearInputs(self):

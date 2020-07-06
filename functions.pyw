@@ -21,7 +21,7 @@ def centerWindow(window,width, height):
 
 
 def getExtensionIfExist(fileNameWithoutExt):
-    fileName = glob.glob(fileNameWithoutExt + '.*')
+    fileName = glob.glob(fileNameWithoutExt + '.png') + glob.glob(fileNameWithoutExt + '.jpg') + glob.glob(fileNameWithoutExt + '.jpeg') + glob.glob(fileNameWithoutExt + '.png')
     return fileName[0].replace('\\','/') if len(fileName) > 0 else None
 
 

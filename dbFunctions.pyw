@@ -11,6 +11,19 @@ def fetchAllSeries(db,settings):
     return  db.fetchall()
 
 
+def updateSerieById(db,settings,json,id):
+    sql = '''
+    UPDATE  ''' + settings['db']['series_table'] + '''
+    SET
+    name = %s,
+    author = %s
+
+    WHERE id = %s;
+    '''
+
+    db.execute(sql,[json['name'],json['author'],id])
+
+
 def updateBookById(db,settings,json,id):
     #update main table
     args = [json['name'],json['year'],json['author'],json['oriLan'],json['lang'],json['isbn'],json['type'],json['pages']]
