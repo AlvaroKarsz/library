@@ -105,7 +105,7 @@ class InsertSerie:
             self.hook(self,vars,self.updateID)
             #if set - remove the window
             if self.destoryAfter:
-                self.justDissapear()
+                self.killWindow()
 
         else:
             flag = insertNewSerie(self.db,self.settings,vars)
@@ -125,12 +125,6 @@ class InsertSerie:
                             messagebox.showerror(title='Error', message="Oppsss\nOS error.\nCould not copy the picture.\nPlease read LOG for mofe info.")
                         else:
                             messagebox.showinfo('Message',f'''Picture Copied.''')
-
-
-
-    def justDissapear(self):
-        self.window.destroy()
-
 
 
     def clearInputs(self):

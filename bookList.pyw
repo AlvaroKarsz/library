@@ -176,6 +176,7 @@ class App:
         self.createView()
 
 
+
     def addPic(self,name,parent,bigSize = False):
         path = self.bookNameToPicName(name)
         path = path if path else self.settings['pics']['blank_pic']
@@ -665,9 +666,10 @@ class App:
         else:
             str = f'''Goodreads rating: {ratingJson['rating']}/5 ({ratingJson['count']})'''
 
-        if self.ratingThreadId != threadId or not parent: #not relevant
+        if self.ratingThreadId != threadId: #not relevant
             return
         parent.configure(text=str)
+
 
 
 
@@ -818,6 +820,7 @@ class App:
 
 
     def goPrevPage(self,event):
+        self.killOverlay()
         self.goUp()
         self.updateMyPageDown()
         minRelevant = self.getIndexFirstRelevant() - 1
@@ -842,6 +845,7 @@ class App:
 
 
     def goNextPage(self,event):
+        self.killOverlay()
         self.goUp()
         self.updateMyPageUp()
         maxRelevant = self.getIndexLastRelevant() + 1
@@ -1143,18 +1147,20 @@ class App:
         if self.currentOverlay:
             return
         self.insertWishCanvas = self.makeOverlayAndPopUp(self.canvas,"black",5,"white",self.settings['insertWish']['padx_popup'],self.settings['insertWish']['pady_popup'])
-        return InsertWish(self.insertWishCanvas,self.settings,self.db,self.canvas,autoData,destoryAfter,wishId,hook)
+        self.currentOverlay = True
+        trace = InsertWish(self.insertWishCanvas,self.settings,self.db,self.canvas,autoData,destoryAfter,wishId,hook)
+        _self = self #acess from another class object
+        trace.sucess.trace("w", _self.removeOverlayFlag)#remove overlay indicator to allow another popups
 
 
     def insertSerieWindow(self,autoData = {},destoryAfter = False,wishId = False,hook = False):
         if self.currentOverlay:
             return
         self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"black",5,"white",self.settings['insertSerie']['padx_popup'],self.settings['insertSerie']['pady_popup'])
-        #self.currentOverlay = True
-        #trace =
-        return InsertSerie(self.insertBookCanvas,self.settings,self.db,autoData,destoryAfter,wishId,hook)
-        #_self = self #acess from another class object
-        #trace.sucess.trace("w", _self.removeOverlayFlag)#remove overlay indicator to allow another popups
+        self.currentOverlay = True
+        trace = InsertSerie(self.insertBookCanvas,self.settings,self.db,autoData,destoryAfter,wishId,hook)
+        _self = self #acess from another class object
+        trace.sucess.trace("w", _self.removeOverlayFlag)#remove overlay indicator to allow another popups
 
 
 

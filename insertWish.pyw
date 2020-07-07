@@ -220,7 +220,7 @@ class InsertWish:
             self.hook(self,vars,self.updateID)
             #if set - remove the window
             if self.destoryAfter:
-                self.justDissapear()
+                self.killWindow()
 
         else:
             flag = insertNewWish(self.db,self.settings,vars)
