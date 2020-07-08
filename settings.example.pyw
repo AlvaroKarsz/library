@@ -61,6 +61,8 @@ settings['icons']['height_cover'] = 30
 settings['icons']['width_cover'] = 30
 settings['icons']['mini_width'] = 20
 settings['icons']['mini_height'] = 20
+settings['icons']['purchase_width'] = 70
+settings['icons']['purchase_height'] = 40
 settings['icons']['folder'] = 'icons/'
 settings['icons']['has_been_read'] = settings['appDir'] + settings['icons']['folder'] + 'hasbeenread.jpg'
 settings['icons']['has_not_been_read'] = settings['appDir'] + settings['icons']['folder'] + 'hasnotbeenread.jpg'
@@ -72,7 +74,10 @@ settings['icons']['has_not_been_ordered'] = settings['appDir'] + settings['icons
 settings['icons']['delete'] = settings['appDir'] + settings['icons']['folder'] + 'delete.png'
 settings['icons']['alter'] = settings['appDir'] + settings['icons']['folder'] + 'edit.png'
 settings['icons']['logo'] = settings['appDir'] + settings['icons']['folder'] + 'logo.ico'
-
+settings['icons']['amazon'] = settings['appDir'] + settings['icons']['folder'] + 'amazon.png'
+settings['icons']['ebay'] = settings['appDir'] + settings['icons']['folder'] + 'ebay.png'
+settings['icons']['better_world_books'] = settings['appDir'] + settings['icons']['folder'] + 'better_world_books.png'
+settings['icons']['book_depository'] = settings['appDir'] + settings['icons']['folder'] + 'book_depository.jpg'
 
 settings['errLog'] = settings['appDir'] + 'logs/'
 
@@ -105,3 +110,9 @@ settings['api']['goodreads']['isbnByTitle'] = 'https://www.goodreads.com/book/ti
 
 settings['api']['googleBooksApi'] = {}
 settings['api']['googleBooksApi']['search'] = 'https://www.googleapis.com/books/v1/volumes?maxResults=20&orderBy=relevance&printType=BOOKS&q='
+
+settings['stores'] = {}
+settings['stores']['betterworldbooks'] = 'https://www.betterworldbooks.com/search/results?Format=Hardcover&p=1&hpp=96&q='
+settings['stores']['ebay'] = 'https://www.ebay.com/sch/i.html?_from=R40&_ipg=200&_nkw='
+settings['stores']['amazon'] = 'https://www.amazon.com/s?k='
+settings['stores']['bookdepository'] = 'https://www.bookdepository.com/search?searchTerm='

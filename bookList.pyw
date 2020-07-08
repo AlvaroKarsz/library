@@ -19,7 +19,7 @@ from wishlist import Wishlist
 from tkinter import messagebox
 from confirmPic import Confirm
 from osFunctions import *
-
+import webbrowser
 
 class App:
     def __init__(self,win,settings,db):
@@ -503,6 +503,9 @@ class App:
             secondOrderFlag = True if 'order_date_2' in bookObj and not bookObj['order_date_2'] else False
             self.addOrderedStamp(selectedBookHeader,bookObj['ordered'],bookObj['id'],secondOrderFlag)
 
+        if self.buyingOption:
+            self.addBuyingOptions(selectedBookHeader,bookObj['isbn'])
+
         Label(self.currentOverlay,
         text = bookObj['name'],
         font=('Arial', 22),
@@ -512,6 +515,30 @@ class App:
         ).pack(fill=X,padx=3)
         self.makeTravelersWithPic(bookObj['name'],self.currentOverlay,id,bookObj)
         self.addBookData(bookObj,self.currentOverlay)
+
+
+
+    def addBuyingOptions(self,parent, isbn):
+        holder = Label(parent)
+        self.setBgColor([holder],'black')
+        self.setFgColor([holder],'white')
+        holder.pack(fill="none", padx=(0,140),expand=True)
+        self.createBuyingIcon(holder,self.settings['icons']['amazon'],self.settings['icons']['purchase_width'] ,self.settings['icons']['purchase_height'],lambda event: webbrowser.open(self.settings['stores']['amazon'] + isbn))
+        self.createBuyingIcon(holder,self.settings['icons']['ebay'],self.settings['icons']['purchase_width'] ,self.settings['icons']['purchase_height'],lambda event: webbrowser.open(self.settings['stores']['ebay'] + isbn))
+        self.createBuyingIcon(holder,self.settings['icons']['better_world_books'],self.settings['icons']['purchase_width'] ,self.settings['icons']['purchase_height'],lambda event: webbrowser.open(self.settings['stores']['betterworldbooks'] + isbn))
+        self.createBuyingIcon(holder,self.settings['icons']['book_depository'],self.settings['icons']['purchase_width'] ,self.settings['icons']['purchase_height'],lambda event: webbrowser.open(self.settings['stores']['bookdepository'] + isbn))
+
+
+    def createBuyingIcon(self,parent,path,width,height,bind):
+        icon = Image.open(path)
+        icon = icon.resize((width ,height))
+        icon = ImageTk.PhotoImage(icon)
+        iconHolder = Label(parent, image = icon,anchor='n',cursor = 'hand2')
+        iconHolder.image = icon # keep a reference!
+        iconHolder.pack(side=LEFT, padx=5)
+        iconHolder.bind('<Button-1>',bind)
+        self.setBgColor([iconHolder],'black')
+        self.setFgColor([iconHolder],'white')
 
 
     def deleteListing(self,parent,id,name):
@@ -542,7 +569,6 @@ class App:
             self.addEditOption(parent,json,id)
         if self.deleteById:
             self.deleteListing(parent,id,name)
-
 
     def addEditOption(self,parent,json,id):
         icon = Image.open(self.settings['icons']['alter'])
@@ -1199,6 +1225,7 @@ class App:
         stories = Stories(self.settings,self.db)
         self.data = stories.setData()
         self.reloadData = self.loadStories
+        self.buyingOption = True if hasattr(stories,'buyingOption') else False
         self.markReadedFlag = stories.markAsReadedFlag
         self.booksCount = len(self.data)
         self.totalBooks = self.booksCount
@@ -1231,6 +1258,7 @@ class App:
         self.totalPages = roundUpDividation(self.booksCount, self.settings['maxBooksFetch']) or 1
         self.picFolder = series.picturesFolder
         self.sortOptions = series.sortOptions
+        self.buyingOption = True if hasattr(series,'buyingOption') else False
         self.sortTranslations = series.sortTranslations
         self.updateTitle(series.title)
         self.fetchById = lambda self,id: Series.fetchById(self.db,self.settings,id)
@@ -1257,6 +1285,7 @@ class App:
         self.totalPages = roundUpDividation(self.booksCount, self.settings['maxBooksFetch']) or 1
         self.picFolder = books.picturesFolder
         self.sortOptions = books.sortOptions
+        self.buyingOption = True if hasattr(books,'buyingOption') else False
         self.sortTranslations = books.sortTranslations
         self.updateTitle(books.title)
         self.fetchById = lambda self,id: Books.fetchById(self.db,self.settings,id)
@@ -1283,6 +1312,7 @@ class App:
         self.totalPages = roundUpDividation(self.booksCount, self.settings['maxBooksFetch']) or 1
         self.picFolder = wish.picturesFolder
         self.sortOptions = wish.sortOptions
+        self.buyingOption = True if hasattr(wish,'buyingOption') else False
         self.sortTranslations = wish.sortTranslations
         self.updateTitle(wish.title)
         self.fetchById = lambda self,id: Ordered.fetchById(self.db,self.settings,id)
@@ -1309,6 +1339,7 @@ class App:
         self.totalPages = roundUpDividation(self.booksCount, self.settings['maxBooksFetch']) or 1
         self.picFolder = wish.picturesFolder
         self.sortOptions = wish.sortOptions
+        self.buyingOption = True if hasattr(wish,'buyingOption') else False
         self.sortTranslations = wish.sortTranslations
         self.updateTitle(wish.title)
         self.fetchById = lambda self,id: Wishlist.fetchById(self.db,self.settings,id)
@@ -1331,6 +1362,7 @@ class App:
         self.reloadData = self.loadReads
         self.markReadedFlag = reads.markAsReadedFlag
         self.booksCount = len(self.data)
+        self.buyingOption = True if hasattr(reads,'buyingOption') else False
         self.totalBooks = self.booksCount
         self.totalPages = roundUpDividation(self.booksCount, self.settings['maxBooksFetch']) or 1
         self.picFolder = reads.picturesFolder
