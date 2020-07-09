@@ -223,9 +223,9 @@ class InsertWish:
                 self.killWindow()
 
         else:
-            flag = insertNewWish(self.db,self.settings,vars)
-            if flag != True:
-                insertError(f"""DB error - {flag}""",self.settings['errLog'])
+            newWIshId = insertNewWish(self.db,self.settings,vars)
+            if not str(newWIshId).isdigit():
+                insertError(f"""DB error - {newWIshId}""",self.settings['errLog'])
                 messagebox.showerror(title='Error', message="Oppsss\nDB error.\nPlease read LOG for mofe info.")
                 return
 
@@ -235,20 +235,20 @@ class InsertWish:
             if fileApiPath: #cover was fetched
                 confirmation = self.popupConfirmPic(fileApiPath,"Would you like to use this picture?","Yes","No")
                 _self = self #acess from another class object
-                confirmation.sucess.trace("w", lambda self, *args: _self.apiPictureResponse(confirmation.sucess,vars['name'],fileApiPath))
+                confirmation.sucess.trace("w", lambda self, *args: _self.apiPictureResponse(confirmation.sucess,str(newWIshId),fileApiPath))
             else: # could not fetch cover from api, ask if want to upload new pic
                 self.askOperatorToUploadPic(vars['name'])
 
 
-    def apiPictureResponse(self,responseTrack,bookName,bookApiPath):
+    def apiPictureResponse(self,responseTrack,bookId,bookApiPath):
         self.displayMainWindow()
         if responseTrack.get():#user want to keep the picture
-            copyFlag = self.copyPicture(bookName,bookApiPath)
+            copyFlag = self.copyPicture(bookId,bookApiPath)
             if not copyFlag: #could not copy - delete the file
                 self.destoryPicture(bookApiPath)
         else: #not want to use the api cover, maybe want a pic from PC
             self.destoryPicture(bookApiPath)
-            self.askOperatorToUploadPic(bookName)
+            self.askOperatorToUploadPic(bookId)
 
 
 
@@ -261,11 +261,11 @@ class InsertWish:
         self.window.destroy()
 
 
-    def askOperatorToUploadPic(self,bookName):
+    def askOperatorToUploadPic(self,bookId):
         if messagebox.askyesno("Question","Would you like to add a picture?"):
             filename = askopenfilename()
             if filename:
-                self.copyPicture(bookName,filename)
+                self.copyPicture(bookId,filename)
 
 
     def destoryPicture(self,path):
@@ -275,8 +275,8 @@ class InsertWish:
 
 
 
-    def copyPicture(self,bookName,filePath):
-        bookNameAsFile = convertnameToPath(bookName) + getExtensionFromPath(filePath)
+    def copyPicture(self,id,filePath):
+        bookNameAsFile = id + getExtensionFromPath(filePath)
         flag = copyFile(filePath,self.settings['pics']['wishFolderPath'] + bookNameAsFile)
         if flag != True:
             insertError(f"""OS error - {flag}""",self.settings['errLog'])

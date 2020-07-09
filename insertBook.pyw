@@ -16,6 +16,7 @@ class InsertBook:
         self.updateID = updateID
         self.hook = hook
         self.sucess = StringVar() # trace
+        self.idTrace = StringVar()
         self.settings = settings
         self.destoryAfter = destoryAfter
         self.setCheckboxStyle()
@@ -377,12 +378,14 @@ class InsertBook:
     def checkOut(self):
         vars = self.getAllVars()
         check = self.checkVars(vars)
+        newId = self.updateID
         if check != True:
             messagebox.showerror(title='Error', message=check)
             return
         else:
             if not self.hook:
-                insertNewBook(self.db,self.settings,vars)
+                newId = insertNewBook(self.db,self.settings,vars)
+                self.idTrace.set(newId)
             else:
                 self.hook(self,vars,self.updateID)
 
@@ -393,8 +396,8 @@ class InsertBook:
                 if messagebox.askyesno("Question","Would you like to add a picture?"):
                     filename = askopenfilename()
                     if filename:
-                        bookNameAsFile = convertnameToPath(vars['name']) + getExtensionFromPath(filename)
-                        flag = copyFile(filename,self.settings['pics']['wishFolderPath'] + bookNameAsFile)
+                        bookNameAsFile = str(newId) + getExtensionFromPath(filename)
+                        flag = copyFile(filename,self.settings['pics']['picFolderPath'] + bookNameAsFile)
                         if flag != True:
                             insertError(f"""OS error - {flag}""",self.settings['errLog'])
                             messagebox.showerror(title='Error', message="Oppsss\nOS error.\nCould not copy the picture.\nPlease read LOG for mofe info.")

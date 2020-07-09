@@ -121,6 +121,7 @@ def insertNewBook(db,settings,json):
         '''
         args = [id,json['prev']]
         db.execute(sql,args)
+    return id
 
 
 def jsonToValues(totalArguments,numOfArgumentsEach):
@@ -691,11 +692,12 @@ def insertNewWish(db,settings,objs):
 
     sql = '''
     INSERT INTO ''' + settings['db']['wish_table'] + values +  '''
-    VALUES(''' + addMultipleS(len(arguments)) + ''');
+    VALUES(''' + addMultipleS(len(arguments)) + ''') RETURNING id;
     '''
     try:
         db.execute(sql,arguments)
-        return True
+        id = db.fetchone()[0]
+        return id
     except Exception as err:
         return err
 
@@ -725,11 +727,12 @@ def updateWishById(db,settings,json,id):
 def insertNewSerie(db,settings,json):
         sql = '''
         INSERT INTO ''' + settings['db']['series_table'] +  '''(name,author)
-        VALUES(%s,%s);
+        VALUES(%s,%s) RETURNING id;
         '''
         try:
             db.execute(sql,[json['name'],json['author']])
-            return True
+            id = db.fetchone()[0]
+            return id
         except Exception as err:
             return err
 

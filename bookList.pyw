@@ -14,6 +14,7 @@ from stories import Stories
 from books import Books
 from ordered import Ordered
 from reads import Reads
+from tkinter.filedialog import askopenfilename
 from series import Series
 from wishlist import Wishlist
 from tkinter import messagebox
@@ -177,8 +178,8 @@ class App:
 
 
 
-    def addPic(self,name,parent,bigSize = False):
-        path = self.bookNameToPicName(name)
+    def addPic(self,id,parent,bigSize = False):
+        path = self.bookNameToPicName(id)
         path = path if path else self.settings['pics']['blank_pic']
         return self.postPic(path,parent,bigSize)
 
@@ -221,7 +222,7 @@ class App:
         )
         title.pack(expand = True,fill = X)
 
-        img = self.addPic(book['name'],bookView)
+        img = self.addPic(book['id'],bookView)
         bookView.pack(side=LEFT,fill=BOTH,expand=True)
         if img:
             img.bind("<Button-1>",lambda event :self.selectBookOnclick(book['id']))
@@ -398,12 +399,13 @@ class App:
         #open insert box and listen to tracer.sucess booleanvar
         tracer = self.insertBookWindow(bookData,True)
         _self = self #acess from another class object
-        tracer.sucess.trace("w", lambda self, *args: _self.inertFromWishlistFinish(id,bookData['name'],tracer.sucess))
+        tracer.sucess.trace("w", lambda self, *args: _self.inertFromWishlistFinish(id,bookData['name'],tracer.sucess,tracer.idTrace))
 
 
-    def inertFromWishlistFinish(self,wishID,wishName,tracerVal):
+    def inertFromWishlistFinish(self,wishID,wishName,tracerVal,traceNewId):
         newName = tracerVal.get()
-        if newName == '0':#action was cancelled, or error occured
+        newId = traceNewId.get()
+        if newName == '0' or not newId:#action was cancelled, or error occured
             return
         #book was inserted - remove from wish list
         flag = removeBookFromWishList(self.db,self.settings,wishID)
@@ -412,7 +414,7 @@ class App:
             insertError(f"""DB error - {flag}""",self.settings['errLog'])
             messagebox.showerror(title='Error', message="Oppsss\nDB error.\nCould not delete book from Wish list.\nPlease read LOG for mofe info.")
 
-        picPath = self.bookNameToPicName(wishName)
+        picPath = self.bookNameToPicName(wishID)
         if not picPath: # no pic
             self.removeItemFromData(wishID)
             self.filter()#reload the pictures- one has been deleted
@@ -420,10 +422,10 @@ class App:
 
         confirmation = self.popupConfirmPic(picPath,"Would you like to use this picture?","Yes","No")
         _self = self #acess from another class object
-        confirmation.sucess.trace("w", lambda self, *args: _self.moveThisPic(confirmation.sucess,picPath,newName,wishID))
+        confirmation.sucess.trace("w", lambda self, *args: _self.moveThisPic(confirmation.sucess,picPath,newId,wishID))
 
 
-    def moveThisPic(self,tracerVal,currentPicturePath,newBookName,wishID):
+    def moveThisPic(self,tracerVal,currentPicturePath,newBookId,wishID):
         if not tracerVal.get():#user dont want to keep the picture, delete it
             destroyFlag = destroyFile(currentPicturePath)
             if destroyFlag != True:#error in destory
@@ -432,15 +434,15 @@ class App:
             if messagebox.askyesno("Question","Would you like to add a picture?"):
                 filename = askopenfilename()
                 if filename:
-                    bookNameAsFile = convertnameToPath(vars['name']) + getExtensionFromPath(filename)
-                    flag = copyFile(filename,self.settings['pics']['wishFolderPath'] + bookNameAsFile)
+                    bookNameAsFile = newBookId + getExtensionFromPath(filename)
+                    flag = copyFile(filename,self.settings['pics']['picFolderPath'] + bookNameAsFile)
                     if flag != True:
                         insertError(f"""OS error - {flag}""",self.settings['errLog'])
                         messagebox.showerror(title='Error', message="Oppsss\nOS error.\nCould not copy the picture.\nPlease read LOG for mofe info.")
                     else:
                         messagebox.showinfo('Message',f'''Picture Copied.''')
         else:
-            newPath = self.settings['pics']['picFolderPath'] + convertnameToPath(newBookName) + getExtensionFromPath(currentPicturePath)
+            newPath = self.settings['pics']['picFolderPath'] + newBookId + getExtensionFromPath(currentPicturePath)
             moveFlag = moveFile(currentPicturePath,newPath)
             if moveFlag != True:
                 insertError(f"""OS error - {moveFlag}""",self.settings['errLog'])
@@ -451,9 +453,8 @@ class App:
         self.filter()#reload the pictures- one has been deleted
 
 
-    def bookNameToPicName(self,bookName):
-        path = convertnameToPath(bookName)
-        path = self.picFolder + path
+    def bookNameToPicName(self,bookId):
+        path = self.picFolder + str(bookId)
         path = getExtensionIfExist(path)
         return path
 
@@ -616,7 +617,7 @@ class App:
             messagebox.showerror(title='Error', message="Oppsss\nDB error.\nCould not delete this listing.\nPlease read LOG for mofe info.")
             return
         #deleted from DB, now delete picture if exists
-        path = self.bookNameToPicName(name)
+        path = self.bookNameToPicName(id)
         if path:
             #picture exists
             flag = destroyFile(path)
@@ -636,7 +637,7 @@ class App:
         prevB.pack(side=LEFT,expand=True,padx=(0,100))
         prevB.bind('<Button-1>',lambda event: self.navigatePrevBook(bookID))
 
-        self.addPic(bookName,parent,True)
+        self.addPic(bookID,parent,True)
 
         nextB = Label(self.currentImageHodler,text='Next >>',font=('Arial',23,'bold'),background='black',foreground = 'white',cursor = 'hand2')
         nextB.pack(side=RIGHT,expand=True,padx=(100,0))

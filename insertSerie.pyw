@@ -108,9 +108,9 @@ class InsertSerie:
                 self.killWindow()
 
         else:
-            flag = insertNewSerie(self.db,self.settings,vars)
-            if flag != True:
-                insertError(f"""DB error - {flag}""",self.settings['errLog'])
+            newId = insertNewSerie(self.db,self.settings,vars)
+            if not str(newId).isdigit():
+                insertError(f"""DB error - {newId}""",self.settings['errLog'])
                 messagebox.showerror(title='Error', message="Oppsss\nDB error.\nPlease read LOG for mofe info.")
             else:
                 messagebox.showinfo('Message',f'''New Books Serie Saved.''')
@@ -118,7 +118,7 @@ class InsertSerie:
                 if messagebox.askyesno("Question","Would you like to add a picture?"):
                     filename = askopenfilename()
                     if filename:
-                        serieName = convertnameToPath(vars['name']) + getExtensionFromPath(filename)
+                        serieName = str(newId) + getExtensionFromPath(filename)
                         flag = copyFile(filename,self.settings['pics']['seriesFolderPath'] + serieName)
                         if flag != True:
                             insertError(f"""OS error - {flag}""",self.settings['errLog'])

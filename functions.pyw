@@ -235,11 +235,6 @@ def moveFile(src,dst):
         return e
 
 
-def convertnameToPath(name):
-    path = name.replace(':','.').replace('<','.').replace('>','.').replace('|','.').replace('/','.').replace('"','.').replace('\\','.').replace('*','.').replace('?','.').lower()
-    return re.sub('\s+','',path)
-
-
 def copyFile(src,dst):
     try:
         shutil.copyfile(src, dst)
