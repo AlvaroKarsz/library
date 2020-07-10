@@ -779,12 +779,141 @@ def markBookAsUnReadSql(db,settings,id):
 
 def makeStats(db,settings):
     sql = '''
-            SELECT
-                    SUM(CASE WHEN read_order IS NOT NULL THEN 1 ELSE 0 END) AS read_books,
-                    SUM(1) AS books,
-                    SUM(pages) AS pages,
-                    SUM(CASE WHEN  read_order IS NOT NULL THEN pages ELSE 0 END) AS read_pages
-            FROM ''' + settings['db']['books_table']
+    SELECT
+        (
+         SELECT
+            JSON_AGG(language_agg)
+            FROM
+                (
+                    SELECT
+                        language AS language,
+                        COUNT(1) AS total_books,
+                        SUM(pages) AS total_pages,
+                        SUM(CASE WHEN read_order IS NOT NULL THEN 1 ELSE 0 END) AS readed_books,
+                        SUM(CASE WHEN  read_order IS NOT NULL THEN pages ELSE 0 END) AS readed_pages
+                    FROM ''' + settings['db']['books_table'] + '''
+                    GROUP BY language
+                ) language_agg
+            ) AS language,
+
+
+        (
+         SELECT
+            JSON_AGG(type_agg)
+            FROM
+                (
+                    SELECT
+                        (CASE WHEN type = 'P' THEN 'Paperback' ELSE CASE WHEN type = 'H' THEN 'Hardcover' ELSE 'Hardcover no Dustjaket'END  END)  AS type,
+                        COUNT(1) AS total_books,
+                        SUM(pages) AS total_pages,
+                        SUM(CASE WHEN read_order IS NOT NULL THEN 1 ELSE 0 END) AS readed_books,
+                        SUM(CASE WHEN  read_order IS NOT NULL THEN pages ELSE 0 END) AS readed_pages
+                    FROM ''' + settings['db']['books_table'] + '''
+                    GROUP BY type
+                ) type_agg
+            ) AS type,
+
+
+        (
+         SELECT
+            JSON_AGG(serie_agg)
+            FROM
+                (
+                    SELECT
+                        series_entry.name AS serie,
+                        COUNT(1) AS total_books,
+                        SUM(pages) AS total_pages,
+                        SUM(CASE WHEN read_order IS NOT NULL THEN 1 ELSE 0 END) AS readed_books,
+                        SUM(CASE WHEN  read_order IS NOT NULL THEN pages ELSE 0 END) AS readed_pages
+                    FROM ''' + settings['db']['books_table'] + ''' books_entry
+                    LEFT JOIN ''' + settings['db']['series_table'] + ''' series_entry
+                    ON series_entry.id = books_entry.serie
+                    WHERE books_entry.serie IS NOT NULL
+                    GROUP BY series_entry.name
+                ) serie_agg
+            ) AS serie,
+
+
+        (
+         SELECT
+            JSON_AGG(author_agg)
+            FROM
+                (
+                    SELECT
+                        author AS author,
+                        COUNT(1) AS total_books,
+                        SUM(pages) AS total_pages,
+                        SUM(CASE WHEN read_order IS NOT NULL THEN 1 ELSE 0 END) AS readed_books,
+                        SUM(CASE WHEN  read_order IS NOT NULL THEN pages ELSE 0 END) AS readed_pages
+                    FROM ''' + settings['db']['books_table'] + '''
+                    GROUP BY author
+                ) author_agg
+            ) AS author,
+
+
+        (
+         SELECT
+            JSON_AGG(stories_agg)
+            FROM
+                (
+                    SELECT
+                        COUNT(1) AS total_stories,
+                        SUM(stories_entry.pages) AS total_pages,
+                        SUM(CASE WHEN parent_entry.read_order IS NOT NULL THEN 1 ELSE 0 END) AS readed_stories,
+                        SUM(CASE WHEN  parent_entry.read_order IS NOT NULL THEN stories_entry.pages ELSE 0 END) AS readed_pages
+                    FROM ''' + settings['db']['stories_table'] + ''' stories_entry
+                    LEFT JOIN ''' + settings['db']['books_table'] + ''' parent_entry
+                    ON stories_entry.parent = parent_entry.id
+                ) stories_agg
+            ) AS stories,
+
+
+        (
+         SELECT
+            JSON_AGG(date_agg)
+            FROM
+                (
+                    SELECT
+                        UPPER(read_date) AS date,
+                        SUM(CASE WHEN read_order IS NOT NULL THEN 1 ELSE 0 END) AS readed_books,
+                        SUM(CASE WHEN  read_order IS NOT NULL THEN pages ELSE 0 END) AS readed_pages
+                    FROM ''' + settings['db']['books_table'] + '''
+                    WHERE read_date IS NOT NULL
+                    GROUP BY UPPER(read_date)
+                ) date_agg
+            ) AS read_date,
+
+
+        (
+         SELECT
+            JSON_AGG(list_agg)
+            FROM
+                (
+                    SELECT
+                        SUBSTRING(listed_date::text FROM '[0-9]{4}\-[0-9]{2}') AS date,
+                        COUNT(1) AS books
+                    FROM ''' + settings['db']['books_table'] + '''
+                    GROUP BY SUBSTRING(listed_date::text FROM '[0-9]{4}\-[0-9]{2}')
+                ) list_agg
+            ) AS list_date,
+
+
+        (
+         SELECT
+            JSON_AGG(publication_agg)
+            FROM
+                (
+                    SELECT
+                        SUBSTRING(year::text FROM '[0-9]{3}') || '0' AS year,
+                        COUNT(1) AS total_books,
+                        SUM(pages) AS total_pages,
+                        SUM(CASE WHEN read_order IS NOT NULL THEN 1 ELSE 0 END) AS readed_books,
+                        SUM(CASE WHEN  read_order IS NOT NULL THEN pages ELSE 0 END) AS readed_pages
+                    FROM ''' + settings['db']['books_table'] + '''
+                    GROUP BY SUBSTRING(year::text FROM '[0-9]{3}')
+                ) publication_agg
+            ) AS publication;
+    '''
     db.execute(sql)
     rows = db.fetchall()
     columns = db.description
