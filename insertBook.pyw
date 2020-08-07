@@ -5,6 +5,7 @@ from dbFunctions import *
 from functions import *
 import re
 from tkinter.filedialog import askopenfilename
+from tkinter.filedialog import askdirectory
 import pandas as pd
 from threading import Thread
 
@@ -19,6 +20,7 @@ class InsertBook:
         self.idTrace = StringVar()
         self.settings = settings
         self.destoryAfter = destoryAfter
+        self.folderToFetchPics = None
         self.setCheckboxStyle()
         self.setFrameStyle()
         self.closeOnclick()
@@ -30,7 +32,6 @@ class InsertBook:
         self.addNextBook(autoValues)
         self.addPrevBook(autoValues)
         self.addCollectionElements(autoValues)
-
 
 
     def addAutoFillLabel(self):
@@ -203,7 +204,7 @@ class InsertBook:
         text = 'Collection of stories',
         variable = self.isCollection,
         style='Red.TCheckbutton',
-        command = lambda : self.isCollectionBind(btn,lab)
+        command = lambda : self.isCollectionBind(btn,tableWidget,collPicturesHandler)
         ).pack(side=LEFT)
 
         btn = Label(topNav,
@@ -216,21 +217,13 @@ class InsertBook:
         )
         btn.bind('<Button-1>',lambda e: self.addNewCollectionEntry())
 
-        lab = Label(topNav,
-        text='Import Csv/Excel',
-        background='black',foreground='white'
-        )
-        lab.bind('<Button-1>',lambda event: self.handleTableImport())
+        tableWidget = self.addExcelCsvHandler(topNav)
 
-        lab.configure(cursor="hand2")
-        fTemp = font.Font(lab, lab.cget("font"))
-        fTemp.configure(weight='bold')
-        fTemp.configure(size=7)
-        lab.configure(font=fTemp)
+        collPicturesHandler = self.addCollectionPicsHandler(topNav) if jsonIsEmpty(autoValues) else None #select pictures for collection only if a new book is insrted, not in a update
+
         topNav.pack()
         fr.pack()
 
-        #self.isCollectionFrame = Label(fr,background='black',foreground='white')
         self.createView()
         self.isCollectionNextRow = 0
         self.collectionArr = []
@@ -239,6 +232,40 @@ class InsertBook:
             if autoValues['stories'] and notEmptyEls(autoValues['stories']):
                 self.isCollection.set(True)
                 Thread(target = lambda: self.insertAutoValuesCollection(autoValues['stories'])).start()
+
+
+    def addExcelCsvHandler(self,parent):
+        tableWidget = Label(parent,
+        text='Import Csv/Excel',
+        background='black',foreground='white'
+        )
+        tableWidget.bind('<Button-1>',lambda event: self.handleTableImport())
+        tableWidget.configure(cursor="hand2")
+        fTemp = font.Font(tableWidget, tableWidget.cget("font"))
+        fTemp.configure(weight='bold')
+        fTemp.configure(size=7)
+        tableWidget.configure(font=fTemp)
+        return tableWidget
+
+
+    def addCollectionPicsHandler(self,parent):
+        collPicturesHandler = Label(parent,
+        text='Chosse Pictures Folder',
+        background='black',foreground='white'
+        )
+        collPicturesHandler.bind('<Button-1>',lambda event: self.chossePicturesFolder())
+        collPicturesHandler.configure(cursor="hand2")
+        fTemp = font.Font(collPicturesHandler, collPicturesHandler.cget("font"))
+        fTemp.configure(weight='bold')
+        fTemp.configure(size=7)
+        collPicturesHandler.configure(font=fTemp)
+        return collPicturesHandler
+
+
+    def chossePicturesFolder(self):
+        folder = askdirectory()
+        if folder:
+            self.folderToFetchPics = folder
 
 
     def autoFillCollection(self,vals):
@@ -288,17 +315,22 @@ class InsertBook:
 
 
 
-    def isCollectionBind(self,btn,label):
+    def isCollectionBind(self,btn,label,collPicturesHandler):
         if not self.isCollection.get():
             self.killAllChildren(self.isCollectionFrame)
             #self.isCollectionFrame.pack_forget()
             btn.pack_forget()
             label.pack_forget()
+            if collPicturesHandler:#may be null in update case
+                collPicturesHandler.pack_forget()
             self.isCollectionNextRow = 0
             self.collectionArr = []
+            self.folderToFetchPics = None
         else:
             btn.pack(side=LEFT)
             label.pack(side=LEFT,padx=20)
+            if collPicturesHandler:#may be null in update case
+                collPicturesHandler.pack(side=LEFT,padx=20)
             #self.isCollectionFrame.pack()
             self.addNewCollectionEntry()
 
@@ -385,6 +417,9 @@ class InsertBook:
         else:
             if not self.hook:
                 newId = insertNewBook(self.db,self.settings,vars)
+                if self.folderToFetchPics != None:
+                    self.movePicsToCollection(newId)
+
                 self.idTrace.set(newId)
             else:
                 self.hook(self,vars,self.updateID)
@@ -404,6 +439,7 @@ class InsertBook:
                         else:
                             messagebox.showinfo('Message',f'''Picture Copied.''')
             self.sucess.set(vars['name'])
+
 
 
     def clearInputs(self):
@@ -611,3 +647,37 @@ class InsertBook:
 
     def scrollDown(self):
         self.canvas.yview_moveto('1')
+
+
+    def movePicsToCollection(self,parentId):
+        stories = getStoriesFromParent(self.db,self.settings,parentId)
+        if not stories:
+            insertError(f"""DB error - Could not fetch Stories from Parent ID""",self.settings['errLog'])
+            messagebox.showerror(title='Error', message="Oppsss\nCould not get pictures from selected folder.")
+            return
+
+        picturesFromFolder = listDir(self.folderToFetchPics,['png','jpg','jpeg'])
+        tempFilenames = None
+        tempPicturesFolderIndex = None
+        copyFlag = None
+        ErrorsFlag = False
+        for story in stories:
+            tempFilenames = [convertnameToPath(story['name']), convertnameToPath(story['name'],True)]
+            tempPicturesFolderIndex = self.findStoryPictureFromName(tempFilenames,picturesFromFolder)
+            if tempPicturesFolderIndex: #pic found
+                copyFlag = copyFile(picturesFromFolder[tempPicturesFolderIndex],self.settings['pics']['storiesFolderPath'] + str(story['id']) + '.' + picturesFromFolder[tempPicturesFolderIndex].split('.')[-1])
+                if copyFlag != True: #err copying file
+                    insertError(f"""OS error - {copyFlag}""",self.settings['errLog'])
+                    ErrorsFlag = True
+        if ErrorsFlag:
+            messagebox.showerror(title='Error', message="Oppsss\nCould not copy all Pictures to App\nPlease read log for more info.")
+
+
+
+    def findStoryPictureFromName(self,storyNameOptionsArr,directoryContentArr):
+        for index,fileName in enumerate(directoryContentArr):
+            for storyName in storyNameOptionsArr:
+                if fileName.split('/')[-1].split('.')[0].lower() == storyName.lower():
+                    return index
+
+        return None

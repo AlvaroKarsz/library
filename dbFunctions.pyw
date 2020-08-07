@@ -751,6 +751,19 @@ def deleteFromWishList(db,settings,id):
         return err
 
 
+def getStoriesFromParent(db,settings,parentId):
+    query = '''
+    SELECT id,name FROM ''' + settings['db']['stories_table'] + '''
+    WHERE parent =  %s'''
+    try:
+        db.execute(query,[parentId])
+        rows = db.fetchall()
+        columns = db.description
+        return postgresResultToColumnRowJson(columns,rows)
+    except Exception as err:
+        return False
+
+
 def deleteFromWSeriesList(db,settings,id):
     if not id:
         return 'Error, serie id is not a number'

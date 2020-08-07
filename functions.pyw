@@ -21,7 +21,7 @@ def centerWindow(window,width, height):
 
 
 def getExtensionIfExist(fileNameWithoutExt):
-    fileName = glob.glob(fileNameWithoutExt + '.png') + glob.glob(fileNameWithoutExt + '.jpg') + glob.glob(fileNameWithoutExt + '.jpeg') + glob.glob(fileNameWithoutExt + '.png')
+    fileName = glob.glob(fileNameWithoutExt + '.png') + glob.glob(fileNameWithoutExt + '.jpg') + glob.glob(fileNameWithoutExt + '.jpeg')
     return fileName[0].replace('\\','/') if len(fileName) > 0 else None
 
 
@@ -453,3 +453,21 @@ def getDataFromIsbn(isbn,settings):
     collectionVals = getCollectionFromApiResponse(res[jsonKey])
 
     return {'name': bookName , 'author':authors, 'year':bookYear,'pages':bookPages,'collection':collectionVals}
+
+def jsonIsEmpty(json):
+    return json == {} or not json
+
+
+def convertnameToPath(name,removeWhiteSpaces = False):
+    path = name.replace(':','.').replace('<','.').replace('>','.').replace('|','.').replace('/','.').replace('"','.').replace('\\','.').replace('*','.').replace('?','.').lower()
+    return re.sub('\s+','',path) if removeWhiteSpaces else path
+
+def listDir(dir,mimeArr = None):
+    ls = []
+    if mimeArr:
+        for mime in mimeArr:
+            ls += glob.glob(dir + '/*.' + mime)
+    else:
+        ls += glob.glob(dir + '/*')
+
+    return list(map(lambda it: it.replace('\\','/'), ls))
