@@ -78,6 +78,7 @@ settings['icons']['amazon'] = settings['appDir'] + settings['icons']['folder'] +
 settings['icons']['ebay'] = settings['appDir'] + settings['icons']['folder'] + 'ebay.png'
 settings['icons']['better_world_books'] = settings['appDir'] + settings['icons']['folder'] + 'better_world_books.png'
 settings['icons']['book_depository'] = settings['appDir'] + settings['icons']['folder'] + 'book_depository.jpg'
+settings['icons']['abebooks'] = settings['appDir'] + settings['icons']['folder'] + 'abebooks.png'
 
 settings['errLog'] = settings['appDir'] + 'logs/'
 
@@ -116,3 +117,4 @@ settings['stores']['betterworldbooks'] = 'https://www.betterworldbooks.com/searc
 settings['stores']['ebay'] = 'https://www.ebay.com/sch/i.html?_from=R40&_ipg=200&_nkw='
 settings['stores']['amazon'] = 'https://www.amazon.com/s?k='
 settings['stores']['bookdepository'] = 'https://www.bookdepository.com/search?searchTerm='
+settings['stores']['abebooks'] = 'https://www.abebooks.com/servlet/SearchResults?bi=h&kn='
