@@ -270,7 +270,7 @@ class InsertWish:
 
     def destoryPicture(self,path):
         destoryFlag = destroyFile(path)
-        if path != True: #could not destory - update log
+        if destoryFlag != True: #could not destory - update log
             insertError(f"""OS error - could not delete a file\nPath: {path}\nError: {destoryFlag}""",self.settings['errLog'])
 
 
