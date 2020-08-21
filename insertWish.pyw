@@ -237,7 +237,7 @@ class InsertWish:
                 _self = self #acess from another class object
                 confirmation.sucess.trace("w", lambda self, *args: _self.apiPictureResponse(confirmation.sucess,str(newWIshId),fileApiPath))
             else: # could not fetch cover from api, ask if want to upload new pic
-                self.askOperatorToUploadPic(vars['name'])
+                self.askOperatorToUploadPic(str(newWIshId))
 
 
     def apiPictureResponse(self,responseTrack,bookId,bookApiPath):
