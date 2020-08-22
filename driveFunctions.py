@@ -137,24 +137,8 @@ def deleteFileFromRemote(service,fileId):
     service.files().delete(fileId=fileId).execute()
 
 
-def updateFileinDrive(service,name,path,folderId,fileId):
-    service.files().delete(fileId=fileId).execute()
-    return uploadFileToDrive(service,name,path,folderId)
-    if not folderId:
-        return False
-
-    mime = getMimeFromExtension(name.split('.')[-1])
-    if not mime:
-        return False
-
-    file = service.files().get(fileId=fileId).execute()
-    file['mimeType'] = mime
-
-
-    media_body = MediaFileUpload(
-        path + '/' + name, mimetype=mime)
-
-    updated_file = service.files().update(
-        fileId=fileId,
-        body=file,
-        media_body=media_body).execute()
+def checkIfFileExistsInLocal(fileName,localFolderContent):
+    for n in localFolderContent:
+        if n[0] == fileName:
+            return True
+    return False

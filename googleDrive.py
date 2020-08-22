@@ -106,6 +106,21 @@ def backupFilesToDrive(dialog,win):
                 updateDriveDialog(dialog,'File ' + file[0] + ' was uploaded Successfully to Remote\n')
 
 
+    #now delete files from remote that no logner exists on local
+    updateDriveDialog(dialog,'\nChecking for files in remote that no longer exists in local\n')
+    parentTmpHolder = ''
+    for fe in files:
+        parentTmpHolder = getParentNameById(fe['parents'][0],folders)
+        updateDriveDialog(dialog,'Remote file ' + fe['name'] + ' in local folder ' + parentTmpHolder + '\n')
+        if checkIfFileExistsInLocal(fe['name'],localJsonData[parentTmpHolder]):
+            updateDriveDialog(dialog,'Remote file ' + fe['name'] + ' exists in local folder ' + parentTmpHolder + '\n')
+        else:
+            updateDriveDialog(dialog,'Remote file ' + fe['name'] + ' NOT exists in local folder ' + parentTmpHolder + '\n')
+            updateDriveDialog(dialog,'DELETING Remote file ' + fe['name'] + ' from remote folder ' + parentTmpHolder + '\n')
+            deleteFileFromRemote(service,fe['id'])
+            updateDriveDialog(dialog,' Remote file ' + fe['name'] + ' from remote folder ' + parentTmpHolder + ' was DELETED\n')
+
+
     updateDriveDialog(dialog,'BACKUP IS DONE!\n\n')
     time.sleep(2)
     win.destroy()
