@@ -11,7 +11,12 @@ def updateDriveDialog(dialog,text):
     dialog.see(END)
 
 
-def backupFilesToDrive(dialog,win):
+def backupFilesToDrive(dialog,win, folderToBackUp):
+    if folderToBackUp:
+        updateDriveDialog(dialog,'Backup ' + folderToBackUp + ' folder\n\n')
+    else:
+        updateDriveDialog(dialog,'Backup ALL folders\n\n')
+
     updateDriveDialog(dialog,'Loggin in to Google Drive.\n')
     service = loginDrive()
     updateDriveDialog(dialog,'Logged into Google Drive.\n')
@@ -24,6 +29,11 @@ def backupFilesToDrive(dialog,win):
         updateDriveDialog(dialog,fl['name'] + '\n')
 
     updateDriveDialog(dialog,'Total: ' + str(len(folders)) + ' Folders\n\n')
+
+    if folderToBackUp:
+        updateDriveDialog(dialog, 'Keep only relevant folder ' + folderToBackUp + '\n\n')
+        folders = keepRelevantFolderFromDrive(folders,folderToBackUp)
+
 
     updateDriveDialog(dialog,'Fetching all relevant files from Google Drive.\n')
 
@@ -40,6 +50,11 @@ def backupFilesToDrive(dialog,win):
     for fil in foldersToBackup:
         updateDriveDialog(dialog,fil + '\n')
     updateDriveDialog(dialog,'Total: ' + str(len(foldersToBackup)) + ' Folders\n\n')
+
+    if folderToBackUp:
+        updateDriveDialog(dialog, 'Keep only relevant folder ' + folderToBackUp + '\n\n')
+        foldersToBackup = [folderToBackUp]
+
 
     #create unexisting folders
     updateDriveDialog(dialog,'Creating unexisting remote Folders\n')
@@ -121,6 +136,6 @@ def backupFilesToDrive(dialog,win):
             updateDriveDialog(dialog,' Remote file ' + fe['name'] + ' from remote folder ' + parentTmpHolder + ' was DELETED\n')
 
 
-    updateDriveDialog(dialog,'BACKUP IS DONE!\n\n')
-    time.sleep(2)
+    updateDriveDialog(dialog,'\nBACKUP IS DONE!\n\n')
+    time.sleep(3)
     win.destroy()

@@ -1103,22 +1103,38 @@ class App:
         self.displayMenu.add_checkbutton(label="Display Stats", variable = temp)
         self.displayVars.append(temp)
 
+
         topNav.add_cascade(label="Display", menu=self.displayMenu)
         bckupMenu = Menu(topNav,tearoff=False,bg='white',font=('Arial',11))
         bckupMenu.add_command(label="Backup DB Structure",command = self.backupStructureDB)
         bckupMenu.add_command(label="Backup DB Data", command = self.backupDataDB)
         bckupMenu.add_command(label="Commit & Push", command = self.commitAndPush)
-        bckupMenu.add_command(label="Upload Pics To Drive", command = self.backupToGoogleDriveCommand)
+
+
+
+        driveSubMenu = Menu(bckupMenu,tearoff=False,bg='white',font=('Arial',11))
+        driveSubMenu.add_command(label="All", command = self.backupToGoogleDriveCommand)
+        driveSubMenu.add_command(label="DB Backups", command = lambda : self.backupToGoogleDriveCommand('backups'))
+        driveSubMenu.add_command(label="Owned Books Pics", command = lambda : self.backupToGoogleDriveCommand('pictures'))
+        driveSubMenu.add_command(label="Series Pics", command = lambda : self.backupToGoogleDriveCommand('series'))
+        driveSubMenu.add_command(label="Stories Pics", command = lambda : self.backupToGoogleDriveCommand('stories'))
+        driveSubMenu.add_command(label="Wishlist Books Pics", command = lambda : self.backupToGoogleDriveCommand('wishlist'))
+        driveSubMenu.add_command(label="Icons", command = lambda : self.backupToGoogleDriveCommand('icons'))
+        driveSubMenu.add_command(label="General Pics", command = lambda : self.backupToGoogleDriveCommand('generalPics'))
+
+        bckupMenu.add_cascade(label="Upload Pics To Drive", menu=driveSubMenu)
         topNav.add_cascade(label="Advanced", menu=bckupMenu)
 
 
-    def backupToGoogleDriveCommand(self):
+
+
+    def backupToGoogleDriveCommand(self, folder = None):
         dialog = Toplevel(self.window)
         dialog.title('Drive Uploader')
         centerWindow(dialog,settings['dialog']['width'],settings['dialog']['height'])
         T = Text(dialog,bg='black',fg='white')
         T.pack()
-        thread = Thread(target = lambda: backupFilesToDrive(T,dialog))
+        thread = Thread(target = lambda: backupFilesToDrive(T,dialog,folder))
         self.killThreadWhenWindowIsClosed(thread)
         thread.start()
 

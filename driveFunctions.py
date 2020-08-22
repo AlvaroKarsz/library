@@ -142,3 +142,10 @@ def checkIfFileExistsInLocal(fileName,localFolderContent):
         if n[0] == fileName:
             return True
     return False
+
+def keepRelevantFolderFromDrive(folders,folderName):
+    for fl in folders:
+        if fl['name'] == folderName:
+            return [fl]
+
+    return []
