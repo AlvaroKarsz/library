@@ -6,6 +6,7 @@ import os
 import shutil
 import requests
 import json
+import subprocess
 
 def decodePass(passw,separator):
     passw = passw.split(separator)
@@ -471,3 +472,13 @@ def listDir(dir,mimeArr = None):
         ls += glob.glob(dir + '/*')
 
     return list(map(lambda it: it.replace('\\','/'), ls))
+
+
+def getMD5(path,fileName):
+    curentWD = os.getcwd()
+    os.chdir(path)
+    command = f'''certutil -hashfile {fileName} md5'''
+    res = subprocess.check_output(command, shell=True)
+    os.chdir(curentWD)
+    res = str(res).split("\\r\\n")
+    return res[1]

@@ -20,6 +20,7 @@ from wishlist import Wishlist
 from tkinter import messagebox
 from confirmPic import Confirm
 from osFunctions import *
+from googleDrive import backupFilesToDrive
 import webbrowser
 
 class App:
@@ -1107,7 +1108,19 @@ class App:
         bckupMenu.add_command(label="Backup DB Structure",command = self.backupStructureDB)
         bckupMenu.add_command(label="Backup DB Data", command = self.backupDataDB)
         bckupMenu.add_command(label="Commit & Push", command = self.commitAndPush)
+        bckupMenu.add_command(label="Upload Pics To Drive", command = self.backupToGoogleDriveCommand)
         topNav.add_cascade(label="Advanced", menu=bckupMenu)
+
+
+    def backupToGoogleDriveCommand(self):
+        dialog = Toplevel(self.window)
+        dialog.title('Drive Uploader')
+        centerWindow(dialog,settings['dialog']['width'],settings['dialog']['height'])
+        T = Text(dialog,bg='black',fg='white')
+        T.pack()
+        thread = Thread(target = lambda: backupFilesToDrive(T,dialog))
+        self.killThreadWhenWindowIsClosed(thread)
+        thread.start()
 
 
     def commitAndPush(self):

@@ -13,6 +13,12 @@ settings['db']['wish_table'] = 'wish_list_table_name'
 
 settings['maxBooksFetch'] = 20
 
+
+settings['dialog'] = {}
+settings['dialog']['width'] = 500
+settings['dialog']['height'] = 300
+
+
 settings['gui'] = {}
 settings['gui']['width'] = 1000
 settings['gui']['height'] = 900
@@ -118,3 +124,8 @@ settings['stores']['ebay'] = 'https://www.ebay.com/sch/i.html?_from=R40&_ipg=200
 settings['stores']['amazon'] = 'https://www.amazon.com/s?k='
 settings['stores']['bookdepository'] = 'https://www.bookdepository.com/search?searchTerm='
 settings['stores']['abebooks'] = 'https://www.abebooks.com/servlet/SearchResults?bi=h&kn='
+
+
+settings['api']['googleDrive'] = {}
+settings['api']['googleDrive']['mainFolderId'] = 'id'
+settings['api']['googleDrive']['foldersList'] = ['series','pictures','stories','wishlist','icons','generalPics','backups']
