@@ -12,11 +12,15 @@ settings['db']['stories_table'] = 'stories_table_name'
 settings['db']['wish_table'] = 'wish_list_table_name'
 
 settings['maxBooksFetch'] = 20
-
+settings["maxCoverFetch"] = 9
 
 settings['dialog'] = {}
 settings['dialog']['width'] = 500
 settings['dialog']['height'] = 300
+
+settings['storiesDialog'] = {}
+settings['storiesDialog']['width'] = 800
+settings['storiesDialog']['height'] = 600
 
 
 settings['gui'] = {}
@@ -39,6 +43,8 @@ settings['pics']['width'] = 180
 settings['pics']['height'] = 200
 settings['pics']['width_big'] =  220
 settings['pics']['height_big'] =  250
+settings['pics']['covers_width'] = 160
+settings['pics']['covers_height'] = 180
 settings['pics']['blank_pic'] =  settings['appDir'] + 'generalPics/blank.jpg'
 
 settings['insertBook'] = {}
@@ -49,6 +55,10 @@ settings['insertBook']['pady_popup'] = 50
 settings['insertWish'] = {}
 settings['insertWish']['padx_popup'] = 200
 settings['insertWish']['pady_popup'] = 180
+
+settings['covers'] = {}
+settings['covers']['width'] = 800
+settings['covers']['height'] = 900
 
 settings['settings_popup'] = {}
 settings['insertBook']['padx'] = 100
@@ -116,7 +126,7 @@ settings['api']['goodreads']['isbnByTitle'] = 'https://www.goodreads.com/book/ti
 
 
 settings['api']['googleBooksApi'] = {}
-settings['api']['googleBooksApi']['search'] = 'https://www.googleapis.com/books/v1/volumes?maxResults=20&orderBy=relevance&printType=BOOKS&q='
+settings['api']['googleBooksApi']['search'] = 'https://www.googleapis.com/books/v1/volumes?maxResults=30&orderBy=relevance&printType=BOOKS&q='
 
 settings['stores'] = {}
 settings['stores']['betterworldbooks'] = 'https://www.betterworldbooks.com/search/results?Format=Hardcover&p=1&hpp=96&q='

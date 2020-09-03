@@ -11,6 +11,8 @@ class Wishlist:
         self.sortTranslations = [['id',False],['id',True],['name',False],['name',True],['year',False],['year',True]]
         self.updateOption = 2
         self.buyingOption = True
+        self.changeCover = True
+        
 
     def setData(self):
         return fetchMyWishlist(self.db,self.settings)

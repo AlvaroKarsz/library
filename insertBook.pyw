@@ -86,7 +86,7 @@ class InsertBook:
                     self.autoFillCollection(data['collection'])
         else:
             #fetch isbn by title, then get data
-            isbn = improvedGetIsbn(name,author,self.settings)
+            isbn = getIsbn(name,author,self.settings)
             if self.autoFetchThreadID == threadId and isbn : # still relevant and the isbn was found
             #now fetch data from isbn
                 data = getDataFromIsbn(isbn,self.settings)

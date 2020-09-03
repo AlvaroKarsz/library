@@ -228,11 +228,15 @@ def getExtensionFromPath(path):
     return '.' + exploded[len(exploded) - 1]
 
 
-def moveFile(src,dst):
+def moveFile(src,dst,settings,force=False):
     try:
-        os.rename(src,dst)
+        if force:
+            os.replace(src,dst)
+        else:
+            os.rename(src,dst)
         return True
     except OSError as e:
+        insertError(f"""Error moving file from:\n{src}\nTO\n{dst}\nError: {e}""",settings['errLog'])
         return e
 
 
@@ -266,6 +270,9 @@ def postgresDateToHumanDate(date):
 def classHasMethod(classObject,methodName):
     attr = getattr(classObject, methodName, None)
     return callable(attr)
+
+def classHaveProperty(c,property):
+    return hasattr(c, property)
 
 
 def isArray(a):
@@ -337,59 +344,6 @@ def arrayIncludesPartInsensitive(needle,arr):
         if stringIncludes2WaysInsensitive(val,needle):
             return True
     return False
-
-
-def getIsbn13FromResponse(arr):
-    #convert to array(if its not one)
-    arr = arr if isArray(arr) else [arr]
-    isbn10 = False
-    isbn13 = False
-
-    for isbnDict in arr:
-        if 'type' not in isbnDict or 'identifier' not in isbnDict:
-            continue #invalid
-
-        if stringIncludes2WaysInsensitive('13',isbnDict['type']):
-            isbn13 = isbnDict['identifier']
-            break #isbn13 was found - now break
-
-        elif stringIncludes2WaysInsensitive('10',isbnDict['type']):
-            isbn10 = isbnDict['identifier']
-
-    return isbn13 if isbn13 else isbn10
-
-
-def improvedGetIsbn(title,author,settings):
-    return getIsbn(title,author, settings)
-    url = settings['api']['googleBooksApi']['search'] + title + ' ' + author
-    res = requests.get(url = url)
-    if res.status_code != 200:
-        insertError(f"""Fetch error - bad status code from http request\nurl: {url}\nstatus code: {res.status_code}\nresponse: {res.text}""",settings['errLog'])
-        return False
-    res = json.loads(res.content)
-    resultVal = False
-    tempHolderVal = False
-    if 'totalItems' in res and res['totalItems'] > 0 and 'items' in res and isArray(res['items']):
-        for item in res['items']:
-            #iterate the results
-            if 'volumeInfo' not in item:
-                continue #invalid - go to next iteration
-
-            if 'title' not in item['volumeInfo'] or 'authors' not in item['volumeInfo'] or 'industryIdentifiers' not in item['volumeInfo']:
-                continue #invalid - go to next iteration
-
-            if stringIncludes2WaysInsensitive(title,item['volumeInfo']['title']):
-                #title match - get the isbn from dict
-                tempHolderVal = getIsbn13FromResponse(item['volumeInfo']['industryIdentifiers'])
-                if not tempHolderVal:
-                    continue #isbn not found in dict
-                #isbn found - keep it in returned value
-                resultVal = tempHolderVal
-                if not author or arrayIncludesPartInsensitive(author,item['volumeInfo']['authors']):
-                    break #best match - title and author, exit loop and return value
-
-    #return response if found - if not try goodreads api
-    return resultVal if resultVal else  getIsbn(title, settings)
 
 
 def getPublicationYearFromApiResponse(str):
@@ -482,3 +436,65 @@ def getMD5(path,fileName):
     os.chdir(curentWD)
     res = str(res).split("\\r\\n")
     return res[1]
+
+
+def clearFolder(path):
+    list = os.listdir(path)
+    for file in list:
+        if not file.startswith('.'):
+            destroyFile(path + "/" + file)
+
+
+def getVarietyOfCoversFromBookNameAndAuthor(title,author,settings):
+    url = settings['api']['googleBooksApi']['search'] + title + ' ' + author
+    res = requests.get(url = url)
+    if res.status_code != 200:
+        insertError(f"""Fetch error - bad status code from http request\nurl: {url}\nstatus code: {res.status_code}\nresponse: {res.text}""",settings['errLog'])
+        return False
+
+    res = json.loads(res.content)
+    coversArr = []
+    tempPathVal = False
+    if 'totalItems' in res and res['totalItems'] > 0 and 'items' in res and isArray(res['items']):
+        for item in res['items']:
+            #iterate the results
+            if 'volumeInfo' not in item:
+                continue #invalid - go to next iteration
+
+            if 'title' not in item['volumeInfo']:
+                continue #invalid - go to next iteration
+
+            if not stringIncludes2WaysInsensitive(title,item['volumeInfo']['title']):
+                #no match in title
+                continue
+            #now check if imageLinks exists - if not continue
+            if 'imageLinks' not in item['volumeInfo']:
+                continue
+
+            #now check if imagelings has thumbnail property
+            if 'thumbnail' not in item['volumeInfo']['imageLinks']:
+                continue
+
+            #now try to fetch the thumbnail
+            res = requests.get(url = item['volumeInfo']['imageLinks']['thumbnail'])
+            #bad response
+            if res.status_code != 200:
+                insertError(f"""Fetch error - bad status code from http request\nurl: {item['volumeInfo']['imageLinks']['thumbnail']}\nstatus code: {res.status_code}\nresponse: {res.text}""",settings['errLog'])
+                continue
+
+            #save the fetched picture
+            tempPathVal = settings['tmp'] + getRandomStr(55) + '.jpg'
+            try:
+                open(tempPathVal, 'wb').write(res.content)
+            except OSError as e:
+                insertError(f"""OS error - Could not create tmp file\nerror: {e}""",settings['errLog'])
+                continue
+
+            #push the pic to array
+            coversArr.append(tempPathVal) #save the pic path
+
+            #fetched the max number of allowed covers
+            if len(coversArr) >= settings["maxCoverFetch"]:
+                break
+
+    return coversArr

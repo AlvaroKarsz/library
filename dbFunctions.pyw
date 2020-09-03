@@ -234,7 +234,9 @@ def fetchBookById(db,settings,id):
                     'name',
                     stories_table.name,
                     'pages',
-                    stories_table.pages
+                    stories_table.pages,
+                    'id',
+                    stories_table.id
                 )
             )
         ) AS stories

@@ -10,6 +10,7 @@ class Stories:
         self.sortOptions = ['ID, Lowest first','ID, Latest first','Story Name, ABC','Story Name, ZYX','Collection Name, ABC','Collection Name, ZYX','Number of Pages, Lowest first','Number of Pages, Biggest first','Publication Year, Lowest first','Publication Year, Latest first']
         self.sortTranslations = [['id',False],['id',True],['name',False],['name',True],['parent_name',False],['parent_name',True],['pages',False],['pages',True],['year',False],['year',True]]
         self.updateOption = None
+        self.changeCover = True
 
     def setData(self):
         return fetchAllMyStories(self.db,self.settings)

@@ -9,6 +9,8 @@ from tkinter import font
 from threading import Thread
 from insertBook import InsertBook
 from insertWish import InsertWish
+from selectCover import CoverSelector
+from displayStories import DisplayStories
 from insertSerie import InsertSerie
 from stories import Stories
 from books import Books
@@ -41,6 +43,7 @@ class App:
         self.totalPages = 1#default untill books loads
         self.booksCount = 1#default untill books loads
         self.currentOverlay = None
+        self.coverChangerWindow = None
         self.perRow = settings['booksDisplayPreRow']
         centerWindow(win,settings['gui']['width'],settings['gui']['height'])
         self.addTopNav()
@@ -444,7 +447,7 @@ class App:
                         messagebox.showinfo('Message',f'''Picture Copied.''')
         else:
             newPath = self.settings['pics']['picFolderPath'] + newBookId + getExtensionFromPath(currentPicturePath)
-            moveFlag = moveFile(currentPicturePath,newPath)
+            moveFlag = moveFile(currentPicturePath,newPath,self.settings)
             if moveFlag != True:
                 insertError(f"""OS error - {moveFlag}""",self.settings['errLog'])
                 messagebox.showerror(title='Error', message="Oppsss\OS error.\nCould not move the Picture.\nPlease read LOG for mofe info.")
@@ -515,7 +518,7 @@ class App:
         background ='black',
         foreground='white'
         ).pack(fill=X,padx=3)
-        self.makeTravelersWithPic(bookObj['name'],self.currentOverlay,id,bookObj)
+        self.makeTravelersWithPic(bookObj['name'],self.currentOverlay,id,bookObj['author'],bookObj)
         self.addBookData(bookObj,self.currentOverlay)
 
 
@@ -567,11 +570,39 @@ class App:
         self.setFgColor([holder,iconHolder],'white')
 
 
-    def addListingOptions(self,parent,id,name,json):
+    def addListingOptions(self,parent,id,name,author,json):
         if self.updateById:
             self.addEditOption(parent,json,id)
+
+        if self.changeCover:
+            self.addChangeCoverOption(parent,name,author,id)
+
         if self.deleteById:
             self.deleteListing(parent,id,name)
+
+
+    def addChangeCoverOption(self,parent,title,author,id):
+        icon = Image.open(self.settings['icons']['alter'])
+        icon = icon.resize((self.settings['icons']['mini_width'] ,self.settings['icons']['mini_height']))
+        icon = ImageTk.PhotoImage(icon)
+        holder = Label(parent,anchor='n')
+        iconHolder = Label(holder, image = icon,anchor='n')
+        iconHolder.image = icon # keep a reference!
+        text = Label(holder,
+        text = "Change Cover",
+        background='black',
+        foreground='white',
+        font=('Arial',10),
+        anchor='n'
+        )
+        self.styleRedirectText(text)
+        holder.pack(pady=3)
+        iconHolder.pack(side=LEFT)
+        text.pack(side=LEFT)
+        text.bind('<Button-1>',lambda event: self.changeCover(title,author,id))
+        self.setBgColor([holder,iconHolder],'black')
+        self.setFgColor([holder,iconHolder],'white')
+
 
     def addEditOption(self,parent,json,id):
         icon = Image.open(self.settings['icons']['alter'])
@@ -632,7 +663,7 @@ class App:
 
 
 
-    def makeTravelersWithPic(self,bookName,parent,bookID,json):
+    def makeTravelersWithPic(self,bookName,parent,bookID,bookAuthor,json):
         self.currentImageHodler = Label(parent,background='white')
 
         prevB = Label(self.currentImageHodler,text='<< Prev.',font=('Arial',23,'bold'),background='black',foreground = 'white',cursor = 'hand2')
@@ -647,7 +678,7 @@ class App:
 
         self.currentImageHodler.pack(fill=X,padx=3,pady=0)
         self.currentImageHodler = None
-        self.addListingOptions(parent,bookID,bookName,json)
+        self.addListingOptions(parent,bookID,bookName,bookAuthor,json)
         self.setBgColor(self.currentImageHodler,'black')
         self.setFgColor(self.currentImageHodler,'white')
 
@@ -702,13 +733,13 @@ class App:
 
 
 
-    def postStoriesList(self,stories,parent):
+    def postStoriesList(self,stories,bookName,bookAuthor,parent):
         label = self.postSingleBookLine('',parent,True)
         Label(label,text='Collection: ',font=('Arial',self.settings['gui']['popup_font_size']),anchor="w",background ='black',foreground='white').pack(side=LEFT,pady=3)
         storiesTag = Label(label,text = str(len(stories)) + ' Stories',font=('Arial',self.settings['gui']['popup_font_size']),anchor="w",background ='black',foreground='white')
         storiesTag.pack(side=LEFT,pady=3)
         self.styleRedirectText(storiesTag)
-        storiesTag.bind('<Button-1>',lambda event: print(stories))
+        storiesTag.bind('<Button-1>',lambda event: self.displayStoriesPopup(stories, bookName,bookAuthor))
 
 
 
@@ -1058,7 +1089,7 @@ class App:
 
         if 'stories' in bookO:
             if bookO['stories'] and notEmptyEls(bookO['stories']):
-                self.postStoriesList(bookO['stories'],parent)
+                self.postStoriesList(bookO['stories'],bookO['name'],bookO['author'],parent)
 
 
     def addTopNav(self):
@@ -1126,6 +1157,20 @@ class App:
         topNav.add_cascade(label="Advanced", menu=bckupMenu)
 
 
+
+    def displayStoriesPopup(self, stories, bookName,bookAuthor):
+        win = Toplevel(self.window)
+        centerWindow(win,settings['storiesDialog']['width'],settings['storiesDialog']['height'])
+        DisplayStories(win,stories, bookName, bookAuthor, settings['pics']['storiesFolderPath'])
+
+
+    def selectCoverWindow(self,title,author,id):
+        if self.coverChangerWindow:#remove the open one
+            self.coverChangerWindow.destroy()
+
+        self.coverChangerWindow =  Toplevel(self.window)
+        centerWindow(self.coverChangerWindow,settings['covers']['width'],settings['covers']['height'])
+        CoverSelector(self.coverChangerWindow,self.settings,title,author,self.picFolder ,id)
 
 
     def backupToGoogleDriveCommand(self, folder = None):
@@ -1265,6 +1310,8 @@ class App:
         self.sortOptions = stories.sortOptions
         self.sortTranslations = stories.sortTranslations
         self.updateTitle(stories.title)
+        if classHaveProperty(Stories,'changeCover')  and Stories.changeCover:
+            self.changeCover = True
         self.fetchById = lambda self,id: Stories.fetchById(self.db,self.settings,id)
         if classHasMethod(Stories,'deleteById'):
             self.deleteById = lambda self,id: Stories.deleteById(self.db,self.settings,id)
@@ -1292,6 +1339,8 @@ class App:
         self.buyingOption = True if hasattr(series,'buyingOption') else False
         self.sortTranslations = series.sortTranslations
         self.updateTitle(series.title)
+        if classHaveProperty(Series,'changeCover') and Series.changeCover:
+            self.changeCover = True
         self.fetchById = lambda self,id: Series.fetchById(self.db,self.settings,id)
         if classHasMethod(Series,'deleteById'):
             self.deleteById = lambda self,id: Series.deleteById(self.db,self.settings,id)
@@ -1319,6 +1368,8 @@ class App:
         self.buyingOption = True if hasattr(books,'buyingOption') else False
         self.sortTranslations = books.sortTranslations
         self.updateTitle(books.title)
+        if classHaveProperty(Books,'changeCover') and Books.changeCover:
+            self.changeCover = True
         self.fetchById = lambda self,id: Books.fetchById(self.db,self.settings,id)
         if classHasMethod(Books,'deleteById'):
             self.deleteById = lambda self,id: Books.deleteById(self.db,self.settings,id)
@@ -1346,6 +1397,8 @@ class App:
         self.buyingOption = True if hasattr(wish,'buyingOption') else False
         self.sortTranslations = wish.sortTranslations
         self.updateTitle(wish.title)
+        if classHaveProperty(Ordered,'changeCover') and Ordered.changeCover:
+            self.changeCover = True
         self.fetchById = lambda self,id: Ordered.fetchById(self.db,self.settings,id)
         if classHasMethod(Ordered,'deleteById'):
             self.deleteById = lambda self,id: Ordered.deleteById(self.db,self.settings,id)
@@ -1373,6 +1426,8 @@ class App:
         self.buyingOption = True if hasattr(wish,'buyingOption') else False
         self.sortTranslations = wish.sortTranslations
         self.updateTitle(wish.title)
+        if classHaveProperty(Wishlist,'changeCover') and Wishlist.changeCover:
+            self.changeCover = True
         self.fetchById = lambda self,id: Wishlist.fetchById(self.db,self.settings,id)
         if classHasMethod(Wishlist,'deleteById'):
             self.deleteById = lambda self,id: Wishlist.deleteById(self.db,self.settings,id)
@@ -1400,6 +1455,8 @@ class App:
         self.sortOptions = reads.sortOptions
         self.sortTranslations = reads.sortTranslations
         self.updateTitle(reads.title)
+        if classHaveProperty(Reads,'changeCover') and Reads.changeCover:
+            self.changeCover = True
         if classHasMethod(Reads,'deleteById'):
             self.deleteById = lambda self,id: Reads.deleteById(self.db,self.settings,id)
         else:
@@ -1461,6 +1518,26 @@ class App:
 
     def addBorders(self,wid):
         wid.configure(borderwidth=2, relief="raised")
+
+
+    def changeCover(self,title,author,id):
+        if messagebox.askyesno(title='Fetch', message="Do you want us to search covers for you?"):
+            #fetch from web
+            self.selectCoverWindow(title,author,id)
+        else:
+            #upload pic
+            filename = askopenfilename()
+            if filename: # file was selected
+                #get the current file
+                currentPicPath = getExtensionIfExist(self.picFolder + '/' + str(id))
+                if not currentPicPath: #no current file - set the extension by the selected pic
+                    currentPicPath = self.picFolder + '/' + str(id) + getExtensionFromPath(filename)
+
+                #try to move the selected file
+                if moveFile(filename,currentPicPath,self.settings,True) != True:#error moving file
+                    messagebox.showerror(title='Error', message="Could not save the cover.")
+                else:
+                    messagebox.showinfo('Sucess','Cover was changed.\nReload the pictures to see the change.')
 
 
     def reactToMouseWheel(self):
