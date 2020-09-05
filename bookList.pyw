@@ -548,83 +548,57 @@ class App:
 
 
     def deleteListing(self,parent,id,name):
-        icon = Image.open(self.settings['icons']['delete'])
-        icon = icon.resize((self.settings['icons']['mini_width'] ,self.settings['icons']['mini_height']))
-        icon = ImageTk.PhotoImage(icon)
-        holder = Label(parent,anchor='n')
-        iconHolder = Label(holder, image = icon,anchor='n')
-        iconHolder.image = icon # keep a reference!
-        text = Label(holder,
-        text = "Delete Listing",
-        background='black',
-        foreground='white',
-        font=('Arial',10),
-        anchor='n'
-        )
-        self.styleRedirectText(text)
-        holder.pack(pady=3)
-        iconHolder.pack(side=LEFT)
-        text.pack(side=LEFT)
-        text.bind('<Button-1>',lambda event: self.deleteThisListing(id,name))
-        self.setBgColor([holder,iconHolder],'black')
-        self.setFgColor([holder,iconHolder],'white')
+        deleteLabel = self.makeIconAndText(parent,self.settings['icons']['delete'],"Delete Listing")
+        deleteLabel.bind('<Button-1>',lambda event: self.deleteThisListing(id,name))
 
 
     def addListingOptions(self,parent,id,name,author,json):
+        optionsHolder = Label(parent)
+        optionsHolder.pack(padx=5)
+        self.setBgColor(optionsHolder,'black')
+        self.setFgColor(optionsHolder,'white')
+
         if self.updateById:
-            self.addEditOption(parent,json,id)
+            self.addEditOption(optionsHolder,json,id)
 
         if self.changeCover:
-            self.addChangeCoverOption(parent,name,author,id)
+            self.addChangeCoverOption(optionsHolder,name,author,id)
 
         if self.deleteById:
-            self.deleteListing(parent,id,name)
+            self.deleteListing(optionsHolder,id,name)
 
 
     def addChangeCoverOption(self,parent,title,author,id):
-        icon = Image.open(self.settings['icons']['alter'])
+        optionLabel = self.makeIconAndText(parent,self.settings['icons']['change_cover'],"Change Cover")
+        optionLabel.bind('<Button-1>',lambda event: self.changeCover(title,author,id))
+
+
+    def makeIconAndText(self,parent,iconPath,text):
+        icon = Image.open(iconPath)
         icon = icon.resize((self.settings['icons']['mini_width'] ,self.settings['icons']['mini_height']))
         icon = ImageTk.PhotoImage(icon)
         holder = Label(parent,anchor='n')
         iconHolder = Label(holder, image = icon,anchor='n')
         iconHolder.image = icon # keep a reference!
         text = Label(holder,
-        text = "Change Cover",
+        text = text,
         background='black',
         foreground='white',
         font=('Arial',10),
         anchor='n'
         )
         self.styleRedirectText(text)
-        holder.pack(pady=3)
+        holder.pack(side=LEFT,pady=(3,8), padx=8)
         iconHolder.pack(side=LEFT)
         text.pack(side=LEFT)
-        text.bind('<Button-1>',lambda event: self.changeCover(title,author,id))
         self.setBgColor([holder,iconHolder],'black')
         self.setFgColor([holder,iconHolder],'white')
+        return text
 
 
     def addEditOption(self,parent,json,id):
-        icon = Image.open(self.settings['icons']['alter'])
-        icon = icon.resize((self.settings['icons']['mini_width'] ,self.settings['icons']['mini_height']))
-        icon = ImageTk.PhotoImage(icon)
-        holder = Label(parent,anchor='n')
-        iconHolder = Label(holder, image = icon,anchor='n')
-        iconHolder.image = icon # keep a reference!
-        text = Label(holder,
-        text = "Alter Listing",
-        background='black',
-        foreground='white',
-        font=('Arial',10),
-        anchor='n'
-        )
-        self.styleRedirectText(text)
-        holder.pack(pady=3)
-        iconHolder.pack(side=LEFT)
-        text.pack(side=LEFT)
-        text.bind('<Button-1>',lambda event: self.alterBookInfo(json,id))
-        self.setBgColor([holder,iconHolder],'black')
-        self.setFgColor([holder,iconHolder],'white')
+        editLabel = self.makeIconAndText(parent,self.settings['icons']['alter'],"Alter Listing")
+        editLabel.bind('<Button-1>',lambda event: self.alterBookInfo(json,id))
 
 
     def alterBookInfo(self,json,id):
