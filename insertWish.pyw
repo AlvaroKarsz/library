@@ -7,7 +7,7 @@ from tkinter.filedialog import askopenfilename
 from confirmPic import Confirm
 import re
 from threading import Thread
-
+from filterWidget import Filter
 
 class InsertWish:
     def __init__(self,win,settings,db,rootWindow,autoValues = {},destoryAfter = False,updateID = False, hook = False):
@@ -175,11 +175,21 @@ class InsertWish:
         self.serieVar.set(list(series)[0])
         self.serieFrame = Label(tempFrame,background='black',foreground='white')
         self.serieFrame.pack()
-        Combobox(self.serieFrame,
+        combo = Combobox(self.serieFrame,
         textvariable = self.serieVar,
         values = [*series.keys()],
-        state="readonly").pack(side=LEFT,padx=5)
-        Label(self.serieFrame,text = 'Number',background='black',foreground='white').pack(side=LEFT)
+        state="readonly")
+
+        filterBox = Filter(self.serieFrame,combo,self.serieVar).get()
+        filterBox.configure(width=5)
+
+        Label(self.serieFrame,text = 'Filter: ',background='black',foreground='white').pack(side=LEFT)
+        filterBox.pack(side=LEFT,padx=5)
+        Label(self.serieFrame,text = 'Options: ',background='black',foreground='white').pack(side=LEFT)
+        combo.pack(side=LEFT,padx=5)
+
+
+        Label(self.serieFrame,text = 'Number: ',background='black',foreground='white').pack(side=LEFT)
         Entry(self.serieFrame,textvariable = self.serieNumber,width=3).pack(side=LEFT)
         tempFrame.pack()
         self.serieFrame.pack_forget()

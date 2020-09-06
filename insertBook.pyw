@@ -8,7 +8,7 @@ from tkinter.filedialog import askopenfilename
 from tkinter.filedialog import askdirectory
 import pandas as pd
 from threading import Thread
-
+from filterWidget import Filter
 
 class InsertBook:
     def __init__(self,win,settings,db,autoValues = {},destoryAfter = False,updateID = False, hook = False):
@@ -373,10 +373,21 @@ class InsertBook:
         self.serieVar.set(list(series)[0])
         self.serieFrame = Label(tempFrame,background='black',foreground='white')
         self.serieFrame.pack()
-        Combobox(self.serieFrame,
+        combo = Combobox(self.serieFrame,
         textvariable = self.serieVar,
         values = [*series.keys()],
-        state="readonly").pack(side=LEFT,padx=5)
+        state="readonly")
+
+
+
+        filterBox = Filter(self.serieFrame,combo,self.serieVar).get()
+        filterBox.configure(width=5)
+
+        Label(self.serieFrame,text = 'Filter: ',background='black',foreground='white').pack(side=LEFT)
+        filterBox.pack(side=LEFT,padx=5)
+        Label(self.serieFrame,text = 'Options: ',background='black',foreground='white').pack(side=LEFT)
+        combo.pack(side=LEFT, padx=5)
+
         Label(self.serieFrame,text = 'Number',background='black',foreground='white').pack(side=LEFT)
         Entry(self.serieFrame,textvariable = self.serieNumber,width=3).pack(side=LEFT)
         tempFrame.pack()
@@ -550,13 +561,22 @@ class InsertBook:
         ).pack()
         self.followedVar = StringVar()
         self.followedVar.set(list(books)[0])
-        self.followedFrame = Frame(tempF)
+        self.followedFrame = Label(tempF, background='black',foreground='white')
         self.followedFrame.pack()
-        Combobox(self.followedFrame,
+        combo = Combobox(self.followedFrame,
         textvariable = self.followedVar,
         values = [*books.keys()],
         width=70,
-        state="readonly").pack()
+        state="readonly")
+
+        filterBox = Filter(self.followedFrame,combo,self.followedVar).get()
+        filterBox.configure(width=5)
+
+        Label(self.followedFrame,text = 'Filter: ',background='black',foreground='white').pack(side=LEFT)
+        filterBox.pack(side=LEFT,padx=5)
+        Label(self.followedFrame,text = 'Options: ',background='black',foreground='white').pack(side=LEFT)
+        combo.pack(side=LEFT, padx=5)
+
         self.followedFrame.pack_forget()
         tempF.pack()
         if 'next_name' in autoValues and autoValues['next_name']:
@@ -589,13 +609,22 @@ class InsertBook:
         ).pack()
         self.precededVar = StringVar()
         self.precededVar.set(list(self.books)[0])
-        self.precededFrame = Frame(fr)
+        self.precededFrame = Label(fr,background='black',foreground='white')
         self.precededFrame.pack()
         combo = Combobox(self.precededFrame,
         textvariable = self.precededVar,
         values = [*self.books.keys()] ,
         width=70,
         state="readonly")
+
+        filterBox = Filter(self.precededFrame,combo,self.precededVar).get()
+        filterBox.configure(width=5)
+
+        Label(self.precededFrame,text = 'Filter: ',background='black',foreground='white').pack(side=LEFT)
+        filterBox.pack(side=LEFT,padx=5)
+        Label(self.precededFrame,text = 'Options: ',background='black',foreground='white').pack(side=LEFT)
+        combo.pack(side=LEFT, padx=5)
+
         combo.pack()
         self.precededFrame.pack_forget()
         fr.pack()
