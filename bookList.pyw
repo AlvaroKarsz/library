@@ -1521,4 +1521,10 @@ class App:
 
 
     def reactToMouseWheel(self):
-        self.window.bind_all("<MouseWheel>", lambda evt: not self.currentOverlay and self.canvas.yview_scroll(int(-1*(evt.delta/120)), "units"))
+        self.window.bind_all("<MouseWheel>", self.mouseWheelHandle)
+
+
+    def mouseWheelHandle(self,evt):
+        #if overlay is hidden and the main window is in focus
+        if not self.currentOverlay and "toplevel" not in str(self.window.focus_get()):
+             self.canvas.yview_scroll(int(-1*(evt.delta/120)), "units")
