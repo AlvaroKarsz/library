@@ -407,6 +407,7 @@ class App:
 
 
     def inertFromWishlistFinish(self,wishID,wishName,tracerVal,traceNewId):
+        self.removeOverlayFlag()
         newName = tracerVal.get()
         newId = traceNewId.get()
         if newName == '0' or not newId:#action was cancelled, or error occured
@@ -606,6 +607,7 @@ class App:
 
         if self.updateOption == 1: #book inserter window
             self.insertBookWindow(json,True,id,self.updateById)
+
 
         elif self.updateOption == 2: #wish inserter window
             self.insertWishWindow(json,True,id,self.updateById)
@@ -1216,7 +1218,11 @@ class App:
         if self.currentOverlay:
             return
         self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"black",5,"white",self.settings['insertBook']['padx_popup'],self.settings['insertBook']['pady_popup'])
-        return InsertBook(self.insertBookCanvas,self.settings,self.db,autoData,destoryAfter,bookId,hook)
+        self.currentOverlay = True
+        trace = InsertBook(self.insertBookCanvas,self.settings,self.db,autoData,destoryAfter,bookId,hook)
+        _self = self #acess from another class object
+        trace.sucess.trace("w", _self.removeOverlayFlag)#remove overlay indicator to allow another popups
+        return trace
 
 
     def insertWishWindow(self,autoData = {},destoryAfter = False,wishId = False,hook = False):
@@ -1515,4 +1521,4 @@ class App:
 
 
     def reactToMouseWheel(self):
-        self.window.bind_all("<MouseWheel>", lambda evt: self.canvas.yview_scroll(int(-1*(evt.delta/120)), "units"))
+        self.window.bind_all("<MouseWheel>", lambda evt: not self.currentOverlay and self.canvas.yview_scroll(int(-1*(evt.delta/120)), "units"))
