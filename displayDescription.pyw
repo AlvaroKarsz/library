@@ -1,6 +1,7 @@
 from tkinter import *
 from functions import *
 from PIL import ImageTk, Image
+from threading import Thread
 
 class Description:
     def __init__(self,win,name,author,isbn,id,picFolder,settings):
@@ -9,7 +10,21 @@ class Description:
         self.addTitle(name,author)
         self.createMainCanvas()
         self.addPic(picFolder,id)
-        self.addDescription(getBookDescription(isbn,settings))
+        self.addDescription()
+        fetchDescriptionThread = Thread(target = lambda: self.updateDescription(getBookDescription(isbn,settings)))
+        fetchDescriptionThread.daemon = True
+        fetchDescriptionThread.start()
+
+
+    def updateDescription(self,desc):
+        self.descriptionLabel['text'] = desc if desc else 'Nothing Found...'
+        #to handle the dissapearing pictures bug
+        self.picLabel.pack_forget()
+        self.picLabel.pack()
+
+
+
+
 
     def addTitle(self,bookName,bookAuthor):
         Label(self.window,
@@ -21,25 +36,26 @@ class Description:
 
     def addPic(self,folderPath,id):
         path = getExtensionIfExist(folderPath + str(id))
-        img = Image.open(path)
-        img = img.resize((300,360))
-        img = ImageTk.PhotoImage(img)
-        frame = Label(self.body,background='black',foreground='white')
-        label = Label(frame, image = img,anchor='c',background='black',foreground='white',borderwidth=2, relief="raised")
-        label.image = img # keep a reference!
-        label.pack()
-        frame.pack()#dont pack here- pack in travelers function
+        self.img = Image.open(path)
+        self.img = self.img.resize((300,360))
+        self.img = ImageTk.PhotoImage(self.img)
+        self.picFrame = Label(self.body,background='black',foreground='white')
+        self.picLabel = Label(self.picFrame, image = self.img,anchor='c',background='black',foreground='white',borderwidth=2, relief="raised")
+        self.picLabel.image = self.img # keep a reference!
+        self.picLabel.pack()
+        self.picFrame.pack()#dont pack here- pack in travelers function
 
 
-    def addDescription(self,desc):
-        Label(self.body,
+    def addDescription(self):
+        self.descriptionLabel = Label(self.body,
         background='black',
         foreground='white',
-        text = desc if desc else 'Nothing Found...',
+        text = "Fetching...",
         font=('Arial', 14),
         wraplengt = 500,
         anchor='w'
-        ).pack()
+        )
+        self.descriptionLabel.pack()
 
 
     def createMainCanvas(self):
