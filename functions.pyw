@@ -498,3 +498,17 @@ def getVarietyOfCoversFromBookNameAndAuthor(title,author,settings):
                 break
 
     return coversArr
+
+
+def getBookDescription(isbn,settings):
+    url = settings['api']['googleBooksApi']['description'] + isbn
+    res = requests.get(url = url)
+    if res.status_code != 200:
+        insertError(f"""Fetch error - bad status code from http request\nurl: {url}\nstatus code: {res.status_code}\nresponse: {res.text}""",settings['errLog'])
+        return False
+    res = json.loads(res.content)
+    if 'items' in res:
+        for i in res['items']:
+            if 'volumeInfo' in i and 'description' in i['volumeInfo']:
+                return i['volumeInfo']['description']
+    return False

@@ -11,6 +11,7 @@ from insertBook import InsertBook
 from insertWish import InsertWish
 from selectCover import CoverSelector
 from displayStories import DisplayStories
+from displayDescription import Description
 from insertSerie import InsertSerie
 from stories import Stories
 from books import Books
@@ -521,7 +522,7 @@ class App:
         background ='black',
         foreground='white'
         ).pack(fill=X,padx=3)
-        self.makeTravelersWithPic(bookObj['name'],self.currentOverlay,id,bookObj['author'],bookObj)
+        self.makeTravelersWithPic(bookObj['name'],self.currentOverlay,id,bookObj['author'],bookObj['isbn'],bookObj)
         self.addBookData(bookObj,self.currentOverlay)
 
 
@@ -555,7 +556,7 @@ class App:
         deleteLabel.bind('<Button-1>',lambda event: self.deleteThisListing(id,name))
 
 
-    def addListingOptions(self,parent,id,name,author,json):
+    def addListingOptions(self,parent,id,name,author,isbn,json):
         optionsHolder = Label(parent)
         optionsHolder.pack(padx=5)
         self.setBgColor(optionsHolder,'black')
@@ -567,8 +568,17 @@ class App:
         if self.changeCover:
             self.addChangeCoverOption(optionsHolder,name,author,id)
 
+
+        self.addDescriptionFetcher(optionsHolder,name,author,isbn,id)
+
         if self.deleteById:
             self.deleteListing(optionsHolder,id,name)
+
+
+
+    def addDescriptionFetcher(self,parent,bookN,bookA,isbn,id):
+        l = self.makeIconAndText(parent,self.settings['icons']['description'],"Description")
+        l.bind('<Button-1>',lambda event: self.fetchDescription(bookN,bookA,isbn,id))
 
 
     def addChangeCoverOption(self,parent,title,author,id):
@@ -641,7 +651,7 @@ class App:
 
 
 
-    def makeTravelersWithPic(self,bookName,parent,bookID,bookAuthor,json):
+    def makeTravelersWithPic(self,bookName,parent,bookID,bookAuthor,isbn,json):
         self.currentImageHodler = Label(parent,background='white')
 
         prevB = Label(self.currentImageHodler,text='<< Prev.',font=('Arial',23,'bold'),background='black',foreground = 'white',cursor = 'hand2')
@@ -656,7 +666,7 @@ class App:
 
         self.currentImageHodler.pack(fill=X,padx=3,pady=0)
         self.currentImageHodler = None
-        self.addListingOptions(parent,bookID,bookName,bookAuthor,json)
+        self.addListingOptions(parent,bookID,bookName,bookAuthor,isbn,json)
         self.setBgColor(self.currentImageHodler,'black')
         self.setFgColor(self.currentImageHodler,'white')
 
@@ -1534,3 +1544,8 @@ class App:
         win = Toplevel()
         centerWindow(win,settings['statistics']['width'],settings['statistics']['height'])
         Statistics(win,self.settings,self.db)
+
+    def fetchDescription(self,name,author,isbn,id):
+        win = Toplevel(self.window)
+        centerWindow(win,settings['descriptions']['width'],settings['descriptions']['height'])
+        Description(win,name,author,isbn,id, self.picFolder,self.settings)

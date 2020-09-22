@@ -72,6 +72,10 @@ settings['insertSerie'] = {}
 settings['insertSerie']['padx_popup'] = 200
 settings['insertSerie']['pady_popup'] = 270
 
+settings['descriptions'] = {}
+settings['descriptions']['width'] = 800
+settings['descriptions']['height'] = 900
+
 
 settings['icons'] = {}
 settings['icons']['width'] = 40
@@ -91,6 +95,7 @@ settings['icons']['hardcover_no_dj'] = settings['appDir'] + settings['icons']['f
 settings['icons']['has_been_ordered'] = settings['appDir'] + settings['icons']['folder'] + 'order.jpg'
 settings['icons']['has_not_been_ordered'] = settings['appDir'] + settings['icons']['folder'] + 'not_order.png'
 settings['icons']['delete'] = settings['appDir'] + settings['icons']['folder'] + 'delete.png'
+settings['icons']['description'] = settings['appDir'] + settings['icons']['folder'] + 'description.png'
 settings['icons']['alter'] = settings['appDir'] + settings['icons']['folder'] + 'edit.png'
 settings['icons']['change_cover'] = settings['appDir'] + settings['icons']['folder'] + 'changecover.png'
 settings['icons']['logo'] = settings['appDir'] + settings['icons']['folder'] + 'logo.ico'
@@ -131,6 +136,7 @@ settings['api']['goodreads']['isbnByTitle'] = 'https://www.goodreads.com/book/ti
 
 settings['api']['googleBooksApi'] = {}
 settings['api']['googleBooksApi']['search'] = 'https://www.googleapis.com/books/v1/volumes?maxResults=30&orderBy=relevance&printType=BOOKS&q='
+settings['api']['googleBooksApi']['description'] = 'https://www.googleapis.com/books/v1/volumes?q=isbn:'
 
 settings['stores'] = {}
 settings['stores']['betterworldbooks'] = 'https://www.betterworldbooks.com/search/results?Format=Hardcover&p=1&hpp=96&q='
