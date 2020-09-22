@@ -16,6 +16,7 @@ from stories import Stories
 from books import Books
 from ordered import Ordered
 from reads import Reads
+from statistics import Statistics
 from tkinter.filedialog import askopenfilename
 from series import Series
 from wishlist import Wishlist
@@ -401,7 +402,8 @@ class App:
 
         self.killOverlay()#remove the wishlist display
         #open insert box and listen to tracer.sucess booleanvar
-        tracer = self.insertBookWindow(bookData,True)
+
+        tracer = self.insertBookWindow(bookData,True,False,False,True)
         _self = self #acess from another class object
         tracer.sucess.trace("w", lambda self, *args: _self.inertFromWishlistFinish(id,bookData['name'],tracer.sucess,tracer.idTrace))
 
@@ -1107,7 +1109,7 @@ class App:
         self.displayVars.append(temp)
 
         temp = IntVar(self.window)
-        self.displayMenu.add_checkbutton(label="Display Stats", variable = temp)
+        self.displayMenu.add_checkbutton(label="Display Stats", command = lambda: self.loadNew(self.makeStatistics,6), variable = temp)
         self.displayVars.append(temp)
 
 
@@ -1116,8 +1118,6 @@ class App:
         bckupMenu.add_command(label="Backup DB Structure",command = self.backupStructureDB)
         bckupMenu.add_command(label="Backup DB Data", command = self.backupDataDB)
         bckupMenu.add_command(label="Commit & Push", command = self.commitAndPush)
-
-
 
         driveSubMenu = Menu(bckupMenu,tearoff=False,bg='white',font=('Arial',11))
         driveSubMenu.add_command(label="All", command = self.backupToGoogleDriveCommand)
@@ -1214,12 +1214,12 @@ class App:
         self.currentOverlay = None
 
 
-    def insertBookWindow(self,autoData = {},destoryAfter = False,bookId = False, hook = False):
+    def insertBookWindow(self,autoData = {},destoryAfter = False,bookId = False, hook = False, markAsArrivedFlag = False):
         if self.currentOverlay:
             return
         self.insertBookCanvas = self.makeOverlayAndPopUp(self.canvas,"black",5,"white",self.settings['insertBook']['padx_popup'],self.settings['insertBook']['pady_popup'])
         self.currentOverlay = True
-        trace = InsertBook(self.insertBookCanvas,self.settings,self.db,autoData,destoryAfter,bookId,hook)
+        trace = InsertBook(self.insertBookCanvas,self.settings,self.db,autoData,destoryAfter,bookId,hook,markAsArrivedFlag)
         _self = self #acess from another class object
         trace.sucess.trace("w", _self.removeOverlayFlag)#remove overlay indicator to allow another popups
         return trace
@@ -1528,3 +1528,9 @@ class App:
         #if overlay is hidden and the main window is in focus
         if not self.currentOverlay and "toplevel" not in str(self.window.focus_get()):
              self.canvas.yview_scroll(int(-1*(evt.delta/120)), "units")
+
+
+    def makeStatistics(self):
+        win = Toplevel()
+        centerWindow(win,settings['statistics']['width'],settings['statistics']['height'])
+        Statistics(win,self.settings,self.db)

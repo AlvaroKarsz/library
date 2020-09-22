@@ -797,6 +797,20 @@ def makeStats(db,settings):
     SELECT
         (
          SELECT
+            JSON_AGG(total_agg)
+            FROM
+                (
+                    SELECT
+                        COUNT(1) AS total_books,
+                        SUM(pages) AS total_pages,
+                        SUM(CASE WHEN read_order IS NOT NULL THEN 1 ELSE 0 END) AS readed_books,
+                        SUM(CASE WHEN  read_order IS NOT NULL THEN pages ELSE 0 END) AS readed_pages
+                    FROM ''' + settings['db']['books_table'] + '''
+                ) total_agg
+            ) AS total,
+
+        (
+         SELECT
             JSON_AGG(language_agg)
             FROM
                 (

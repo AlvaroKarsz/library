@@ -22,6 +22,9 @@ settings['storiesDialog'] = {}
 settings['storiesDialog']['width'] = 800
 settings['storiesDialog']['height'] = 600
 
+settings['statistics'] = {}
+settings['statistics']['width'] = 900
+settings['statistics']['height'] = 700
 
 settings['gui'] = {}
 settings['gui']['width'] = 1000

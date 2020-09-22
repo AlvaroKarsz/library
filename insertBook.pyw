@@ -11,7 +11,7 @@ from threading import Thread
 from filterWidget import Filter
 
 class InsertBook:
-    def __init__(self,win,settings,db,autoValues = {},destoryAfter = False,updateID = False, hook = False):
+    def __init__(self,win,settings,db,autoValues = {},destoryAfter = False,updateID = False, hook = False, markAsArrived = False):
         self.window = win
         self.db = db
         self.updateID = updateID
@@ -31,7 +31,7 @@ class InsertBook:
         self.addSerie(autoValues)
         self.addNextBook(autoValues)
         self.addPrevBook(autoValues)
-        self.addCollectionElements(autoValues)
+        self.addCollectionElements(autoValues,markAsArrived)
 
 
     def addAutoFillLabel(self):
@@ -196,7 +196,7 @@ class InsertBook:
         innerFrame.pack()
 
 
-    def addCollectionElements(self,autoValues = {}):
+    def addCollectionElements(self,autoValues,markAsArrivedFlag):
         fr = Label(self.window,background='black',foreground='white')
         topNav = Label(fr,background='black',foreground='white')
         self.isCollection = BooleanVar()
@@ -219,7 +219,7 @@ class InsertBook:
 
         tableWidget = self.addExcelCsvHandler(topNav)
 
-        collPicturesHandler = self.addCollectionPicsHandler(topNav) if jsonIsEmpty(autoValues) else None #select pictures for collection only if a new book is insrted, not in a update
+        collPicturesHandler = self.addCollectionPicsHandler(topNav) if jsonIsEmpty(autoValues) or markAsArrivedFlag else None #select pictures for collection only if a new book is insrted, not in a update
 
         topNav.pack()
         fr.pack()
@@ -250,10 +250,10 @@ class InsertBook:
 
     def addCollectionPicsHandler(self,parent):
         collPicturesHandler = Label(parent,
-        text='Chosse Pictures Folder',
+        text='Choose Pictures Folder',
         background='black',foreground='white'
         )
-        collPicturesHandler.bind('<Button-1>',lambda event: self.chossePicturesFolder())
+        collPicturesHandler.bind('<Button-1>',lambda event: self.choosePicturesFolder())
         collPicturesHandler.configure(cursor="hand2")
         fTemp = font.Font(collPicturesHandler, collPicturesHandler.cget("font"))
         fTemp.configure(weight='bold')
@@ -262,7 +262,7 @@ class InsertBook:
         return collPicturesHandler
 
 
-    def chossePicturesFolder(self):
+    def choosePicturesFolder(self):
         folder = askdirectory()
         if folder:
             self.folderToFetchPics = folder
