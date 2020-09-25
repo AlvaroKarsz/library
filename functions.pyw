@@ -117,8 +117,6 @@ def getRandomStr(len):
     return ''.join([random.choice('qazxswedcvfrQAZXSWEDCV9876FRTGBNHYUJMKIO0L1P2t3g4b5nhyujmkiolp') for _ in range(len)])
 
 
-
-
 def roundUpDividation(a,b):
     return -(-a // b)
 

@@ -522,7 +522,7 @@ class App:
         background ='black',
         foreground='white'
         ).pack(fill=X,padx=3)
-        self.makeTravelersWithPic(bookObj['name'],self.currentOverlay,id,bookObj['author'],bookObj['isbn'],bookObj)
+        self.makeTravelersWithPic(bookObj['name'],self.currentOverlay,id,bookObj['author'],bookObj['isbn'] if 'isbn' in bookObj else False,bookObj)
         self.addBookData(bookObj,self.currentOverlay)
 
 
@@ -568,8 +568,8 @@ class App:
         if self.changeCover:
             self.addChangeCoverOption(optionsHolder,name,author,id)
 
-
-        self.addDescriptionFetcher(optionsHolder,name,author,isbn,id)
+        if isbn:
+            self.addDescriptionFetcher(optionsHolder,name,author,isbn,id)
 
         if self.deleteById:
             self.deleteListing(optionsHolder,id,name)
@@ -1147,7 +1147,7 @@ class App:
     def displayStoriesPopup(self, stories, bookName,bookAuthor):
         win = Toplevel(self.window)
         centerWindow(win,settings['storiesDialog']['width'],settings['storiesDialog']['height'])
-        DisplayStories(win,stories, bookName, bookAuthor, settings['pics']['storiesFolderPath'])
+        DisplayStories(win,self.settings,stories, bookName, bookAuthor, settings['pics']['storiesFolderPath'])
 
 
     def selectCoverWindow(self,title,author,id):
