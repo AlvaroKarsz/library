@@ -396,8 +396,13 @@ def fetchSerieById(db,settings,id):
         (
             SELECT COUNT(1)
             FROM ''' + settings['db']['wish_table'] + '''
-            WHERE serie = ser.id
-        ) AS wish_books
+            WHERE serie = ser.id AND order_date IS NULL
+        ) AS wish_books,
+        (
+            SELECT COUNT(1)
+            FROM ''' + settings['db']['wish_table'] + '''
+            WHERE serie = ser.id AND order_date IS NOT NULL
+        ) AS purchased_books
         FROM ''' + settings['db']['series_table'] + ''' ser
         WHERE id = %s
     '''

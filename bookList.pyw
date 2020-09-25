@@ -1045,6 +1045,9 @@ class App:
         if 'wish_books' in bookO:
             self.postSingleBookLine('Books in Wish List: ' + str(bookO['wish_books']),parent)
 
+        if 'purchased_books' in bookO:
+            self.postSingleBookLine('Purchased Books: ' + str(bookO['purchased_books']),parent)
+
         if 'read_date' in bookO:
             self.postSingleBookLine('Read Date: ' + str(bookO['read_date']),parent)
 
