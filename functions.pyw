@@ -284,7 +284,7 @@ def fetchPic(isbn,settings):
         insertError(f"""Fetch error - bad status code from http request\nurl: {url}\nstatus code: {res.status_code}\nresponse: {res.text}""",settings['errLog'])
         return False
 
-    path = settings['tmp'] + getRandomStr(35) + '.jpg'
+    path = settings['tmp'] + getRandomStr(45) + '.jpg'
     try:
         open(path, 'wb').write(res.content)
     except OSError as e:
@@ -511,10 +511,75 @@ def getBookDescription(isbn,settings):
                 return i['volumeInfo']['description']
     return False
 
+def getISBNfromGoogleApiTitle(title,author,settings):
+    url = settings['api']['googleBooksApi']['search'] + title + ' ' + author
+    res = requests.get(url = url)
+    if res.status_code != 200:
+        insertError(f"""Fetch error - bad status code from http request\nurl: {url}\nstatus code: {res.status_code}\nresponse: {res.text}""",settings['errLog'])
+        return False
+    res = json.loads(res.content)
+    isbn = None
+    if 'items' in res:
+        for v in res['items']:
+            if 'volumeInfo' in v:
+                if 'industryIdentifiers' in v['volumeInfo']:
+                    for a in v['volumeInfo']['industryIdentifiers']:
+                        if 'type' in a:
+                            if a['type'].lower() == 'isbn_13':
+                                return a['identifier']
+                            elif a['type'].lower() == 'isbn_10':
+                                isbn = a['identifier']
+    return isbn
+
+
+def fetchCoverFromWiki(title,settings):
+    url = settings['api']['wiki']['summary'] + title
+    res = requests.get(url = url)
+    if res.status_code != 200:
+        insertError(f"""Fetch error - bad status code from http request\nurl: {url}\nstatus code: {res.status_code}\nresponse: {res.text}""",settings['errLog'])
+        return False
+    res = json.loads(res.content)
+    picBin = None
+    if 'originalimage' in res:
+        if 'source' in res['originalimage']:
+            url = res['originalimage']['source']
+            resT = requests.get(url =  url)
+            if resT.status_code != 200:
+                insertError(f"""Fetch error - bad status code from http request\nurl: {url}\nstatus code: {resT.status_code}\nresponse: {resT.text}""",settings['errLog'])
+            else:
+                picBin = resT.content
+    if not picBin:
+        if 'thumbnail' in res:
+            if 'source' in res['thumbnail']:
+                url = res['thumbnail']['source']
+                resT = requests.get(url =  url)
+                if resT.status_code != 200:
+                    insertError(f"""Fetch error - bad status code from http request\nurl: {url}\nstatus code: {resT.status_code}\nresponse: {resT.text}""",settings['errLog'])
+                else:
+                    picBin = resT.content
+    if not picBin:
+        return False
+
+    path = settings['tmp'] + getRandomStr(45) + '.jpg'
+    try:
+        open(path, 'wb').write(picBin)
+    except OSError as e:
+        insertError(f"""OS error - Could not create tmp file\nerror: {e}""",settings['errLog'])
+        return False
+    return path
+
 
 def getSeriesBook(settings,author,series):
     from bs4 import BeautifulSoup
     from threading import Thread
+
+    def fetchCoverThread(title,resultKeeper,doneArr):
+        picPath = fetchCoverFromWiki(title,settings)
+        if picPath:
+            resultKeeper[title] = picPath
+        doneArr.append(1)
+
+
     def findAuthor(name):
         payload = {'key': settings['api']['goodreads']['key']}
         url = settings['api']['goodreads']['authorIdByName'] + name
@@ -526,6 +591,13 @@ def getSeriesBook(settings,author,series):
         else:
             insertError(f"""Fetch error - bad status code from http request\nurl: {url}\nstatus code: {req.status_code}\nresponse: {req.text}""",settings['errLog'])
         return None
+
+    def getIsbnThread(title,resultKeeper,doneArr):
+        isbn = getISBNfromGoogleApiTitle(title,author,settings)
+        if isbn:
+            resultKeeper[title] = isbn
+        doneArr.append(1)
+
 
     def makeAuthorThread(authorId,resultKeeper,doneKeeper):
         payload = {'key': settings['api']['goodreads']['key'], 'id':authorId}
@@ -559,6 +631,9 @@ def getSeriesBook(settings,author,series):
             if str(dict[v]['number']) == str(num):
                 return dict[v]
 
+    def thisIsGoodFormat(f):
+        f = f.lower()
+        return 'hardcover' in f or 'softcover' in f or 'paperback' in f
 
     def saveThisBook(dict,book):
         tmp = None
@@ -574,8 +649,8 @@ def getSeriesBook(settings,author,series):
 
         if numberExists(dict,book['number']):
             tmp = getBookByNumber(dict,book['number'])
-            if 'hardcover' not in tmp['format'].lower() and 'softcover' not in tmp['format'].lower() and 'paperback' not in tmp['format'].lower():
-                if 'hardcover' in book['format'].lower() or 'softcover' in book['format'].lower() or 'paperback' in book['format'].lower():
+            if not thisIsGoodFormat(tmp['format']):
+                if thisIsGoodFormat(book['format']):
                     return True
             if tmp['isbn'] == '' and (book['isbn10'] or book['isbn13']):
                 return True
@@ -643,7 +718,7 @@ def getSeriesBook(settings,author,series):
     requestsA = []
     waiter = []
     t = False
-    times = 4
+    times = 2
     for i in range(times):
         t = Thread(target = lambda:makeAuthorThread(authorId,requestsA,waiter))
         t.deamon = True
@@ -686,4 +761,45 @@ def getSeriesBook(settings,author,series):
             }
 
     match = sorted(match.values(), key = lambda a: int(a['number']))
+    isbnsToFetch = []
+    for v in match:
+        if v['isbn'] == '' or not thisIsGoodFormat(v['format']):
+            isbnsToFetch.append(v['title'])
+
+
+    requestsA = {}
+    waiter = []
+    times = len(isbnsToFetch)
+    t = False
+    for book in isbnsToFetch:
+        t = Thread(target = lambda:getIsbnThread(book,requestsA,waiter))
+        t.deamon = True
+        t.start()
+
+    while len(waiter) != times:
+        pass
+
+    for name in requestsA:
+        for g in match:
+            if g['title'] == name:
+                g['isbn'] = requestsA[name]
+
+
+    requestsA = {}
+    waiter = []
+    times = len(match)
+    t = False
+    for book in match:
+        t = Thread(target = lambda:fetchCoverThread(book['title'],requestsA,waiter))
+        t.deamon = True
+        t.start()
+
+    while len(waiter) != times:
+        pass
+
+    for title in requestsA:
+        for g in match:
+            if g['title'] == title:
+                g['cover'] = requestsA[title]
+
     print(match)

@@ -126,6 +126,8 @@ settings['api']['openLibrary'] = {}
 settings['api']['openLibrary']['covers'] = 'http://covers.openlibrary.org/b/isbn/'
 settings['api']['openLibrary']['data'] = 'https://openlibrary.org/api/books?jscmd=data&format=json&bibkeys=ISBN:'
 
+settings['api']['wiki'] = {}
+settings['api']['wiki']['summary'] = 'https://en.wikipedia.org/api/rest_v1/page/summary/'
 
 settings['api']['goodreads'] = {}
 settings['api']['goodreads']['key'] = 'key'
