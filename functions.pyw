@@ -510,3 +510,180 @@ def getBookDescription(isbn,settings):
             if 'volumeInfo' in i and 'description' in i['volumeInfo']:
                 return i['volumeInfo']['description']
     return False
+
+
+def getSeriesBook(settings,author,series):
+    from bs4 import BeautifulSoup
+    from threading import Thread
+    def findAuthor(name):
+        payload = {'key': settings['api']['goodreads']['key']}
+        url = settings['api']['goodreads']['authorIdByName'] + name
+        req = requests.get(url = url, params = payload)
+        if req.status_code == 200:
+            req = BeautifulSoup(req.content,"html.parser")
+            req = req.find('author')
+            return req['id'] if req['id'] else None
+        else:
+            insertError(f"""Fetch error - bad status code from http request\nurl: {url}\nstatus code: {req.status_code}\nresponse: {req.text}""",settings['errLog'])
+        return None
+
+    def makeAuthorThread(authorId,resultKeeper,doneKeeper):
+        payload = {'key': settings['api']['goodreads']['key'], 'id':authorId}
+        url = settings['api']['goodreads']['booksByAuthor']
+        req = requests.get(url = url, params = payload)
+        if req.status_code == 200:
+            req = BeautifulSoup(req.content,"html.parser")
+            req = req.find_all('book')
+            req = list(map(lambda x:{'isbn10':x.find('isbn').get_text(),'isbn13':x.find('isbn13').get_text(),'title':x.find('title_without_series').get_text(),'format':x.find('format').get_text(),'publication':x.find('publication_year').get_text(),'titleWithSerie':x.find('title').get_text()} ,req))
+            resultKeeper += req
+        else:
+            insertError(f"""Fetch error - bad status code from http request\nurl: {url}\nstatus code: {req.status_code}\nresponse: {req.text}""",settings['errLog'])
+
+        doneKeeper.append(1)
+
+    def isEnglish(s):
+        try:
+            s.encode(encoding='utf-8').decode('ascii')
+            return True
+        except UnicodeDecodeError:
+            return False
+
+    def numberExists(dictArr,num):
+        for v in dictArr:
+            if str(dictArr[v]['number']) == str(num):
+                return True
+        return False
+
+    def getBookByNumber(dict,num):
+        for v in dict:
+            if str(dict[v]['number']) == str(num):
+                return dict[v]
+
+
+    def saveThisBook(dict,book):
+        tmp = None
+        if not isEnglish(book['title']):
+            return False
+
+        if re.search('part\s?[0-9]+\s?of\s?[0-9]+',book['title'].lower()):
+            return False
+
+        if book['title'] not in dict:
+            return True
+
+
+        if numberExists(dict,book['number']):
+            tmp = getBookByNumber(dict,book['number'])
+            if 'hardcover' not in tmp['format'].lower() and 'softcover' not in tmp['format'].lower() and 'paperback' not in tmp['format'].lower():
+                if 'hardcover' in book['format'].lower() or 'softcover' in book['format'].lower() or 'paperback' in book['format'].lower():
+                    return True
+            if tmp['isbn'] == '' and (book['isbn10'] or book['isbn13']):
+                return True
+            if tmp['format'].lower() != 'hardcover' and book['format'] == 'hardcover':
+                    if tmp['isbn'] == '':
+                        return True
+                    else:
+                        if book['isbn10'] or book['isbn13']:
+                            return True
+        else:
+            return True
+
+        return False
+
+    def getBasicSerieName(serie):
+        t = serie.lower().replace('trilogy','').replace('series','').replace('serie','').strip()
+        t = re.sub('^a','',t).strip()
+        t = re.sub('^the','',t).strip()
+        return t
+
+    def getKeyByNumber(dict,number):
+        for v in dict:
+            if str(dict[v]['number']) == str(number):
+                return v
+
+    def deleteBookByNumberIfExists(dict,number):
+        if numberExists(dict,number):
+            k = getKeyByNumber(dict,number)
+            del dict[k]
+
+    def thisIsList(t):
+        if len(t.split(',')) > 0:
+            if re.search("\((.*?)#(.*?)[0-9]+\s?-\s?[0-9]+\)",t):
+                return True
+        return False
+
+    def getBookByName(name,arr):
+        for v in arr:
+            if v['title'].lower().strip() == name.lower().strip():
+                return v
+        return None
+
+
+    def handleList(t,all):
+        serieName = re.search("\((.*?)\)",t).group(1)
+        serieName = re.sub('\s?,?\s?#(.*?)[0-9]+\s?-\s?[0-9]+','',serieName)
+        tmp = re.sub("\((.*?)\)", "", t)
+        tmp = tmp.split(',')
+        t = None
+        res = []
+        for i,book in enumerate(tmp):
+            t = getBookByName(book,all)
+            if t:
+                t['serie'] = serieName
+                t['number'] = str(i + 1)
+                res.append(t)
+            else:
+                res.append({'isbn10':'','isbn13':'','title':book,'format':'','publication':'','titleWithSerie':book + '(' + serieName + ' #' + str(i + 1) + ')'})
+        return res
+
+
+    authorId = findAuthor(author)
+    if not authorId:
+        return None
+    requestsA = []
+    waiter = []
+    t = False
+    times = 4
+    for i in range(times):
+        t = Thread(target = lambda:makeAuthorThread(authorId,requestsA,waiter))
+        t.deamon = True
+        t.start()
+
+    while len(waiter) != times:
+        pass
+
+    res = list(filter(lambda a : a['title'] != a['titleWithSerie'],requestsA))
+
+    tmp = []
+    for book in res:
+        if thisIsList(book['titleWithSerie']):
+            tmp += handleList(book['titleWithSerie'],requestsA)
+    res += tmp
+
+    tmp = None
+    for book in res:
+        tmp = re.search('\((.*)\)', book['titleWithSerie'])
+        if tmp:
+            tmp = tmp.group(1)
+            book['serie'] = re.sub("(,)?(\s)?#[0-9]+", "", tmp).strip()
+            tmp = re.search('\#(.*)', tmp)
+            if tmp:
+                book['number'] = tmp.group(1).strip()
+
+    series = getBasicSerieName(series)
+    res = list(filter(lambda a : 'number' in a and 'serie' in a and getBasicSerieName(a['serie']) == series,res))
+    match = {}
+
+    for book in res:
+        if saveThisBook(match,book):
+            deleteBookByNumberIfExists(match,book['number'])
+            match[book['title']] = {
+            'title':book['title'],
+            'number':book['number'],
+            'year':book['publication'],
+            'isbn':book['isbn13'] if book['isbn13'] else book['isbn10'] if book['isbn10'] else '',
+            'format':book['format']
+            }
+
+    match = sorted(match.values(), key = lambda a: int(a['number']))
+    print(match)

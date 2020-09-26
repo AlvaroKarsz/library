@@ -132,7 +132,8 @@ settings['api']['goodreads']['key'] = 'key'
 settings['api']['goodreads']['secret'] = 'secret'
 settings['api']['goodreads']['ratingByIsbnsArray'] = 'https://www.goodreads.com/book/review_counts.json'
 settings['api']['goodreads']['isbnByTitle'] = 'https://www.goodreads.com/book/title.json'
-
+settings['api']['goodreads']['authorIdByName'] = 'https://www.goodreads.com/api/author_url/'
+settings['api']['goodreads']['booksByAuthor'] = 'https://www.goodreads.com/author/list.xml'
 
 settings['api']['googleBooksApi'] = {}
 settings['api']['googleBooksApi']['search'] = 'https://www.googleapis.com/books/v1/volumes?maxResults=30&orderBy=relevance&printType=BOOKS&q='
