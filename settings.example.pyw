@@ -55,6 +55,12 @@ settings['insertBook']['padx_popup'] = 100
 settings['insertBook']['pady_popup'] = 50
 
 
+settings['booksSeries'] = {}
+settings['booksSeries']['pady'] = 0
+settings['booksSeries']['padx'] = 20
+settings['booksSeries']['picW'] = 180
+settings['booksSeries']['picH'] = 200
+
 settings['insertWish'] = {}
 settings['insertWish']['padx_popup'] = 200
 settings['insertWish']['pady_popup'] = 180

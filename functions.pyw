@@ -7,6 +7,9 @@ import shutil
 import requests
 import json
 import subprocess
+from bs4 import BeautifulSoup
+from threading import Thread
+import time
 
 def decodePass(passw,separator):
     passw = passw.split(separator)
@@ -570,11 +573,8 @@ def fetchCoverFromWiki(title,settings):
 
 
 def getSeriesBook(settings,author,series):
-    from bs4 import BeautifulSoup
-    from threading import Thread
-
-    def fetchCoverThread(title,resultKeeper,doneArr):
-        picPath = fetchCoverFromWiki(title,settings)
+    def fetchCoverThread(isbn,title,resultKeeper,doneArr):
+        picPath = fetchPic(isbn,settings) if isbn else fetchCoverFromWiki(title,settings)
         if picPath:
             resultKeeper[title] = picPath
         doneArr.append(1)
@@ -599,8 +599,8 @@ def getSeriesBook(settings,author,series):
         doneArr.append(1)
 
 
-    def makeAuthorThread(authorId,resultKeeper,doneKeeper):
-        payload = {'key': settings['api']['goodreads']['key'], 'id':authorId}
+    def makeAuthorThread(authorId,page,resultKeeper,doneKeeper):
+        payload = {'key': settings['api']['goodreads']['key'], 'id':authorId,'page':page}
         url = settings['api']['goodreads']['booksByAuthor']
         req = requests.get(url = url, params = payload)
         if req.status_code == 200:
@@ -720,13 +720,12 @@ def getSeriesBook(settings,author,series):
     t = False
     times = 2
     for i in range(times):
-        t = Thread(target = lambda:makeAuthorThread(authorId,requestsA,waiter))
+        t = Thread(target = lambda:makeAuthorThread(authorId,i,requestsA,waiter))
         t.deamon = True
         t.start()
 
     while len(waiter) != times:
-        pass
-
+        time.sleep(0.2)
     res = list(filter(lambda a : a['title'] != a['titleWithSerie'],requestsA))
 
     tmp = []
@@ -756,6 +755,7 @@ def getSeriesBook(settings,author,series):
             'title':book['title'],
             'number':book['number'],
             'year':book['publication'],
+            'cover':'',
             'isbn':book['isbn13'] if book['isbn13'] else book['isbn10'] if book['isbn10'] else '',
             'format':book['format']
             }
@@ -777,7 +777,7 @@ def getSeriesBook(settings,author,series):
         t.start()
 
     while len(waiter) != times:
-        pass
+        time.sleep(0.2)
 
     for name in requestsA:
         for g in match:
@@ -790,16 +790,15 @@ def getSeriesBook(settings,author,series):
     times = len(match)
     t = False
     for book in match:
-        t = Thread(target = lambda:fetchCoverThread(book['title'],requestsA,waiter))
+        t = Thread(target = lambda:fetchCoverThread(book['isbn'],book['title'],requestsA,waiter))
         t.deamon = True
         t.start()
 
     while len(waiter) != times:
-        pass
+        time.sleep(0.2)
 
     for title in requestsA:
         for g in match:
             if g['title'] == title:
                 g['cover'] = requestsA[title]
-
-    print(match)
+    return match

@@ -7,11 +7,17 @@ from tkinter import messagebox
 
 
 class CoverSelector:
-    def __init__(self,win,settings,title,author,folderPath,id):
+    def __init__(self,win,settings,title,author,folderPath=False,id=False,returnValue=False,clearTemp=True,confirmAlert=True):
         self.window = win
         self.settings = settings
-        self.originalPic = self.getDestinationPath(folderPath,id)
+        self.returnValue = returnValue
+        self.confirmAlert = confirmAlert
+        self.clearTemp = clearTemp
+        self.originalPic = self.getDestinationPath(folderPath,id) if folderPath and id else None
         self.selected = None
+        self.trace = StringVar()
+        self.defaultStringVarValue = 'abcd'
+        self.trace.set(self.defaultStringVarValue)
         self.imagesHolder = []
         self.setBgColor(win,'black')
         self.addTitle()
@@ -27,7 +33,8 @@ class CoverSelector:
 
 
     def clearTmpOnclose(self):
-        clearFolder(self.settings['tmp'])
+        if self.clearTemp:
+            clearFolder(self.settings['tmp'])
         self.killWindow()
 
 
@@ -152,7 +159,12 @@ class CoverSelector:
             messagebox.showerror(title='Error', message="Please select the wanted cover.")
             return
 
-        if not messagebox.askyesno(title='Sure?', message="Are you sure you want to save this cover?"):
+        if self.confirmAlert and not messagebox.askyesno(title='Sure?', message="Are you sure you want to save this cover?"):
+            return
+
+        if self.returnValue:
+            self.trace.set(self.selected)
+            self.killWindow()
             return
 
         if moveFile(self.selected,self.originalPic,self.settings,True) != True:
@@ -164,4 +176,6 @@ class CoverSelector:
 
 
     def killWindow(self):
+        if self.trace.get() == self.defaultStringVarValue:
+            self.trace.set(False)
         self.window.destroy()

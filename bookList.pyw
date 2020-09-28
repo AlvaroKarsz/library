@@ -1225,6 +1225,7 @@ class App:
 
     def removeOverlayFlag(self,*args):
         self.currentOverlay = None
+        self.reactToMouseWheel()
 
 
     def insertBookWindow(self,autoData = {},destoryAfter = False,bookId = False, hook = False, markAsArrivedFlag = False):
@@ -1256,8 +1257,6 @@ class App:
         trace = InsertSerie(self.insertBookCanvas,self.settings,self.db,autoData,destoryAfter,wishId,hook)
         _self = self #acess from another class object
         trace.sucess.trace("w", _self.removeOverlayFlag)#remove overlay indicator to allow another popups
-
-
 
 
     def popupConfirmPic(self,path,text,okButton,cancelButton):
