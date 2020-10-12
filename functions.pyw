@@ -11,6 +11,9 @@ from bs4 import BeautifulSoup
 from threading import Thread
 import time
 
+def dd_mm_yyyyToTimestamp(date):
+    return time.mktime(datetime.datetime.strptime(date, "%d/%m/%Y").timetuple())
+
 def decodePass(passw,separator):
     passw = passw.split(separator)
     return "".join(map(lambda a: chr(int(a)),passw))

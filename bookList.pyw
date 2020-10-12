@@ -337,7 +337,7 @@ class App:
         labelParent.pack(side=LEFT)
         holder.pack(side=LEFT)
         stringLabel.pack()
-        actionStr = "Mark ad Ordered" if not orderedFlag else "Mark as Arrived"
+        actionStr = "Mark as Ordered" if not orderedFlag else "Mark as Arrived"
         toggle = Label(labelParent,text=actionStr,background='white',anchor='sw',font=('Arial',10))
         self.styleRedirectText(toggle)
         toggle.pack(side=LEFT)
@@ -1264,8 +1264,14 @@ class App:
         return Confirm(self.insertBookCanvas,self.settings,path,text,okButton,cancelButton)
 
 
-    def evalSortingFunction(self,key,reverseFlag):
-        self.data.sort(key = lambda u : u[key], reverse = reverseFlag)
+    def evalSortingFunction(self,key,reverseFlag, type = None):
+        sortFunc = None
+        if(type == None):
+            sortFunc = lambda u : u[key]
+        elif(type.lower() == 'date'):
+            sortFunc = lambda u : dd_mm_yyyyToTimestamp(u[key])
+
+        self.data.sort(key = sortFunc, reverse = reverseFlag)
 
 
     def sortBooks(self,args):
