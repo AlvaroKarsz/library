@@ -45,20 +45,28 @@ def getFoldersFromDrive(service,mainParentId):
 def getFilesFromDrive(service, folders):
     if not folders:
         return []
+    items = []
+    results = None
+    nextPageToken = None
+
     qString = "trashed = false and ("
     for folder in folders:
         qString +=  " '" + folder['id'] + "' in parents or"
 
     qString = qString[:-2]
     qString += ")"
-
-    results = service.files().list(
+    while True:
+        results = service.files().list(
         pageSize=1000,
+        pageToken=nextPageToken,
         fields="nextPageToken, files(id, name,parents,md5Checksum)",
         q = qString
         ).execute()
-    items = results.get('files', [])
-    return items if items else []
+        items += results.get('files', [])#add the files to the result arr
+        nextPageToken = results.get('nextPageToken', None)# get the next page token if there are more files to fetch, or none if all was fetched
+        if not nextPageToken:# no more values
+            break
+    return items
 
 
 def createFolder(service,name,parentId):
