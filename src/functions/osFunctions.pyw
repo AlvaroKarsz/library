@@ -39,6 +39,6 @@ def backupDBdata():
 def commitPushOS(commitMessage):
     if not commitMessage or emptyStr(commitMessage):
         return False
-    command = f'''{usefullCommands['gitAdd']} && {usefullCommands['gitCommit']} "{escapeGitMessage(commitMessage)}" && {usefullCommands['gitPush']}'''
+    command = f'''cd {settings['appDir']} && {usefullCommands['gitAdd']} && {usefullCommands['gitCommit']} "{escapeGitMessage(commitMessage)}" && {usefullCommands['gitPush']}'''
     res = os.system(command)
     return checkSuccess(res)
