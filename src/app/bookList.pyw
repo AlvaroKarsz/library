@@ -1363,7 +1363,7 @@ class App:
         self.data = books.setData()
         self.reloadData = self.loadBooks
         self.markReadedFlag = books.markAsReadedFlag
-        self.markReaded = lambda date,id: Stories.markReaded(self.db,self.settings,id,date)
+        self.markReaded = lambda date,id: Books.markReaded(self.db,self.settings,id,date)
         self.booksCount = len(self.data)
         self.totalBooks = self.booksCount
         self.totalPages = roundUpDividation(self.booksCount, self.settings['maxBooksFetch']) or 1

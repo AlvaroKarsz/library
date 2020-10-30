@@ -287,7 +287,17 @@ def markStoryAsReaded(db,settings,storyID,date):
     #first mark story as readed
     sql = '''
     UPDATE ''' + settings['db']['stories_table'] + '''
-    SET readed_date = %s WHERE id=%s RETURNING (
+    SET readed_date = %s,
+    read_order =
+        (
+            (
+            SELECT read_order FROM ''' + settings['db']['stories_table'] + '''
+            WHERE read_order IS NOT NULL
+            ORDER BY read_order DESC
+            LIMIT 1
+            ) + 1
+        )
+     WHERE id=%s RETURNING (
         (
         SELECT COUNT(1) FROM  ''' + settings['db']['stories_table'] + '''
         WHERE readed_date IS NOT NULL
@@ -381,10 +391,26 @@ def markStoryAsReaded(db,settings,storyID,date):
 
 
 def markBookAsReaded(db,settings,bookID,date):
-    sql = '''
-    UPDATE ''' + settings['db']['stories_table'] + '''
-    SET readed_date = %s WHERE parent = %s AND readed_date IS NULL;
-    UPDATE ''' + settings['db']['books_table'] + '''
+    sql = '''UPDATE ''' + settings['db']['stories_table'] + '''
+     SET readed_date = %s,
+     read_order = (
+            SELECT read_order FROM ''' + settings['db']['stories_table'] + ''' WHERE read_order IS NOT NULL ORDER BY read_order DESC LIMIT 1
+        ) + 1
+
+        WHERE id =
+        (
+            SELECT id FROM ''' + settings['db']['stories_table'] + ''' WHERE parent = %s AND read_order IS NULL ORDER BY id ASC LIMIT 1
+        )
+        RETURNING id;
+        '''
+    keepGoing = True
+    while keepGoing:
+        db.execute(sql,[date,bookID])
+        keepGoing = db.rowcount
+
+
+
+    sql = '''UPDATE ''' + settings['db']['books_table'] + '''
         SET read_order =
             (
                 (
@@ -398,7 +424,7 @@ def markBookAsReaded(db,settings,bookID,date):
     WHERE id = %s
     RETURNING read_order;
     '''
-    db.execute(sql,[date,bookID,date,bookID])
+    db.execute(sql,[date,bookID])
     return db.fetchone()[0]
 
 
