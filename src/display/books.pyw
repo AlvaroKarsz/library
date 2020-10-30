@@ -23,3 +23,8 @@ class Books:
 
     def updateById(db,settings,json,id):
         return updateBookById(db,settings,json,id)
+
+
+    def markReaded(db,settings,bookId,date):
+        readNum = markBookAsReaded(db,settings,bookId,date)
+        messagebox.showinfo('Change saved',f'''This is the {readNum}th book you've read''')

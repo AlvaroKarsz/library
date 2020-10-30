@@ -219,6 +219,7 @@ def fetchBookById(db,settings,id):
         my_books_main.type AS type,
         my_books_main.pages AS pages,
         my_books_main.read_order AS read,
+        my_books_main.read_date AS read_date,
         my_books_main.listed_date AS listed_date,
         my_books_main.serie_num AS serie_num,
         series_table.name AS serie,
@@ -282,8 +283,107 @@ def fetchBookById(db,settings,id):
     return postgresResultToColumnRowJson(columns,rows)[0]
 
 
+def markStoryAsReaded(db,settings,storyID,date):
+    #first mark story as readed
+    sql = '''
+    UPDATE ''' + settings['db']['stories_table'] + '''
+    SET readed_date = %s WHERE id=%s RETURNING (
+        (
+        SELECT COUNT(1) FROM  ''' + settings['db']['stories_table'] + '''
+        WHERE readed_date IS NOT NULL
+        ) + 1
+    );'''
+    db.execute(sql,[date,storyID])
+    readedStory = db.fetchone()[0]
+    readedBook = None
+    #now check if the collection is completed, if so mark it as readed too
+    sql = '''SELECT id,readed_date FROM ''' + settings['db']['stories_table'] + ''' WHERE parent =
+    (
+        SELECT parent FROM ''' +  settings['db']['stories_table'] + ''' WHERE id = %s
+    );'''
+
+    db.execute(sql,[storyID])
+    rows = db.fetchall()
+    columns = db.description
+    storiesFromSameCollection = postgresResultToColumnRowJson(columns,rows)
+    updateCollectionFlag = True
+    #check if all stories were readed
+    for story in storiesFromSameCollection:
+        if not story['readed_date']:
+            updateCollectionFlag = False
+            break
+
+    if updateCollectionFlag:
+        #find the dates range
+        fromD = None
+        toD = None
+        tmp = None
+        def compareDbDates(date1,date2,biggerFlag):
+            if not date1:
+                return date2
+            if not date2:
+                return date1
+            monthsStrength = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'] #higher index - latest month
+            date1Month = ''.join(list(filter(lambda x: x.isalpha(), date1)))
+            date2Month = ''.join(list(filter(lambda x: x.isalpha(), date2)))
+            date1Year = ''.join(list(filter(lambda x: not x.isalpha(), date1)))
+            date2Year = ''.join(list(filter(lambda x: not x.isalpha(), date2)))
+
+            if date1Year > date2Year:
+                return date1 if biggerFlag else date2
+            if date1Year < date2Year:
+                return date2 if biggerFlag else date1
+            #equal year - check month
+            if monthsStrength.index(date1Month) > monthsStrength.index(date2Month):
+                return date1 if biggerFlag else date2
+            if monthsStrength.index(date1Month) < monthsStrength.index(date2Month):
+                return date2 if biggerFlag else date1
+            #equal - return each one - no difference
+            return date1
+
+
+        for story in storiesFromSameCollection:
+            tmp = story['readed_date'].replace(' ','').lower().split('-')
+            for date in tmp:
+                toD = compareDbDates(toD,date,True)
+                fromD = compareDbDates(fromD,date,False)
+
+        #add white space after month
+        fromD = fromD[:3] + ' ' + fromD[3:]
+        toD = toD[:3] + ' ' + toD[3:]
+
+        #capitalizate month first letter
+        fromD = fromD[0].upper() + fromD[1:]
+        toD = toD[0].upper() + toD[1:]
+        fullDateString = (fromD + ' - ' + toD) if fromD != toD else fromD
+        sql = '''UPDATE ''' + settings['db']['books_table'] + '''
+            SET read_order =
+                (
+                    (
+                    SELECT read_order FROM ''' + settings['db']['books_table'] + '''
+                    WHERE read_order IS NOT NULL
+                    ORDER BY read_order DESC
+                    LIMIT 1
+                    ) + 1
+                ),
+            read_date = %s
+        WHERE id =
+        (
+        SELECT parent FROM ''' + settings['db']['stories_table'] + ''' WHERE id = %s
+        )
+        RETURNING read_order;
+        '''
+        db.execute(sql,[fullDateString,storyID])
+        readedBook = db.fetchone()[0]
+
+
+    return {'book':readedBook, 'story':readedStory}
+
+
 def markBookAsReaded(db,settings,bookID,date):
     sql = '''
+    UPDATE ''' + settings['db']['stories_table'] + '''
+    SET readed_date = %s WHERE parent = %s AND readed_date IS NULL;
     UPDATE ''' + settings['db']['books_table'] + '''
         SET read_order =
             (
@@ -298,7 +398,7 @@ def markBookAsReaded(db,settings,bookID,date):
     WHERE id = %s
     RETURNING read_order;
     '''
-    db.execute(sql,[date,bookID])
+    db.execute(sql,[date,bookID,date,bookID])
     return db.fetchone()[0]
 
 
@@ -459,13 +559,14 @@ def fetchStoryById(db,settings,id):
         my_stories_main.id AS id,
         my_stories_main.name AS name,
         my_stories_main.pages AS pages,
+        my_stories_main.readed_date AS read_date,
+        my_stories_main.readed_date AS read,
         my_books_main.year AS year,
         my_books_main.name AS parent_name,
         my_books_main.author AS author,
         my_books_main.language AS language,
         my_books_main.listed_date AS listed_date,
         my_books_main.original_language AS o_language,
-        my_books_main.read_order AS read,
         my_stories_entry1.id AS next_id,
         my_stories_entry1.name AS next_name,
         my_stories_entry2.id AS prev_id,

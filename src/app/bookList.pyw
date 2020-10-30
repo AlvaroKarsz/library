@@ -10,6 +10,7 @@ from threading import Thread
 from insertBook import InsertBook
 from insertWish import InsertWish
 from selectCover import CoverSelector
+from authorBooks import AuthorBooks
 from displayStories import DisplayStories
 from displayDescription import Description
 from insertSerie import InsertSerie
@@ -309,14 +310,14 @@ class App:
         stringLabel.pack()
         self.setBgColor([labelParent,holder,stringLabel],'black')
         self.setFgColor([labelParent,holder,stringLabel],'white')
-        if readFlag and self.markReadedFlag:
+        if readFlag and self.markReadedFlag and self.markReaded and False:#block option for now
             toggle = Label(labelParent,text='Mark as unread',background='white',anchor='sw',font=('Arial',10))
             self.styleRedirectText(toggle)
             toggle.pack(side=LEFT)
             toggle.bind('<Button-1>',lambda event: self.markThisBookUnRead(bookID))
             self.setBgColor(toggle,'black')
             self.setFgColor(toggle,'white')
-        elif self.markReadedFlag:
+        elif self.markReadedFlag and self.markReaded:
             toggle = Label(labelParent,text='Mark as readed',background='white',anchor='sw',font=('Arial',10))
             self.styleRedirectText(toggle)
             toggle.pack(side=LEFT)
@@ -473,12 +474,8 @@ class App:
         if not validDate:
             messagebox.showerror(title='Error', message="Invalid Date Format")
         else :
-            readNum = markBookAsReaded(self.db,self.settings,bookID,validDate)
-            if type(readNum) is not int:
-                messagebox.showerror(title='Error', message="Error Updating DB data.")
-            else:
-                messagebox.showinfo('Change saved',f'''This is the {readNum}th book you've read''')
-                self.redirectPopUp(bookID) # reload with the new icon
+            self.markReaded(validDate,bookID)
+            self.redirectPopUp(bookID) # reload with the new icon
 
 
     def markThisBookUnRead(self,bookID):
@@ -571,9 +568,15 @@ class App:
         if isbn:
             self.addDescriptionFetcher(optionsHolder,name,author,isbn,id)
 
+        self.addFindAuthorWorks(optionsHolder,author)
+
         if self.deleteById:
             self.deleteListing(optionsHolder,id,name)
 
+
+    def addFindAuthorWorks(self,parent,author):
+        l = self.makeIconAndText(parent,self.settings['icons']['author'],"Books by Author")
+        l.bind('<Button-1>',lambda event: self.findMoreBooksByAuthor(author))
 
 
     def addDescriptionFetcher(self,parent,bookN,bookA,isbn,id):
@@ -1048,7 +1051,7 @@ class App:
         if 'purchased_books' in bookO:
             self.postSingleBookLine('Purchased Books: ' + str(bookO['purchased_books']),parent)
 
-        if 'read_date' in bookO:
+        if 'read_date' in bookO and bookO['read_date']:
             self.postSingleBookLine('Read Date: ' + str(bookO['read_date']),parent)
 
         if 'language' in bookO:
@@ -1301,6 +1304,7 @@ class App:
         self.reloadData = self.loadStories
         self.buyingOption = True if hasattr(stories,'buyingOption') else False
         self.markReadedFlag = stories.markAsReadedFlag
+        self.markReaded = lambda date,id,: Stories.markReaded(self.db,self.settings,id,date)
         self.booksCount = len(self.data)
         self.totalBooks = self.booksCount
         self.totalPages = roundUpDividation(self.booksCount, self.settings['maxBooksFetch']) or 1
@@ -1329,6 +1333,7 @@ class App:
         self.data = series.setData()
         self.reloadData = self.loadSeries
         self.markReadedFlag = series.markAsReadedFlag
+        self.markReaded = None
         self.booksCount = len(self.data)
         self.totalBooks = self.booksCount
         self.totalPages = roundUpDividation(self.booksCount, self.settings['maxBooksFetch']) or 1
@@ -1358,6 +1363,7 @@ class App:
         self.data = books.setData()
         self.reloadData = self.loadBooks
         self.markReadedFlag = books.markAsReadedFlag
+        self.markReaded = lambda date,id: Stories.markReaded(self.db,self.settings,id,date)
         self.booksCount = len(self.data)
         self.totalBooks = self.booksCount
         self.totalPages = roundUpDividation(self.booksCount, self.settings['maxBooksFetch']) or 1
@@ -1387,6 +1393,7 @@ class App:
         self.data = wish.setData()
         self.reloadData = self.loadOrdered
         self.markReadedFlag = wish.markAsReadedFlag
+        self.markReaded = None
         self.booksCount = len(self.data)
         self.totalBooks = self.booksCount
         self.totalPages = roundUpDividation(self.booksCount, self.settings['maxBooksFetch']) or 1
@@ -1416,6 +1423,7 @@ class App:
         self.data = wish.setData()
         self.reloadData = self.loadWish
         self.markReadedFlag = wish.markAsReadedFlag
+        self.markReaded = None
         self.booksCount = len(self.data)
         self.totalBooks = self.booksCount
         self.totalPages = roundUpDividation(self.booksCount, self.settings['maxBooksFetch']) or 1
@@ -1445,6 +1453,7 @@ class App:
         self.data = reads.setData()
         self.reloadData = self.loadReads
         self.markReadedFlag = reads.markAsReadedFlag
+        self.markReaded = None
         self.booksCount = len(self.data)
         self.buyingOption = True if hasattr(reads,'buyingOption') else False
         self.totalBooks = self.booksCount
@@ -1557,3 +1566,7 @@ class App:
         win = Toplevel(self.window)
         centerWindow(win,settings['descriptions']['width'],settings['descriptions']['height'])
         Description(win,name,author,isbn,id, self.picFolder,self.settings)
+
+
+    def findMoreBooksByAuthor(self,authorName):
+        AuthorBooks(self.currentOverlay,self.settings,authorName)
