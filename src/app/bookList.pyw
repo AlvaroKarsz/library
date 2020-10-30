@@ -317,7 +317,7 @@ class App:
             toggle.bind('<Button-1>',lambda event: self.markThisBookUnRead(bookID))
             self.setBgColor(toggle,'black')
             self.setFgColor(toggle,'white')
-        elif self.markReadedFlag and self.markReaded:
+        elif not readFlag and self.markReadedFlag and self.markReaded:
             toggle = Label(labelParent,text='Mark as readed',background='white',anchor='sw',font=('Arial',10))
             self.styleRedirectText(toggle)
             toggle.pack(side=LEFT)
