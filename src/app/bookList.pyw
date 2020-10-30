@@ -1051,6 +1051,9 @@ class App:
         if 'purchased_books' in bookO:
             self.postSingleBookLine('Purchased Books: ' + str(bookO['purchased_books']),parent)
 
+        if 'read' in bookO:
+            self.postSingleBookLine('Read Order: ' + (str(bookO['read']) if bookO['read'] else 'Not Read'),parent)
+
         if 'read_date' in bookO and bookO['read_date']:
             self.postSingleBookLine('Read Date: ' + str(bookO['read_date']),parent)
 

@@ -8,8 +8,8 @@ class Stories:
         self.title = 'My Stories'
         self.markAsReadedFlag = True
         self.picturesFolder = self.settings['pics']['storiesFolderPath']
-        self.sortOptions = ['ID, Lowest first','ID, Latest first','Story Name, ABC','Story Name, ZYX','Collection Name, ABC','Collection Name, ZYX','Number of Pages, Lowest first','Number of Pages, Biggest first','Publication Year, Lowest first','Publication Year, Latest first']
-        self.sortTranslations = [['id',False],['id',True],['name',False],['name',True],['parent_name',False],['parent_name',True],['pages',False],['pages',True],['year',False],['year',True]]
+        self.sortOptions = ['ID, Lowest first','ID, Latest first','Read Order','Read Order, Reverse','Story Name, ABC','Story Name, ZYX','Collection Name, ABC','Collection Name, ZYX','Number of Pages, Lowest first','Number of Pages, Biggest first','Publication Year, Lowest first','Publication Year, Latest first']
+        self.sortTranslations = [['id',False],['id',True],['read',False],['read',True],['name',False],['name',True],['parent_name',False],['parent_name',True],['pages',False],['pages',True],['year',False],['year',True]]
         self.updateOption = None
         self.changeCover = True
 

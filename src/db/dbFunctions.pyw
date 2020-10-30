@@ -544,6 +544,7 @@ def fetchAllMyStories(db,settings):
         self.id,
         self.name,
         self.pages,
+        COALESCE(self.read_order,9999999) AS read,
         parent.author,
         parent.name AS parent_name,
         parent.year
@@ -586,7 +587,7 @@ def fetchStoryById(db,settings,id):
         my_stories_main.name AS name,
         my_stories_main.pages AS pages,
         my_stories_main.readed_date AS read_date,
-        my_stories_main.readed_date AS read,
+        my_stories_main.read_order AS read,
         my_books_main.year AS year,
         my_books_main.name AS parent_name,
         my_books_main.author AS author,
