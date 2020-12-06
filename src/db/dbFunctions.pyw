@@ -26,7 +26,7 @@ def updateSerieById(db,settings,json,id):
 
 def updateBookById(db,settings,json,id):
     #update main table
-    args = [json['name'],json['year'],json['author'],json['oriLan'],json['lang'],json['isbn'],json['type'],json['pages']]
+    args = [json['name'],json['year'],json['author'],json['oriLan'],json['lang'],json['store'].upper(),json['isbn'],json['type'],json['pages']]
     sql = '''
     UPDATE ''' + settings['db']['books_table'] + '''
     SET
@@ -35,6 +35,7 @@ def updateBookById(db,settings,json,id):
     author = %s,
     original_language = %s,
     language = %s,
+    store = %s,
     isbn = %s,
     type = %s,
     pages = %s
@@ -82,8 +83,8 @@ def updateBookById(db,settings,json,id):
 
 
 def insertNewBook(db,settings,json):
-    values = "(name,year,author,original_language,language,isbn,type,pages"
-    arguments = [json['name'],json['year'],json['author'],json['oriLan'],json['lang'],json['isbn'],json['type'],json['pages']]
+    values = "(name,year,author,original_language,language,store,isbn,type,pages"
+    arguments = [json['name'],json['year'],json['author'],json['oriLan'],json['lang'],json['store'].upper(),json['isbn'],json['type'],json['pages']]
     if 'serie' in json:
         values += ",serie,serie_num"
         arguments += [json['serie']['id'],json['serie']['number']]
@@ -213,6 +214,7 @@ def fetchBookById(db,settings,id):
         my_books_main.name AS name,
         my_books_main.year AS year,
         my_books_main.author AS author,
+        my_books_main.store AS store,
         my_books_main.language AS language,
         my_books_main.original_language AS o_language,
         my_books_main.isbn AS isbn,
@@ -266,6 +268,7 @@ def fetchBookById(db,settings,id):
         my_books_main.isbn,
         my_books_main.type,
         my_books_main.pages,
+        my_books_main.store,
         my_books_main.read_order,
         my_books_main.serie_num,
         series_table.name,
@@ -428,30 +431,32 @@ def markBookAsReaded(db,settings,bookID,date):
     return db.fetchone()[0]
 
 
-def markWishAsOrdered(db,settings,bookID):
+def markWishAsOrdered(db,settings,bookID,store):
     date = makeReadableTime()
     sql = '''
     UPDATE ''' + settings['db']['wish_table'] + '''
-        SET ordered = 't',
+        SET
+        ordered = 't',
+        store = %s,
         order_date = %s
     WHERE id = %s;
     '''
     try:
-        db.execute(sql,[date,bookID])
+        db.execute(sql,[store.upper(),date,bookID])
         return True
     except Exception as err:
         return err
 
 
-def markThisBookSecondOrder(db,settings,bookID):
+def markThisBookSecondOrder(db,settings,bookID,store):
     date = makeReadableTime()
     sql = '''
     UPDATE ''' + settings['db']['wish_table'] + '''
-        SET order_date_2 = %s
+        SET order_date_2 = %s,store = %s
     WHERE id = %s;
     '''
     try:
-        db.execute(sql,[date,bookID])
+        db.execute(sql,[date,store.upper(),bookID])
         return True
     except Exception as err:
         return err
@@ -462,7 +467,8 @@ def markThisBookAsNotPurchased(db,settings,id):
     UPDATE ''' + settings['db']['wish_table'] + '''
         SET order_date_2 = NULL,
         order_date = NULL,
-        ordered = 'f'
+        ordered = 'f',
+        store = NULL
     WHERE id = %s;
     '''
     try:
@@ -742,6 +748,7 @@ def fetchWishById(db,settings,id):
         main.isbn AS isbn,
         main.year AS year,
         main.author AS author,
+        main.store AS store,
         main.ordered AS ordered,
         main.serie_num AS serie_num,
         series.name AS serie
@@ -758,6 +765,7 @@ def fetchWishById(db,settings,id):
         main.name,
         main.year,
         main.author,
+        main.store,
         main.ordered,
         main.serie_num,
         series.name;
@@ -774,6 +782,7 @@ def fetchOrderedById(db,settings,id):
         main.name AS name,
         main.isbn AS isbn,
         main.year AS year,
+        main.store AS store,
         main.author AS author,
         main.order_date AS order_date,
         main.ordered AS ordered,
@@ -790,6 +799,7 @@ def fetchOrderedById(db,settings,id):
         GROUP BY
 
         main.id,
+        main.store,
         main.name,
         main.year,
         main.ordered,
@@ -819,6 +829,10 @@ def removeBookFromWishList(db,settings,id):
 def insertNewWish(db,settings,objs):
     values = "(name,year,author,isbn"
     arguments = [objs['name'],objs['year'],objs['author'],objs['isbn']]
+    if 'store' in objs and objs['store']:
+        values += ",store"
+        arguments += [objs['store']]
+
     if 'serie' in objs:
         values += ",serie,serie_num"
         arguments += [objs['serie']['id'],objs['serie']['number']]
@@ -847,6 +861,11 @@ def updateWishById(db,settings,json,id):
     isbn = %s
     '''
     args = [json['name'],json['year'],json['author'],json['isbn']]
+
+    if 'store' in json and json['store']:
+        sql += ''',store = %s'''
+        args += [json['store']]
+
     if 'serie' in json:
         sql += ''',serie = %s ,serie_num = %s'''
         args += [json['serie']['id'],json['serie']['number']]

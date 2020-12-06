@@ -19,6 +19,7 @@ class InsertWish:
         self.destoryAfter = destoryAfter
         self.hook = hook
         self.updateID = updateID
+        self.storeDataExists = True if 'store' in autoValues and autoValues['store'] else False
         self.setCheckboxStyle()
         self.closeOnclick()
         self.addTitle()
@@ -56,10 +57,17 @@ class InsertWish:
         if 'isbn' in autoValues:
             self.isbn.set(autoValues['isbn'])
 
+        if self.storeDataExists:
+            self.store = StringVar()
+            self.store.set(autoValues['store'])
+
+
         self.addNewLabelAndInput(fram,'Book Name','name')
         self.addNewLabelAndInput(fram,'Author Name','author')
         self.addNewLabelAndInput(fram,'Publication Year','year')
         self.addNewLabelAndInput(fram,'ISBN','isbn')
+        if self.storeDataExists:
+            self.addNewLabelAndInput(fram,'Bougth from:','store')
         fram.pack()
 
 
@@ -307,6 +315,9 @@ class InsertWish:
 
 
     def checkVars(self,vars):
+        if self.storeDataExists:
+            if not vars['store']:
+                return 'Empty Store'
         if not vars['isbn']:
             return 'Empty ISBN'
         if not re.match('^[0-9a-zA-Z\-]+$',vars['isbn']):
@@ -331,6 +342,9 @@ class InsertWish:
 
     def getAllVars(self):
         res = {}
+        if self.storeDataExists:
+            res['store'] = self.store.get().strip()
+
         res['name'] = self.name.get().strip()
         res['author'] = self.author.get().strip()
         res['year'] = self.year.get().strip()

@@ -141,6 +141,10 @@ class InsertBook:
         if 'o_language' in autoValues:
             self.oriLan.set(str(autoValues['o_language']))
 
+        self.store = StringVar()
+        if 'store' in autoValues and autoValues['store']:
+            self.store.set(str(autoValues['store']))
+
         self.isbn = StringVar()
         if 'isbn' in autoValues:
             self.isbn.set(str(autoValues['isbn']))
@@ -150,6 +154,7 @@ class InsertBook:
         self.addNewLabelAndInput(fram,'Number Of Pages',4,0,'pages')
         self.addNewLabelAndInput(fram,'Book Language',5,0,'lang')
         self.addNewLabelAndInput(fram,'Book Origin Language',6,0,'oriLan')
+        self.addNewLabelAndInput(fram,'Bought in',6,0,'store')
         self.addNewLabelAndInput(fram,'Book ISBN',7,0,'isbn')
         fram.pack()
 
@@ -470,6 +475,8 @@ class InsertBook:
 
 
     def checkVars(self,vars):
+        if not vars['store']:
+            return 'Empty store name'
         if not vars['name']:
             return 'Empty Name'
         if not vars['author']:
@@ -519,6 +526,7 @@ class InsertBook:
 
     def getAllVars(self):
         res = {}
+        res['store'] = self.store.get().strip()
         res['name'] = self.name.get().strip()
         res['author'] = self.author.get().strip()
         res['year'] = self.year.get().strip()

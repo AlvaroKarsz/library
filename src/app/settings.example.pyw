@@ -28,7 +28,7 @@ settings['statistics']['height'] = 700
 
 settings['gui'] = {}
 settings['gui']['width'] = 1000
-settings['gui']['height'] = 900
+settings['gui']['height'] = 950
 settings['gui']['popup_pad_x'] = 100
 settings['gui']['popup_pad_y'] = 2
 settings['gui']['popup_font_size'] = 13
@@ -110,6 +110,7 @@ settings['icons']['ebay'] = settings['appDir'] + settings['icons']['folder'] + '
 settings['icons']['better_world_books'] = settings['appDir'] + settings['icons']['folder'] + 'better_world_books.png'
 settings['icons']['book_depository'] = settings['appDir'] + settings['icons']['folder'] + 'book_depository.jpg'
 settings['icons']['abebooks'] = settings['appDir'] + settings['icons']['folder'] + 'abebooks.png'
+settings['icons']['author'] = settings['appDir'] + settings['icons']['folder'] + 'author.jpg'
 
 settings['errLog'] = settings['appDir'] + 'logs/'
 

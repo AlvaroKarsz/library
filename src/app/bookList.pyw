@@ -361,9 +361,11 @@ class App:
 
 
     def markThisBookAsReordered(self,id):
-        if not messagebox.askyesno(title='Confirmation', message="Are you sure you want to mark this book as Purchased again?"):
+        store = simpledialog.askstring("Bought From", "When did you Bought this book?")
+        if not store:
+            messagebox.showerror(title='Error', message="This input is required\nPlease try again")
             return
-        f = markThisBookSecondOrder(self.db,self.settings,id)
+        f = markThisBookSecondOrder(self.db,self.settings,id,store)
         if f == True:
             messagebox.showinfo('change saved',f'''Book saved as "Ordered Twice" on this date.''')
             self.redirectPopUp(id) # reload with the new icon
@@ -384,9 +386,12 @@ class App:
 
 
     def markThisBookAsOrdered(self,id):
-        if not messagebox.askyesno(title='Confirmation', message="Are you sure you want to mark this book as Purchased?"):
+        store = simpledialog.askstring("Bought From", "When did you Bought this book?")
+
+        if not store:
+            messagebox.showerror(title='Error', message="This input is required\nPlease try again")
             return
-        flag =  markWishAsOrdered(self.db,self.settings,id)
+        flag =  markWishAsOrdered(self.db,self.settings,id,store)
         if flag == True:
             messagebox.showinfo('change saved',f'''Book status changed to "Ordered"''')
             self.reloadData() # reload with the new icon
@@ -1062,6 +1067,9 @@ class App:
 
         if 'o_language' in bookO:
             self.postSingleBookLine('Original Language: ' + bookO['o_language'],parent)
+
+        if 'store' in bookO and bookO['store']:
+            self.postSingleBookLine('Bougth from: ' + bookO['store'],parent)
 
         if 'isbn' in bookO:
             self.postSingleBookLine('ISBN: ' + str(bookO['isbn']),parent)

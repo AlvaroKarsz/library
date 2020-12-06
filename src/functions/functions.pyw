@@ -582,19 +582,6 @@ def getSeriesBook(settings,author,series):
             resultKeeper[title] = picPath
         doneArr.append(1)
 
-
-    def findAuthor(name):
-        payload = {'key': settings['api']['goodreads']['key']}
-        url = settings['api']['goodreads']['authorIdByName'] + name
-        req = requests.get(url = url, params = payload)
-        if req.status_code == 200:
-            req = BeautifulSoup(req.content,"html.parser")
-            req = req.find('author')
-            return req['id'] if req['id'] else None
-        else:
-            insertError(f"""Fetch error - bad status code from http request\nurl: {url}\nstatus code: {req.status_code}\nresponse: {req.text}""",settings['errLog'])
-        return None
-
     def getIsbnThread(title,resultKeeper,doneArr):
         isbn = getISBNfromGoogleApiTitle(title,author,settings)
         if isbn:
@@ -715,7 +702,7 @@ def getSeriesBook(settings,author,series):
         return res
 
 
-    authorId = findAuthor(author)
+    authorId = findGoodReadsAuthorID(author,settings)
     if not authorId:
         return None
     requestsA = []
@@ -805,3 +792,53 @@ def getSeriesBook(settings,author,series):
             if g['title'] == title:
                 g['cover'] = requestsA[title]
     return match
+
+def findGoodReadsAuthorID(name,settings):
+    payload = {'key': settings['api']['goodreads']['key']}
+    url = settings['api']['goodreads']['authorIdByName'] + name
+    req = requests.get(url = url, params = payload)
+    if req.status_code == 200:
+        req = BeautifulSoup(req.content,"html.parser")
+        req = req.find('author')
+        return req['id'] if req['id'] else None
+    else:
+        insertError(f"""Fetch error - bad status code from http request\nurl: {url}\nstatus code: {req.status_code}\nresponse: {req.text}""",settings['errLog'])
+    return None
+
+
+def getMoreBooksFromThisAuthor(author,settings):
+    authorId = findGoodReadsAuthorID(author,settings)
+    if not authorId:
+        return None
+
+    return fetchAuthorBooksFromGoodReads(authorId,settings)
+
+
+def fetchAuthorBooksFromGoodReads(authorId,settings):
+    payload = {'key': settings['api']['goodreads']['key'], 'id':authorId,'page':'1'}
+    url = settings['api']['goodreads']['booksByAuthor']
+    req = requests.get(url = url, params = payload)
+    output = None
+    if req.status_code == 200:
+        req = BeautifulSoup(req.content,"html.parser")
+        req = req.find_all('book')
+        output = list(map(lambda x:{'ratingCount':x.find('ratings_count').get_text(),'rating':x.find('average_rating').get_text(),'description':x.find('description').get_text(),'cover':x.find('image_url').get_text(),'isbn10':x.find('isbn').get_text(),'isbn13':x.find('isbn13').get_text(),'publication':x.find('publication_year').get_text(),'title':x.find('title').get_text()} ,req))
+        for book in output:
+            if book['cover']:
+                pic = requests.get(url =  book['cover'])
+                del book['cover']
+                if pic.status_code != 200:
+                    insertError(f"""Fetch error - bad status code from http request\nurl: {book['cover']}\nstatus code: {pic.status_code}\nresponse: {pic.text}""",settings['errLog'])
+                else:
+                    id = settings['tmp'] + getRandomStr(45) + '.jpg'
+                    try:
+                        open(id, 'wb').write(pic.content)
+                        book['cover'] = id
+                    except OSError as e:
+                        insertError(f"""OS error - Could not create tmp file\nerror: {e}""",settings['errLog'])
+            else:
+                del book['cover']
+
+    else:
+        insertError(f"""Fetch error - bad status code from http request\nurl: {url}\nstatus code: {req.status_code}\nresponse: {req.text}""",settings['errLog'])
+    return output
