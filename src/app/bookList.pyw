@@ -536,6 +536,9 @@ class App:
         holder.pack(fill="none", padx=(0,140),expand=True)
         self.createBuyingIcon(holder,self.settings['icons']['amazon'],self.settings['icons']['purchase_width'] ,self.settings['icons']['purchase_height'],lambda event: webbrowser.open(self.settings['stores']['amazon'] + isbn))
         self.createBuyingIcon(holder,self.settings['icons']['ebay'],self.settings['icons']['purchase_width'] ,self.settings['icons']['purchase_height'],lambda event: webbrowser.open(self.settings['stores']['ebay'] + isbn))
+
+        self.createBuyingIcon(holder,self.settings['icons']['thriftbooks'],self.settings['icons']['purchase_width'] ,self.settings['icons']['purchase_height'],lambda event: webbrowser.open(self.settings['stores']['thriftbooks'](isbn)))
+
         self.createBuyingIcon(holder,self.settings['icons']['better_world_books'],self.settings['icons']['purchase_width'] ,self.settings['icons']['purchase_height'],lambda event: webbrowser.open(self.settings['stores']['betterworldbooks'] + isbn))
         self.createBuyingIcon(holder,self.settings['icons']['book_depository'],self.settings['icons']['purchase_width'] ,self.settings['icons']['purchase_height'],lambda event: webbrowser.open(self.settings['stores']['bookdepository'] + isbn))
         self.createBuyingIcon(holder,self.settings['icons']['abebooks'],self.settings['icons']['purchase_width'] ,self.settings['icons']['purchase_height'],lambda event: webbrowser.open(self.settings['stores']['abebooks'] + isbn))

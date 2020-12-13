@@ -90,7 +90,7 @@ settings['icons']['height_cover'] = 30
 settings['icons']['width_cover'] = 30
 settings['icons']['mini_width'] = 20
 settings['icons']['mini_height'] = 20
-settings['icons']['purchase_width'] = 70
+settings['icons']['purchase_width'] = 50
 settings['icons']['purchase_height'] = 40
 settings['icons']['folder'] = 'icons/'
 settings['icons']['has_been_read'] = settings['appDir'] + settings['icons']['folder'] + 'hasbeenread.jpg'
@@ -111,6 +111,7 @@ settings['icons']['better_world_books'] = settings['appDir'] + settings['icons']
 settings['icons']['book_depository'] = settings['appDir'] + settings['icons']['folder'] + 'book_depository.jpg'
 settings['icons']['abebooks'] = settings['appDir'] + settings['icons']['folder'] + 'abebooks.png'
 settings['icons']['author'] = settings['appDir'] + settings['icons']['folder'] + 'author.jpg'
+settings['icons']['thriftbooks'] = settings['appDir'] + settings['icons']['folder'] + 'thriftbooks.png'
 
 settings['errLog'] = settings['appDir'] + 'logs/'
 
@@ -154,7 +155,7 @@ settings['stores']['ebay'] = 'https://www.ebay.com/sch/i.html?_from=R40&_ipg=200
 settings['stores']['amazon'] = 'https://www.amazon.com/s?k='
 settings['stores']['bookdepository'] = 'https://www.bookdepository.com/search?searchTerm='
 settings['stores']['abebooks'] = 'https://www.abebooks.com/servlet/SearchResults?bi=h&kn='
-
+settings['stores']['thriftbooks'] = lambda  a : f"""https://www.thriftbooks.com/browse/?b.search={a}#b.s=mostPopular-desc&b.p=1&b.pp=30&b.oos&b.tile"""
 
 settings['api']['googleDrive'] = {}
 settings['api']['googleDrive']['mainFolderId'] = 'id'
