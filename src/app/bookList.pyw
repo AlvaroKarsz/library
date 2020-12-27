@@ -1145,8 +1145,7 @@ class App:
 
         topNav.add_cascade(label="Display", menu=self.displayMenu)
         bckupMenu = Menu(topNav,tearoff=False,bg='white',font=('Arial',11))
-        bckupMenu.add_command(label="Backup DB Structure",command = self.backupStructureDB)
-        bckupMenu.add_command(label="Backup DB Data", command = self.backupDataDB)
+        bckupMenu.add_command(label="Backup DB",command = self.backupDB)
         bckupMenu.add_command(label="Commit & Push", command = self.commitAndPush)
 
         driveSubMenu = Menu(bckupMenu,tearoff=False,bg='white',font=('Arial',11))
@@ -1203,17 +1202,8 @@ class App:
             messagebox.showinfo('Sucess',f'''All changes pushed to GitHub''')
 
 
-    def backupDataDB(self):
-        res = backupDBdata()
-        if not res:
-            insertError(f"""DB error -Error saving DB data""",self.settings['errLog'])
-            messagebox.showerror(title='Error', message="Oppsss\nOS error.\nPlease read LOG for mofe info.")
-        else:
-            messagebox.showinfo('Sucess',f'''Backup Succeeded''')
-
-
-    def backupStructureDB(self):
-        res = backupDBstructure()
+    def backupDB(self):
+        res = backupWholeDB()
         if not res:
             insertError(f"""DB error -Error saving DB structure""",self.settings['errLog'])
             messagebox.showerror(title='Error', message="Oppsss\nOS error.\nPlease read LOG for mofe info.")

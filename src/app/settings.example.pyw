@@ -125,8 +125,7 @@ settings['confirm']['pady_popup'] = 50
 
 settings['backups'] = {}
 settings['backups']['dir'] = settings['appDir'] + 'backups/'
-settings['backups']['db_structure'] = settings['backups']['dir'] + 'db_structure.txt'
-settings['backups']['db_data'] = settings['backups']['dir'] + 'db_data.txt'
+settings['backups']['db'] = settings['backups']['dir'] + 'db_bkp.txt'
 
 
 settings['api'] = {}
