@@ -68,18 +68,32 @@ def updateBookById(db,settings,json,id):
         args = [id,json['prev']]
         db.execute(sql,args)
 
-    #delete prev. collection
-    sql = '''DELETE FROM ''' + settings['db']['stories_table'] +  ''' WHERE parent = %s;'''
-    db.execute(sql,[id])
-
-    #update collection
-    if 'collection' in json:
-        sql = '''
-            INSERT INTO ''' + settings['db']['stories_table'] + '''
-            (name,pages,parent) VALUES  ''' + jsonToValues(len(json['collection']),3) + ''';'''
-        json['collection'] = addValueToEachJson(json['collection'],'id',id)
-        args = convertJsonToFlatArray(json['collection'])
-        db.execute(sql,args)
+    #delete prev. collection if this new book is not a colletion, in this case collection that are not anymore will not have any stories attached
+    if 'collection' not in json:
+        sql = '''DELETE FROM ''' + settings['db']['stories_table'] +  ''' WHERE parent = %s;'''
+        db.execute(sql,[id])
+    else:
+        #if this is a collection, fetch all prev. stories and diff between prev. state and current state
+        sql = '''SELECT * FROM ''' + settings['db']['stories_table'] +  ''' WHERE parent = %s;'''
+        db.execute(sql,[id])
+        prevRows = db.fetchall()
+        columns = db.description
+        prevStories = postgresResultToColumnRowJson(columns,prevRows)
+        breakMainLoop = False
+        for newStory in json['collection']:
+            breakMainLoop = False #reset
+            if newStory['id']: #has id - updated story - else new story that needs to be inserted
+                for prevStory in prevStories:
+                    if int(prevStory['id']) == int(newStory['id']):
+                        sql = '''UPDATE ''' + settings['db']['stories_table'] + ''' SET name=%s, pages=%s WHERE id=%s;'''
+                        db.execute(sql,[newStory['name'],newStory['pages'], newStory['id']])
+                        breakMainLoop = True
+                        break
+            if breakMainLoop:
+                continue
+            else :
+                sql = '''INSERT INTO ''' + settings['db']['stories_table'] + '''(name, pages, parent) VALUES(%s,%s,%s);'''
+                db.execute(sql,[newStory['name'],newStory['pages'], id])
 
 
 def insertNewBook(db,settings,json):
@@ -394,6 +408,7 @@ def markStoryAsReaded(db,settings,storyID,date):
 
 
 def markBookAsReaded(db,settings,bookID,date):
+    #first mark it stories as readed
     sql = '''UPDATE ''' + settings['db']['stories_table'] + '''
      SET readed_date = %s,
      read_order = (

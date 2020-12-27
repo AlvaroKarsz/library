@@ -234,6 +234,7 @@ class InsertBook:
         self.collectionArr = []
 
         if 'stories' in autoValues:
+            btn.pack(side=LEFT)#display 'add' button
             if autoValues['stories'] and notEmptyEls(autoValues['stories']):
                 self.isCollection.set(True)
                 Thread(target = lambda: self.insertAutoValuesCollection(autoValues['stories'])).start()
@@ -281,7 +282,7 @@ class InsertBook:
 
     def insertAutoValuesCollection(self,values):
         for entry in values:
-            self.addNewCollectionEntry([entry['name'],entry['pages']])
+            self.addNewCollectionEntry([entry['name'],entry['pages'], entry['id']])
 
 
     def handleTableImport(self):
@@ -344,7 +345,8 @@ class InsertBook:
         line = Label(self.isCollectionFrame,background='black',foreground='white')
         a = StringVar()
         b = StringVar()
-        self.collectionArr.append({'name':a,'pages':b})
+        c = StringVar()
+        self.collectionArr.append({'name':a,'pages':b, 'id':c})
         Label(line,text='Story Name:',background='black',foreground='white').pack(side=LEFT)
         e1 = Entry(line,textvariable = a)
         e1.pack(side=LEFT)
@@ -352,10 +354,12 @@ class InsertBook:
         e2 = Entry(line,textvariable = b)
         e2.pack(side=LEFT)
         line.pack(pady=7)
+        e3 = Entry(line,textvariable = c)#invisible to hold story id
         self.isCollectionNextRow += 1
         if defaultValues:
             e1.insert(0,defaultValues[0])
             e2.insert(0,defaultValues[1])
+            e3.insert(0,defaultValues[2] if len(defaultValues) == 3 else 0)
         self.scrollDown()
 
 
@@ -547,7 +551,7 @@ class InsertBook:
             res['collection'] = []
             for i in self.collectionArr:
                 if i['name'].get() and i['pages'].get() :
-                    res['collection'].append({'name':i['name'].get().strip(),'pages':i['pages'].get().strip()})
+                    res['collection'].append({'name':i['name'].get().strip(),'pages':i['pages'].get().strip(),'id':i['id'].get().strip()})
 
         if 'collection' in res and not res['collection']:
             del res['collection']
