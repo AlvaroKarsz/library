@@ -4,15 +4,18 @@ from functions import *
 from PIL import ImageTk, Image
 from threading import Thread
 from tkinter import messagebox
-
+from dbFunctions import *
 
 class CoverSelector:
-    def __init__(self,win,settings,title,author,folderPath=False,id=False,returnValue=False,clearTemp=True,confirmAlert=True):
+    def __init__(self,win,db,settings,title,author,folderPath=False,id=False,returnValue=False,clearTemp=True,confirmAlert=True):
         self.window = win
+        self.db = db
         self.settings = settings
         self.returnValue = returnValue
         self.confirmAlert = confirmAlert
         self.clearTemp = clearTemp
+        self.picId = id
+        self.picPath = folderPath
         self.originalPic = self.getDestinationPath(folderPath,id) if folderPath and id else None
         self.selected = None
         self.trace = StringVar()
@@ -27,6 +30,7 @@ class CoverSelector:
         thId = Thread(target = lambda: self.fetchAndDisplayCovers(title,author))
         thId.daemon = True
         thId.start()
+
 
     def setOncloseEventListener(self):
         self.window.protocol("WM_DELETE_WINDOW", self.clearTmpOnclose)
@@ -172,6 +176,8 @@ class CoverSelector:
             return
 
         messagebox.showinfo('Sucess','Cover was changed.\nReload the pictures to see the change.')
+        #update md5 cache
+        updateMD5_inCache(self.db,self.settings,getMD5(self.picPath, self.originalPic.split("/")[-1]), getPicturesFolderNameFromPath(self.picPath), self.picId)
         self.clearTmpOnclose()
 
 

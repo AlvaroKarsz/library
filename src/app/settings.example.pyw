@@ -10,6 +10,7 @@ settings['db']['books_table'] = 'my_books_table_name'
 settings['db']['series_table'] = 'series_table_name'
 settings['db']['stories_table'] = 'stories_table_name'
 settings['db']['wish_table'] = 'wish_list_table_name'
+settings['db']['cache_table'] = 'cache_table_name'
 
 settings['maxBooksFetch'] = 20
 settings["maxCoverFetch"] = 9
@@ -35,13 +36,18 @@ settings['gui']['popup_font_size'] = 13
 
 settings['booksDisplayPreRow'] = 4
 
-settings['appDir'] = 'C:/Users/app'
+settings['folderNames'] = {}
+settings['folderNames']['wishlist'] = 'folderName'
+settings['folderNames']['stories'] = 'folderName'
+settings['folderNames']['series'] = 'folderName'
+settings['folderNames']['pictures'] = 'folderName'
+settings['appDir'] = 'C:\/path\/to\/app'
 settings['tmp'] = settings['appDir'] + 'tmp/'
 settings['pics'] = {}
-settings['pics']['picFolderPath'] = settings['appDir'] + 'pictures/'
-settings['pics']['wishFolderPath'] = settings['appDir'] + 'wishlist/'
-settings['pics']['storiesFolderPath'] = settings['appDir'] + 'stories/'
-settings['pics']['seriesFolderPath'] = settings['appDir'] + 'series/'
+settings['pics']['picFolderPath'] = settings['appDir'] + settings['folderNames']['pictures'] +'/'
+settings['pics']['wishFolderPath'] = settings['appDir'] + settings['folderNames']['wishlist'] +'/'
+settings['pics']['storiesFolderPath'] = settings['appDir'] + settings['folderNames']['stories'] + '/'
+settings['pics']['seriesFolderPath'] = settings['appDir'] + settings['folderNames']['series'] + '/'
 settings['pics']['width'] = 180
 settings['pics']['height'] = 200
 settings['pics']['width_big'] =  220

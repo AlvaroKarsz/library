@@ -1114,3 +1114,16 @@ def makeStats(db,settings):
     rows = db.fetchall()
     columns = db.description
     return postgresResultToColumnRowJson(columns,rows)
+
+
+def updateMD5_inCache(db,settings,md5,folder,pictureId):
+    sql = '''INSERT INTO ''' + settings['db']['cache_table'] + ''' (id, folder, md5) VALUES ( %s, %s, %s )
+            ON CONFLICT (id, folder) DO UPDATE SET
+            md5=%s,
+            "timestamp" = TIMEZONE('ASIA/JERUSALEM'::TEXT, NOW());'''
+    db.execute(sql,[pictureId, folder, md5, md5])
+
+
+def removeFromCache(db,settings, id, folder):
+    sql = '''DELETE FROM ''' + settings['db']['cache_table'] + ''' WHERE id=%s AND folder=%s;'''
+    db.execute(sql,[id, folder])

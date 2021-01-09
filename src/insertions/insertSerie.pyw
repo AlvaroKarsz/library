@@ -133,6 +133,8 @@ class InsertSerie:
                             messagebox.showerror(title='Error', message="Oppsss\nOS error.\nCould not copy the picture.\nPlease read LOG for mofe info.")
                         else:
                             messagebox.showinfo('Message',f'''Picture Copied.''')
+                            #update md5 cache
+                            updateMD5_inCache(self.db,self.settings,getMD5(self.settings['pics']['seriesFolderPath'],serieName),self.settings['folderNames']['series'],newId)
         self.findBooks(vars,newId)
 
 
@@ -220,8 +222,11 @@ class InsertSerie:
                 messagebox.showerror(title='Error', message="Oppsss\nDB error.\nPlease read LOG for mofe info.")
                 return
             if book['cover']:
-                newPicPath = self.settings['pics']['wishFolderPath'] + '/' + str(bookId) + getExtensionFromPath(book['cover'])
+                coverExtension = getExtensionFromPath(book['cover'])
+                newPicPath = self.settings['pics']['wishFolderPath'] + '/' + str(bookId) + coverExtension
                 moveFile(book['cover'],newPicPath,self.settings)
+                #update md5 cache
+                updateMD5_inCache(self.db,self.settings,getMD5(self.settings['pics']['wishFolderPath'], str(bookId) + coverExtension), self.settings['folderNames']['wishlist'], bookId)
 
         messagebox.showinfo('Done',f'''Books Saved.''')
         self.closeBookFetcher()

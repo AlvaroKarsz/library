@@ -262,6 +262,7 @@ class InsertWish:
         self.displayMainWindow()
         if responseTrack.get():#user want to keep the picture
             copyFlag = self.copyPicture(bookId,bookApiPath)
+            updateMD5_inCache(self.db,self.settings,getMD5(self.settings['pics']['wishFolderPath'],self.bookNameAsFile), self.settings['folderNames']['wishlist'], bookId)
             if not copyFlag: #could not copy - delete the file
                 self.destoryPicture(bookApiPath)
         else: #not want to use the api cover, maybe want a pic from PC
@@ -283,7 +284,10 @@ class InsertWish:
         if messagebox.askyesno("Question","Would you like to add a picture?"):
             filename = askopenfilename()
             if filename:
+                #move the picture to the app folder
                 self.copyPicture(bookId,filename)
+                #now save the md5 in cache
+                updateMD5_inCache(self.db,self.settings,getMD5(self.settings['pics']['wishFolderPath'],self.bookNameAsFile),self.settings['folderNames']['wishlist'],bookId)
 
 
     def destoryPicture(self,path):
@@ -294,8 +298,8 @@ class InsertWish:
 
 
     def copyPicture(self,id,filePath):
-        bookNameAsFile = id + getExtensionFromPath(filePath)
-        flag = copyFile(filePath,self.settings['pics']['wishFolderPath'] + bookNameAsFile)
+        self.bookNameAsFile = id + getExtensionFromPath(filePath)
+        flag = copyFile(filePath,self.settings['pics']['wishFolderPath'] + self.bookNameAsFile)
         if flag != True:
             insertError(f"""OS error - {flag}""",self.settings['errLog'])
             messagebox.showerror(title='Error', message="Oppsss\nOS error.\nCould not copy the picture.\nPlease read LOG for mofe info.")

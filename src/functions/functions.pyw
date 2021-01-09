@@ -842,3 +842,7 @@ def fetchAuthorBooksFromGoodReads(authorId,settings):
     else:
         insertError(f"""Fetch error - bad status code from http request\nurl: {url}\nstatus code: {req.status_code}\nresponse: {req.text}""",settings['errLog'])
     return output
+
+
+def getPicturesFolderNameFromPath(path):
+    return path.split('/')[-2]

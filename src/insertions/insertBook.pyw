@@ -458,6 +458,9 @@ class InsertBook:
                             messagebox.showerror(title='Error', message="Oppsss\nOS error.\nCould not copy the picture.\nPlease read LOG for mofe info.")
                         else:
                             messagebox.showinfo('Message',f'''Picture Copied.''')
+                            #update md5 cache
+                            updateMD5_inCache(self.db,self.settings,getMD5(self.settings['pics']['picFolderPath'],bookNameAsFile), self.settings['folderNames']['pictures'], newId)
+
             self.sucess.set(vars['name'])
 
 
@@ -710,9 +713,12 @@ class InsertBook:
                 if copyFlag != True: #err copying file
                     insertError(f"""OS error - {copyFlag}""",self.settings['errLog'])
                     ErrorsFlag = True
+                else:#no error copying file
+                    #update md5 cache
+                    updateMD5_inCache(self.db,self.settings,getMD5(self.settings['pics']['storiesFolderPath'], str(story['id']) + '.' + picturesFromFolder[tempPicturesFolderIndex].split('.')[-1]) , self.settings['folderNames']['stories'], story['id'])
+
         if ErrorsFlag:
             messagebox.showerror(title='Error', message="Oppsss\nCould not copy all Pictures to App\nPlease read log for more info.")
-
 
 
     def findStoryPictureFromName(self,storyNameOptionsArr,directoryContentArr):

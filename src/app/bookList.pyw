@@ -440,6 +440,8 @@ class App:
 
 
     def moveThisPic(self,tracerVal,currentPicturePath,newBookId,wishID):
+        #first - remove file md5 from cache
+        removeFromCache(self.db,self.settings, wishID, self.settings['folderNames']['wishlist'])
         if not tracerVal.get():#user dont want to keep the picture, delete it
             destroyFlag = destroyFile(currentPicturePath)
             if destroyFlag != True:#error in destory
@@ -448,21 +450,27 @@ class App:
             if messagebox.askyesno("Question","Would you like to add a picture?"):
                 filename = askopenfilename()
                 if filename:
-                    bookNameAsFile = newBookId + getExtensionFromPath(filename)
+                    fileExtenstionNameFromOS = getExtensionFromPath(filename)
+                    bookNameAsFile = newBookId + fileExtenstionNameFromOS
                     flag = copyFile(filename,self.settings['pics']['picFolderPath'] + bookNameAsFile)
                     if flag != True:
                         insertError(f"""OS error - {flag}""",self.settings['errLog'])
                         messagebox.showerror(title='Error', message="Oppsss\nOS error.\nCould not copy the picture.\nPlease read LOG for mofe info.")
                     else:
+                        #update md5 cache
+                        updateMD5_inCache(self.db,self.settings,getMD5(self.settings['pics']['picFolderPath'], bookNameAsFile), self.settings['folderNames']['pictures'], newBookId)
                         messagebox.showinfo('Message',f'''Picture Copied.''')
         else:
-            newPath = self.settings['pics']['picFolderPath'] + newBookId + getExtensionFromPath(currentPicturePath)
+            fileExtenstionName = getExtensionFromPath(currentPicturePath)
+            newPath = self.settings['pics']['picFolderPath'] + newBookId + fileExtenstionName
             moveFlag = moveFile(currentPicturePath,newPath,self.settings)
             if moveFlag != True:
                 insertError(f"""OS error - {moveFlag}""",self.settings['errLog'])
                 messagebox.showerror(title='Error', message="Oppsss\OS error.\nCould not move the Picture.\nPlease read LOG for mofe info.")
             else:
                 messagebox.showinfo('Action Succeeded',f'''Picture Moved.''')
+                #update md5 cache
+                updateMD5_inCache(self.db,self.settings,getMD5(self.settings['pics']['picFolderPath'], newBookId + fileExtenstionName), self.settings['folderNames']['pictures'], newBookId)
         self.removeItemFromData(wishID)
         self.filter()#reload the pictures- one has been deleted
 
@@ -657,7 +665,8 @@ class App:
                 insertError(f"""OS error - {flag}""",self.settings['errLog'])
                 messagebox.showerror(title='Error', message="Oppsss\nOS error.\nFile deleted from DB, but could not delete Picture from folder.\nPlease read LOG for mofe info.")
                 return
-
+            #remove md5 from cache
+            removeFromCache(self.db, self.settings, id, getPicturesFolderNameFromPath(self.picFolder))
         self.reloadData()
 
 
@@ -1175,7 +1184,7 @@ class App:
 
         self.coverChangerWindow =  Toplevel(self.window)
         centerWindow(self.coverChangerWindow,settings['covers']['width'],settings['covers']['height'])
-        CoverSelector(self.coverChangerWindow,self.settings,title,author,self.picFolder ,id)
+        CoverSelector(self.coverChangerWindow,self.db,self.settings,title,author,self.picFolder ,id)
 
 
     def backupToGoogleDriveCommand(self, folder = None):
@@ -1549,6 +1558,8 @@ class App:
                     messagebox.showerror(title='Error', message="Could not save the cover.")
                 else:
                     messagebox.showinfo('Sucess','Cover was changed.\nReload the pictures to see the change.')
+                    #update md5 cache
+                    updateMD5_inCache(self.db,self.settings,getMD5(self.picFolder,str(id) + getExtensionFromPath(filename)),getPicturesFolderNameFromPath(self.picFolder),id)
 
 
     def reactToMouseWheel(self):
