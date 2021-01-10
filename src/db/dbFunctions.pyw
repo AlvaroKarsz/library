@@ -1127,3 +1127,18 @@ def updateMD5_inCache(db,settings,md5,folder,pictureId):
 def removeFromCache(db,settings, id, folder):
     sql = '''DELETE FROM ''' + settings['db']['cache_table'] + ''' WHERE id=%s AND folder=%s;'''
     db.execute(sql,[id, folder])
+
+
+def fetchCache(db, settings):
+    db.execute('''SELECT md5, id, folder FROM ''' + settings['db']['cache_table'] + ''';''')
+    rows = db.fetchall()
+    columns = db.description
+    data = postgresResultToColumnRowJson(columns,rows)
+    outputDict = {}
+
+    for cache in data:
+        if(cache['folder'] not in outputDict):
+            outputDict[cache['folder']] = {}
+        outputDict[cache['folder']][str(cache['id'])] = cache['md5']
+
+    return outputDict

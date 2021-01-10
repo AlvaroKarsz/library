@@ -846,3 +846,6 @@ def fetchAuthorBooksFromGoodReads(authorId,settings):
 
 def getPicturesFolderNameFromPath(path):
     return path.split('/')[-2]
+
+def getnameFromfileString(str):
+    return str.split('.')[0]

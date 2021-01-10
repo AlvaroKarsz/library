@@ -1,6 +1,8 @@
 from driveFunctions import *
 from functions import *
 from settings import settings
+from dbConnection import db
+from dbFunctions import *
 from tkinter import *
 import time
 
@@ -82,21 +84,31 @@ def backupFilesToDrive(dialog,win, folderToBackUp):
             updateDriveDialog(dialog,'File name: ' + f + ':\n')
         updateDriveDialog(dialog,str(len(localJsonData[folder])) + ' Files in folder ' + folder + ':\n\n')
 
-
+    #fetch md5 from cache
+    updateDriveDialog(dialog,'Fetching MD5 from Cache\n')
+    md5FromCache = fetchCache(db, settings)
     updateDriveDialog(dialog,'Generating MD5CheckSum to local files\n')
     arrTmp = []
     tmpMd5 = ''
+    fileId = ''
+    fromCacheFlag = False
     for val in localJsonData:
         arrTmp = []
         updateDriveDialog(dialog,'Folder ' + val + ':\n')
-        for nm in localJsonData[val]:
-            tmpMd5 = getMD5(settings['appDir'] + val,nm)
-            arrTmp.append([nm,tmpMd5])
-            updateDriveDialog(dialog,'File: ' + nm + ', Hash: ' + tmpMd5 + '\n')
 
+        for nm in localJsonData[val]:
+            fileId = getnameFromfileString(nm)
+            fromCacheFlag = (val in md5FromCache and fileId in  md5FromCache[val])
+            updateDriveDialog(dialog,'Geting MD5 for: ' + val + '/' + nm + ' from ' + ('Cache' if fromCacheFlag else 'OS') + '\n')
+            tmpMd5 = md5FromCache[val][fileId] if fromCacheFlag else getMD5(settings['appDir'] + val,nm)
+            arrTmp.append([nm,tmpMd5])
+            updateDriveDialog(dialog,'Folder: ' + val + ', File: ' + nm + ', Hash: ' + tmpMd5 + '\n')
+            if fromCacheFlag == False:
+                #cache the md5
+                updateDriveDialog(dialog,'Caching MD5 for file ' + val + '/' + nm  + ' in DB\n')
+                updateMD5_inCache(db,settings,tmpMd5,val,fileId)
         localJsonData[val] = arrTmp
         updateDriveDialog(dialog,str(len(localJsonData[val])) + ' Files in folder ' + val + ':\n\n')
-
 
     #upload non existing files or changes files (by md5)
     updateDriveDialog(dialog,'Check which file needs Backup:\n')

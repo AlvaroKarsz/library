@@ -16,7 +16,7 @@ settings['maxBooksFetch'] = 20
 settings["maxCoverFetch"] = 9
 
 settings['dialog'] = {}
-settings['dialog']['width'] = 500
+settings['dialog']['width'] = 700
 settings['dialog']['height'] = 300
 
 settings['storiesDialog'] = {}

@@ -1192,7 +1192,7 @@ class App:
         dialog.title('Drive Uploader')
         centerWindow(dialog,settings['dialog']['width'],settings['dialog']['height'])
         T = Text(dialog,bg='black',fg='white')
-        T.pack()
+        T.pack(fill="both", expand=True)
         thread = Thread(target = lambda: backupFilesToDrive(T,dialog,folder))
         self.killThreadWhenWindowIsClosed(thread)
         thread.start()
