@@ -1217,6 +1217,8 @@ class App:
             insertError(f"""DB error -Error saving DB structure""",self.settings['errLog'])
             messagebox.showerror(title='Error', message="Oppsss\nOS error.\nPlease read LOG for mofe info.")
         else:
+            #update md5
+            updateMD5_inCache(self.db,self.settings,getMD5(self.settings['backups']['dir'],self.settings['backups']['fileName']),self.settings['backups']['folderName'],getnameFromfileString(self.settings['backups']['fileName']))
             messagebox.showinfo('Sucess',f'''Backup Succeeded''')
 
 
