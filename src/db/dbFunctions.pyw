@@ -140,14 +140,17 @@ def insertNewBook(db,settings,json):
 
 
     #try to save the rating in ratings table - on error just continue
+    googleIsbn = None #in case that provided isbn not exists in goodreads, and google isbn does
     ratingDict = fetchRating(json['isbn'],settings)
     if not ratingDict or not ratingDict['count'] or not ratingDict['rating']:#could not fetch - try another isbn from google api
         googleIsbn = getISBNfromGoogleApiTitle(json['name'],json['author'],settings)
-        if googleIsbn:
+        if googleIsbn and googleIsbn.isdigit():
             ratingDict = fetchRating(googleIsbn,settings)
+        else:
+            googleIsbn = None #reset
 
     if ratingDict and ratingDict['count'] and ratingDict['rating']:#could fetch
-        db.execute("""INSERT INTO """ + settings['db']['ratings_table'] + """(table_name, id, count, rating) VALUES ('""" + settings['db']['books_table'] +  """',%s,%s,%s) ON CONFLICT (id,table_name) DO NOTHING;""",[id,ratingDict['count'],ratingDict['rating']])
+        db.execute("""INSERT INTO """ + settings['db']['ratings_table'] + """(table_name, id, count, rating, additional_isbn) VALUES ('""" + settings['db']['books_table'] +  """',%s,%s,%s, """ + ("""'""" + googleIsbn + """'""" if googleIsbn else 'NULL')  + """) ON CONFLICT (id,table_name) DO NOTHING;""",[id,ratingDict['count'],ratingDict['rating']])
 
     return id
 
@@ -931,14 +934,15 @@ def insertNewWish(db,settings,objs):
         id = db.fetchone()[0]
 
         #try to save the rating in ratings table - on error just continue
+        googleIsbn = None #in case that provided isbn not exists in goodreads, and google isbn does
         ratingDict = fetchRating(objs['isbn'],settings)
         if not ratingDict or not ratingDict['count'] or not ratingDict['rating']:#could not fetch - try another isbn from google api
             googleIsbn = getISBNfromGoogleApiTitle(objs['name'],objs['author'],settings)
-            if googleIsbn:
+            if googleIsbn and googleIsbn.isdigit():
                 ratingDict = fetchRating(googleIsbn,settings)
 
         if ratingDict and ratingDict['count'] and ratingDict['rating']:#could fetch
-            db.execute("""INSERT INTO """ + settings['db']['ratings_table'] + """(table_name, id, count, rating) VALUES (%s,%s,%s,%s) ON CONFLICT (id,table_name) DO NOTHING;""",[settings['db']['wish_table'],id,ratingDict['count'],ratingDict['rating']])
+            db.execute("""INSERT INTO """ + settings['db']['ratings_table'] + """(table_name, id, count, rating,additional_isbn) VALUES (%s,%s,%s,%s, """ + ("""'""" + googleIsbn + """'""" if googleIsbn else 'NULL')  + """) ON CONFLICT (id,table_name) DO NOTHING;""",[settings['db']['wish_table'],id,ratingDict['count'],ratingDict['rating']])
 
         return id
     except Exception as err:
@@ -1242,6 +1246,20 @@ def cacheRatings(db,settings):
     columns = db.description
     data += postgresResultToColumnRowJson(columns,rows)
 
+
+    #fetch isbns from ratings table - some isbns not exists in goodreads DB, so ratings table have a column with additional isbns to replace these
+    db.execute("""SELECT additional_isbn, id, table_name FROM """ + settings['db']['ratings_table'] + """ WHERE additional_isbn IS NOT NULL;""")
+    rows = db.fetchall()
+    columns = db.description
+    additionalIsbns = postgresResultToColumnRowJson(columns,rows)
+
+    #replace isbns with additional_isbn, if additional_isbn exists
+    for bk in additionalIsbns:
+        for index, mainBook in enumerate(data):
+            if mainBook['id'] == bk['id'] and mainBook['table_name'] == bk['table_name']: #match
+                data[index]['isbn'] = bk['additional_isbn']
+                break
+
     #create isbn string to fetch goodreads API
     isbnString = ','.join(list(map(lambda a : a['isbn'],data)))
 
@@ -1281,10 +1299,9 @@ def cacheRatings(db,settings):
         newIsbns = []
         for bk in googleIsbnFetch:
             temp = getISBNfromGoogleApiTitle(bk['name'],bk['author'],settings)
-            if temp:#found
-                bk['tmp_isbn'] = temp#save isbn
+            if temp and temp.isdigit():#found and valid
+                bk['temp_isbn'] = temp#save isbn
                 newIsbns.append(temp)#push to arr
-
         if len(newIsbns):#new isbns found - fetch rating from goodreads api
             apiPayload['isbns'] = ','.join(newIsbns)
             fetchAction = requests.get(url = apiUrl ,params=apiPayload)
@@ -1298,7 +1315,7 @@ def cacheRatings(db,settings):
             #iterate isbns and add these new ratings
             for ratingResult in fetchAction['books']:
                 for book in googleIsbnFetch:
-                    if book['tmp_isbn'] == ratingResult['isbn'] or book['tmp_isbn'] == ratingResult['isbn13']:#match
+                    if book['temp_isbn'] == ratingResult['isbn'] or book['temp_isbn'] == ratingResult['isbn13']:#match
                         if isinstance(ratingResult['work_ratings_count'], int) and ratingResult['average_rating'].replace('.','',1).isdigit():#good format
                             book['rating'] = ratingResult['average_rating']
                             book['count'] = ratingResult['work_ratings_count']
@@ -1310,20 +1327,25 @@ def cacheRatings(db,settings):
                         if mainBookObj['id'] == book['id'] and mainBookObj['table_name'] == book['table_name']:#match
                             mainBookObj['count'] = book['count']
                             mainBookObj['rating'] = book['rating']
+                            mainBookObj['temp_isbn'] = book['temp_isbn']#save temp isbn in ratings table - so next time we will use this isbn instead of the one from the table's DB
                             break
 
     #insert rating to DB table
-    sql = '''INSERT INTO ''' + settings['db']['ratings_table'] + '''(id, table_name, rating, count) VALUES '''
+    sql = '''INSERT INTO ''' + settings['db']['ratings_table'] + ''' AS main (id, table_name, rating, count, additional_isbn) VALUES '''
 
     for book in data:
         if 'rating' in book and 'count' in book:
-            sql += """('""" + str(book['id']) + """','""" + book['table_name']  + """','""" + book['rating']  + """','""" + str(book['count']) + """'),"""
+            sql += """('""" + str(book['id']) + """','""" + book['table_name']  + """','""" + book['rating']  + """','""" + str(book['count'])
+            if 'temp_isbn' in book:#book has temp isbn
+                sql += """','""" + str(book['temp_isbn']) + """'),"""
+            else:#no temp isbn
+                sql += """',NULL),"""
         else:
-            sql += """('""" + str(book['id']) + """','""" + book['table_name']  + """',NULL,NULL),"""
+            sql += """('""" + str(book['id']) + """','""" + book['table_name']  + """',NULL,NULL,NULL),"""
 
     sql = sql[:-1] #remove last comma
 
-    sql += """ ON CONFLICT (table_name, id) DO UPDATE SET count = EXCLUDED.count, rating = EXCLUDED.rating;"""
+    sql += """ ON CONFLICT (table_name, id) DO UPDATE SET count = EXCLUDED.count, rating = EXCLUDED.rating, additional_isbn = COALESCE(EXCLUDED.additional_isbn,main.additional_isbn);"""
 
     db.execute(sql)
     return output
