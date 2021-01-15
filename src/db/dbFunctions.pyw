@@ -1,4 +1,5 @@
 import json
+import requests
 from functions import *
 
 
@@ -136,6 +137,13 @@ def insertNewBook(db,settings,json):
         '''
         args = [id,json['prev']]
         db.execute(sql,args)
+
+
+    #try to save the rating in ratings table - on error just continue
+    ratingDict = fetchRating(json['isbn'],settings)
+    if ratingDict and ratingDict['count'] and ratingDict['rating']:#could fetch
+        db.execute("""INSERT INTO """ + settings['db']['ratings_table'] + """(table_name, id, count, rating) VALUES ('""" + settings['db']['books_table'] +  """',%s,%s,%s) ON CONFLICT (id,table_name) DO NOTHING;""",[id,ratingDict['count'],ratingDict['rating']])
+
     return id
 
 
@@ -204,17 +212,23 @@ def postgresResultToColumnRowJson(columns,rows):
     return list (map( lambda row : buildJsonFromSingleRow(columns,row) , rows)  )
 
 def fetchMyLibrary(db,settings):
-    sql = '''
+    sql = """
     SELECT
-        id,
-        name,
-        author,
-        pages,
-        year
-        FROM ''' + settings['db']['books_table'] + '''
+        main.id,
+        main.name,
+        main.author,
+        main.pages,
+        main.year,
+        COALESCE(rat.rating,'0') AS rating
+        -- if no rating exists - set as zero
+        FROM """ + settings['db']['books_table'] + """ main
+
+        LEFT JOIN """ + settings['db']['ratings_table'] + """ rat
+        ON main.id = rat.id AND rat.table_name = '""" + settings['db']['books_table'] + """'
+
         ORDER BY
-        id;
-        '''
+        main.id;
+        """
     db.execute(sql)
     rows = db.fetchall()
     columns = db.description
@@ -222,7 +236,7 @@ def fetchMyLibrary(db,settings):
 
 
 def fetchBookById(db,settings,id):
-    sql = '''
+    sql = """
     SELECT
         my_books_main.id AS id,
         my_books_main.name AS name,
@@ -245,6 +259,8 @@ def fetchBookById(db,settings,id):
         my_books_entry2.id AS prev_id,
         my_books_entry2.name AS prev_name,
         my_books_entry2.author AS prev_author,
+        ratings_entry.rating AS rating,
+        ratings_entry.count AS rating_count,
         JSON_STRIP_NULLS(
             JSON_AGG(
                 JSONB_BUILD_OBJECT(
@@ -258,19 +274,23 @@ def fetchBookById(db,settings,id):
             )
         ) AS stories
 
-        FROM ''' + settings['db']['books_table'] + ''' my_books_main
+        FROM """ + settings['db']['books_table'] + """ my_books_main
 
-        LEFT JOIN ''' +  settings['db']['books_table'] + ''' my_books_entry1
+        LEFT JOIN """ +  settings['db']['books_table'] + """ my_books_entry1
         ON my_books_main.next = my_books_entry1.id
 
-        LEFT JOIN ''' + settings['db']['series_table']  + ''' series_table
+        LEFT JOIN """ + settings['db']['series_table']  + """ series_table
         ON my_books_main.serie = series_table.id
 
-        LEFT JOIN ''' + settings['db']['stories_table']  + ''' stories_table
+        LEFT JOIN """ + settings['db']['stories_table']  + """ stories_table
         ON my_books_main.id = stories_table.parent
 
-        LEFT JOIN ''' +  settings['db']['books_table'] + ''' my_books_entry2
+        LEFT JOIN """ +  settings['db']['books_table'] + """ my_books_entry2
         ON my_books_main.id = my_books_entry2.next
+
+        LEFT JOIN """ + settings['db']['ratings_table'] + """ ratings_entry
+        ON my_books_main.id = ratings_entry.id AND ratings_entry.table_name = '""" + settings['db']['books_table'] + """'
+
         WHERE my_books_main.id = %s
         GROUP BY
         my_books_main.id,
@@ -292,8 +312,10 @@ def fetchBookById(db,settings,id):
         my_books_entry1.author,
         my_books_entry2.id,
         my_books_entry2.name,
-        my_books_entry2.author
-        '''
+        my_books_entry2.author,
+        ratings_entry.rating,
+        ratings_entry.count
+        """
     db.execute(sql,[id])
     rows = [db.fetchone()]
     columns = db.description
@@ -582,19 +604,25 @@ def fetchAllMyStories(db,settings):
 
 
 def fetchMyReadList(db,settings):
-    sql = '''
+    sql = """
     SELECT
-        id,
-        name,
-        author,
-        pages,
-        year,
-        read_order AS read
-        FROM ''' + settings['db']['books_table'] + '''
+        main.id,
+        main.name,
+        main.author,
+        main.pages,
+        main.year,
+        main.read_order AS read,
+        COALESCE(rat.rating,'0') AS rating
+        -- if no rating exists - set as zero
+        FROM """ + settings['db']['books_table'] + """ main
+
+        LEFT JOIN """ + settings['db']['ratings_table'] + """ rat
+        ON main.id = rat.id AND rat.table_name = '""" + settings['db']['books_table'] + """'
+
         WHERE read_order IS NOT NULL
         ORDER BY
         read_order;
-        '''
+        """
     db.execute(sql)
     rows = db.fetchall()
     columns = db.description
@@ -668,7 +696,7 @@ def fetchStoryById(db,settings,id):
 
 
 def fetchReadById(db,settings,id):
-    sql = '''
+    sql = """
     SELECT
         main.id,
         main.name,
@@ -682,6 +710,8 @@ def fetchReadById(db,settings,id):
         main.pages,
         main.read_order AS read,
         main.read_date,
+        rat.rating AS rating,
+        rat.count AS rating_count,
         JSON_STRIP_NULLS(
             JSON_AGG(
                 JSONB_BUILD_OBJECT(
@@ -692,10 +722,13 @@ def fetchReadById(db,settings,id):
                 )
             )
         ) AS stories
-        FROM ''' + settings['db']['books_table'] + ''' main
+        FROM """ + settings['db']['books_table'] + """ main
 
-        LEFT JOIN ''' + settings['db']['stories_table']  + ''' stories_table
+        LEFT JOIN """ + settings['db']['stories_table']  + """ stories_table
         ON main.id = stories_table.parent
+
+        LEFT JOIN """ + settings['db']['ratings_table'] + """ rat
+        ON main.id = rat.id AND rat.table_name = '""" + settings['db']['books_table'] + """'
 
         WHERE main.id = %s
         GROUP BY
@@ -710,8 +743,10 @@ def fetchReadById(db,settings,id):
         main.type,
         main.pages,
         main.read_order,
-        main.read_date
-        '''
+        main.read_date,
+        rat.rating,
+        rat.count;
+        """
     db.execute(sql,[id])
     rows = [db.fetchone()]
     columns = db.description
@@ -719,36 +754,46 @@ def fetchReadById(db,settings,id):
 
 
 def fetchMyWishlist(db,settings):
-    sql = '''
+    sql = """
     SELECT
-        id,
-        name,
-        author,
-        year
-        FROM ''' + settings['db']['wish_table'] + '''
+        main.id,
+        main.name,
+        main.author,
+        main.year,
+        COALESCE(rat.rating,'0') AS rating
+        -- if no rating exists - set as zero
+        FROM """ + settings['db']['wish_table'] + """ main
+
+        LEFT JOIN """ + settings['db']['ratings_table'] + """ rat
+        ON main.id = rat.id AND rat.table_name = '""" + settings['db']['wish_table'] + """'
+
         WHERE ordered='f'
         ORDER BY
-        id;
-        '''
+        main.id;
+        """
     db.execute(sql)
     rows = db.fetchall()
     columns = db.description
     return postgresResultToColumnRowJson(columns,rows)
 
 def fetchMyOrderedlist(db,settings):
-    sql = '''
+    sql = """
     SELECT
-        id,
-        name,
-        author,
-        year,
-        order_date,
-        order_date_2
-        FROM ''' + settings['db']['wish_table'] + '''
+        main.id,
+        main.name,
+        main.author,
+        main.year,
+        COALESCE(rat.rating,'0') AS rating
+        -- if no rating exists - set as zero
+        FROM """ + settings['db']['wish_table'] + """ main
+
+        LEFT JOIN """ + settings['db']['ratings_table'] + """ rat
+        ON main.id = rat.id AND rat.table_name = '""" + settings['db']['wish_table'] + """'
+
         WHERE ordered='t'
         ORDER BY
-        id;
-        '''
+        main.id;
+        """
     db.execute(sql)
     rows = db.fetchall()
     columns = db.description
@@ -756,7 +801,7 @@ def fetchMyOrderedlist(db,settings):
 
 
 def fetchWishById(db,settings,id):
-    sql = '''
+    sql = """
     SELECT
         main.id AS id,
         main.name AS name,
@@ -766,12 +811,17 @@ def fetchWishById(db,settings,id):
         main.store AS store,
         main.ordered AS ordered,
         main.serie_num AS serie_num,
-        series.name AS serie
+        series.name AS serie,
+        ratings_e.rating AS rating,
+        ratings_e.count AS rating_count
 
-        FROM ''' + settings['db']['wish_table'] + ''' main
+        FROM """ + settings['db']['wish_table'] + """ main
 
-        LEFT JOIN  ''' + settings['db']['series_table'] + ''' series
+        LEFT JOIN  """ + settings['db']['series_table'] + """ series
         ON main.serie = series.id
+
+        LEFT JOIN  """ + settings['db']['ratings_table'] + """ ratings_e
+        ON main.id = ratings_e.id AND ratings_e.table_name = '""" + settings['db']['wish_table'] +  """'
 
         WHERE main.id = %s
         GROUP BY
@@ -783,15 +833,18 @@ def fetchWishById(db,settings,id):
         main.store,
         main.ordered,
         main.serie_num,
-        series.name;
-        '''
+        series.name,
+        ratings_e.rating,
+        ratings_e.count;"""
+
     db.execute(sql,[id])
     rows = [db.fetchone()]
     columns = db.description
     return postgresResultToColumnRowJson(columns,rows)[0]
 
+
 def fetchOrderedById(db,settings,id):
-    sql = '''
+    sql = """
     SELECT
         main.id AS id,
         main.name AS name,
@@ -803,16 +856,20 @@ def fetchOrderedById(db,settings,id):
         main.ordered AS ordered,
         main.order_date_2 AS order_date_2,
         main.serie_num AS serie_num,
-        series.name AS serie
+        series.name AS serie,
+        ratings_e.rating AS rating,
+        ratings_e.count AS rating_count
 
-        FROM ''' + settings['db']['wish_table'] + ''' main
+        FROM """ + settings['db']['wish_table'] + """ main
 
-        LEFT JOIN  ''' + settings['db']['series_table'] + ''' series
+        LEFT JOIN  """ + settings['db']['series_table'] + """ series
         ON main.serie = series.id
+
+        LEFT JOIN  """ + settings['db']['ratings_table'] + """ ratings_e
+        ON main.id = ratings_e.id AND ratings_e.table_name = '""" + settings['db']['wish_table'] +  """'
 
         WHERE main.id = %s
         GROUP BY
-
         main.id,
         main.store,
         main.name,
@@ -822,8 +879,10 @@ def fetchOrderedById(db,settings,id):
         main.order_date,
         main.order_date_2,
         main.serie_num,
-        series.name;
-        '''
+        series.name,
+        ratings_e.rating,
+        ratings_e.count;
+        """
     db.execute(sql,[id])
     rows = [db.fetchone()]
     columns = db.description
@@ -831,6 +890,9 @@ def fetchOrderedById(db,settings,id):
 
 
 def removeBookFromWishList(db,settings,id):
+    #first all - remove from rating table - if fails just keep going
+    db.execute("""DELETE FROM """ +  settings['db']['ratings_table'] + """ WHERE id=%s AND table_name='""" + settings['db']['wish_table'] + """';""",[id])
+
     sql = '''
     DELETE FROM ''' + settings['db']['wish_table'] + '''
     WHERE id = %s;
@@ -840,6 +902,7 @@ def removeBookFromWishList(db,settings,id):
         return True
     except Exception as err:
         return err
+
 
 def insertNewWish(db,settings,objs):
     values = "(name,year,author,isbn"
@@ -861,6 +924,12 @@ def insertNewWish(db,settings,objs):
     try:
         db.execute(sql,arguments)
         id = db.fetchone()[0]
+
+        #try to save the rating in ratings table - on error just continue
+        ratingDict = fetchRating(objs['isbn'],settings)
+        if ratingDict and ratingDict['count'] and ratingDict['rating']:#could fetch
+            db.execute("""INSERT INTO """ + settings['db']['ratings_table'] + """(table_name, id, count, rating) VALUES (%s,%s,%s,%s) ON CONFLICT (id,table_name) DO NOTHING;""",[settings['db']['wish_table'],id,ratingDict['count'],ratingDict['rating']])
+
         return id
     except Exception as err:
         return err
@@ -909,6 +978,9 @@ def insertNewSerie(db,settings,json):
 def deleteFromWishList(db,settings,id):
     if not id:
         return 'Error, wish list id is not a number'
+    #first all - remove from rating table - if fails just keep going
+    db.execute("""DELETE FROM """ +  settings['db']['ratings_table'] + """ WHERE id=%s AND table_name='""" + settings['db']['wish_table'] + """';""",[id])
+
     sql = '''
     DELETE FROM ''' + settings['db']['wish_table'] + '''
     WHERE id=%s;
@@ -1142,3 +1214,61 @@ def fetchCache(db, settings):
         outputDict[cache['folder']][str(cache['id'])] = cache['md5']
 
     return outputDict
+
+
+def cacheRatings(db,settings):
+    output = {'status':True,'count':''}
+    data = []
+    #first fetch ISBNS
+    #books:
+    db.execute("""SELECT id, isbn, '""" + settings['db']['books_table'] + """' AS table_name FROM """ + settings['db']['books_table'] + """;""")
+    rows = db.fetchall()
+    columns = db.description
+    data += postgresResultToColumnRowJson(columns,rows)
+    #wishlist:
+    db.execute("""SELECT id, isbn, '""" + settings['db']['wish_table'] + """' AS table_name FROM """ + settings['db']['wish_table'] + """;""")
+    rows = db.fetchall()
+    columns = db.description
+    data += postgresResultToColumnRowJson(columns,rows)
+
+    #create isbn string to fetch goodreads API
+    isbnString = ','.join(list(map(lambda a : a['isbn'],data)))
+
+    apiUrl = settings['api']['goodreads']['ratingByIsbnsArray']
+    apiFormat = 'json'
+
+    apiPayload = {'key': settings['api']['goodreads']['key'], 'isbns': isbnString, 'format': apiFormat}
+    fetchAction = requests.get(url = apiUrl ,params=apiPayload)
+    if fetchAction.status_code != 200:
+        insertError(f"""Fetch error - bad status code from http request\nurl: {url}\npayload:{payload}\nstatus code: {res.status_code}\nresponse: {res.text}""",settings['errLog'])
+        output['status'] = False
+        return output
+
+    fetchAction = json.loads(fetchAction.content)
+    output['count'] = (len(fetchAction['books']))
+
+    #iterate api result and keep the rating data in data ARRAY
+
+    for ratingResult in fetchAction['books']:
+        for book in data:
+            #make sure the format is right - numbers and number with one dot - if so - no need to escape value before inserting to DB
+            if isinstance(ratingResult['work_ratings_count'], int) and ratingResult['average_rating'].replace('.','',1).isdigit() and book['isbn'] == ratingResult['isbn'] or book['isbn'] == ratingResult['isbn13']:
+                book['rating'] = ratingResult['average_rating']
+                book['count'] = ratingResult['work_ratings_count']
+                break
+
+    #insert rating to DB table
+    sql = '''INSERT INTO ''' + settings['db']['ratings_table'] + '''(id, table_name, rating, count) VALUES '''
+
+    for book in data:
+        if 'rating' in book and 'count' in book:
+            sql += """('""" + str(book['id']) + """','""" + book['table_name']  + """','""" + book['rating']  + """','""" + str(book['count']) + """'),"""
+        else:
+            sql += """('""" + str(book['id']) + """','""" + book['table_name']  + """',NULL,NULL),"""
+
+    sql = sql[:-1] #remove last comma
+
+    sql += """ ON CONFLICT (table_name, id) DO UPDATE SET count = EXCLUDED.count, rating = EXCLUDED.rating;"""
+
+    db.execute(sql)
+    return output

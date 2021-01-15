@@ -11,6 +11,10 @@ from bs4 import BeautifulSoup
 from threading import Thread
 import time
 
+def addCommaToNumber(num):
+    return "{:,}".format(num)
+
+
 def dd_mm_yyyyToTimestamp(date):
     return time.mktime(datetime.datetime.strptime(date, "%d/%m/%Y").timetuple())
 
@@ -313,7 +317,7 @@ def fetchRating(isbn,settings):
         insertError(f"""bad response from goodreads api rating - bad status code from http request\nurl: {url}\npayload:{payload}\nstatus code: {res.status_code}\nresponse: {res}""",settings['errLog'])
         return False
 
-    return {'rating':res['books'][0]['average_rating'], 'count':'{:,}'.format(res['books'][0]['work_reviews_count'])}
+    return {'rating':res['books'][0]['average_rating'], 'count':res['books'][0]['work_ratings_count']}
 
 
 def getIsbn(title,author,settings):

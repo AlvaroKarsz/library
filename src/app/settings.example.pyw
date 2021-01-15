@@ -11,6 +11,7 @@ settings['db']['series_table'] = 'series_table_name'
 settings['db']['stories_table'] = 'stories_table_name'
 settings['db']['wish_table'] = 'wish_list_table_name'
 settings['db']['cache_table'] = 'cache_table_name'
+settings['db']['ratings_table'] = 'ratings_table_name'
 
 settings['maxBooksFetch'] = 20
 settings["maxCoverFetch"] = 9

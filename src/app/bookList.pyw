@@ -704,43 +704,6 @@ class App:
         if returnValue:
             return label
 
-    def addRatingToBook(self,isbn,parent):
-        label = Label(parent,
-        text = f'''Goodreads rating: Fetching...''',
-        font=('Arial',self.settings['gui']['popup_font_size']),
-        anchor="w",
-        background ='white'
-        )
-        label.pack(fill=X,padx=15,pady=3)
-        self.setBgColor(label,'black')
-        self.setFgColor(label,'white')
-
-        threadId = getRandomStr(50) #random string
-        self.ratingThreadId = threadId
-        thread = Thread(target = lambda: self.fetchRatingThread(threadId,isbn,label))
-        self.killThreadWhenWindowIsClosed(thread)
-        thread.start()
-
-
-    def fetchRatingThread(self,threadId,isbn,parent):
-        str = ''
-        ratingJson = fetchRating(isbn,self.settings)
-
-        if self.ratingThreadId != threadId or not parent: #not relevant
-            return
-
-        if not ratingJson:
-            str = 'Goodreads rating: Unknown'
-        else:
-            str = f'''Goodreads rating: {ratingJson['rating']}/5 ({ratingJson['count']})'''
-
-        if self.ratingThreadId != threadId: #not relevant
-            return
-        parent.configure(text=str)
-
-
-
-
     def postStoriesList(self,stories,bookName,bookAuthor,parent):
         label = self.postSingleBookLine('',parent,True)
         Label(label,text='Collection: ',font=('Arial',self.settings['gui']['popup_font_size']),anchor="w",background ='black',foreground='white').pack(side=LEFT,pady=3)
@@ -1032,8 +995,11 @@ class App:
 
     def addBookData(self,bookO,parent):
 
-        if 'isbn' in bookO:
-            self.addRatingToBook(bookO['isbn'],parent)
+        if 'rating' in bookO and 'rating_count' in bookO:#has rating element
+            if bookO['rating'] and bookO['rating_count']:#not empty
+                self.postSingleBookLine('Goodreads rating: ' + bookO['rating'] + '/5 (' + addCommaToNumber(bookO['rating_count']) + ')' ,parent)
+            else:#empty - not found in goodreads
+                self.postSingleBookLine('Goodreads rating: Unknown',parent)
 
         if 'author' in bookO:
             self.postSingleBookLine('Author: ' + bookO['author'],parent)
@@ -1156,6 +1122,7 @@ class App:
         bckupMenu = Menu(topNav,tearoff=False,bg='white',font=('Arial',11))
         bckupMenu.add_command(label="Backup DB",command = self.backupDB)
         bckupMenu.add_command(label="Commit & Push", command = self.commitAndPush)
+        bckupMenu.add_command(label="Cache Ratings", command = self.cacheRatingsToDB)
 
         driveSubMenu = Menu(bckupMenu,tearoff=False,bg='white',font=('Arial',11))
         driveSubMenu.add_command(label="All", command = self.backupToGoogleDriveCommand)
@@ -1197,6 +1164,12 @@ class App:
         self.killThreadWhenWindowIsClosed(thread)
         thread.start()
 
+    def cacheRatingsToDB(self):
+        cacheRes = cacheRatings(self.db,self.settings) #DB function
+        if not cacheRes or 'status' not in cacheRes or not cacheRes['status']:#error
+            messagebox.showerror(title='Error', message="Oppsss\nCould not fetch rarings from goodreads.\nPlease read LOG for mofe info.")
+        else:#success
+            messagebox.showinfo('Sucess', str(cacheRes['count']) + ''' ratings Fetched and saved''')
 
     def commitAndPush(self):
         commitMsg = simpledialog.askstring("Commit Message", "Please Write your commit message:")
