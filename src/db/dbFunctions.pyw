@@ -141,6 +141,11 @@ def insertNewBook(db,settings,json):
 
     #try to save the rating in ratings table - on error just continue
     ratingDict = fetchRating(json['isbn'],settings)
+    if not ratingDict or not ratingDict['count'] or not ratingDict['rating']:#could not fetch - try another isbn from google api
+        googleIsbn = getISBNfromGoogleApiTitle(json['name'],json['author'],settings)
+        if googleIsbn:
+            ratingDict = fetchRating(googleIsbn,settings)
+
     if ratingDict and ratingDict['count'] and ratingDict['rating']:#could fetch
         db.execute("""INSERT INTO """ + settings['db']['ratings_table'] + """(table_name, id, count, rating) VALUES ('""" + settings['db']['books_table'] +  """',%s,%s,%s) ON CONFLICT (id,table_name) DO NOTHING;""",[id,ratingDict['count'],ratingDict['rating']])
 
@@ -927,6 +932,11 @@ def insertNewWish(db,settings,objs):
 
         #try to save the rating in ratings table - on error just continue
         ratingDict = fetchRating(objs['isbn'],settings)
+        if not ratingDict or not ratingDict['count'] or not ratingDict['rating']:#could not fetch - try another isbn from google api
+            googleIsbn = getISBNfromGoogleApiTitle(objs['name'],objs['author'],settings)
+            if googleIsbn:
+                ratingDict = fetchRating(googleIsbn,settings)
+
         if ratingDict and ratingDict['count'] and ratingDict['rating']:#could fetch
             db.execute("""INSERT INTO """ + settings['db']['ratings_table'] + """(table_name, id, count, rating) VALUES (%s,%s,%s,%s) ON CONFLICT (id,table_name) DO NOTHING;""",[settings['db']['wish_table'],id,ratingDict['count'],ratingDict['rating']])
 
@@ -1219,14 +1229,15 @@ def fetchCache(db, settings):
 def cacheRatings(db,settings):
     output = {'status':True,'count':''}
     data = []
+    googleIsbnFetch = []#push here books without ratings - and try the google api isbn
     #first fetch ISBNS
     #books:
-    db.execute("""SELECT id, isbn, '""" + settings['db']['books_table'] + """' AS table_name FROM """ + settings['db']['books_table'] + """;""")
+    db.execute("""SELECT id, isbn,name,author, '""" + settings['db']['books_table'] + """' AS table_name FROM """ + settings['db']['books_table'] + """;""")
     rows = db.fetchall()
     columns = db.description
     data += postgresResultToColumnRowJson(columns,rows)
     #wishlist:
-    db.execute("""SELECT id, isbn, '""" + settings['db']['wish_table'] + """' AS table_name FROM """ + settings['db']['wish_table'] + """;""")
+    db.execute("""SELECT id, isbn,name,author, '""" + settings['db']['wish_table'] + """' AS table_name FROM """ + settings['db']['wish_table'] + """;""")
     rows = db.fetchall()
     columns = db.description
     data += postgresResultToColumnRowJson(columns,rows)
@@ -1248,14 +1259,58 @@ def cacheRatings(db,settings):
     output['count'] = (len(fetchAction['books']))
 
     #iterate api result and keep the rating data in data ARRAY
-
-    for ratingResult in fetchAction['books']:
-        for book in data:
+    FoundFlag = False
+    for book in data:
+        FoundFlag = False#reset
+        for ratingResult in fetchAction['books']:
             #make sure the format is right - numbers and number with one dot - if so - no need to escape value before inserting to DB
-            if isinstance(ratingResult['work_ratings_count'], int) and ratingResult['average_rating'].replace('.','',1).isdigit() and book['isbn'] == ratingResult['isbn'] or book['isbn'] == ratingResult['isbn13']:
-                book['rating'] = ratingResult['average_rating']
-                book['count'] = ratingResult['work_ratings_count']
+            if book['isbn'] == ratingResult['isbn'] or book['isbn'] == ratingResult['isbn13']:#match
+                if isinstance(ratingResult['work_ratings_count'], int) and ratingResult['average_rating'].replace('.','',1).isdigit():#good format
+                    book['rating'] = ratingResult['average_rating']
+                    book['count'] = ratingResult['work_ratings_count']
+                    FoundFlag = True
                 break
+        if not FoundFlag:
+            #if we here - isbn not found for this book - try to fetch isbn from google api, then fetch the ratings again
+            googleIsbnFetch.append({'name':book['name'],'author':book['author'], 'id':book['id'], 'table_name':book['table_name']})
+
+
+    #fetch google isbns if needed
+    if len(googleIsbnFetch):
+        temp = ''
+        newIsbns = []
+        for bk in googleIsbnFetch:
+            temp = getISBNfromGoogleApiTitle(bk['name'],bk['author'],settings)
+            if temp:#found
+                bk['tmp_isbn'] = temp#save isbn
+                newIsbns.append(temp)#push to arr
+
+        if len(newIsbns):#new isbns found - fetch rating from goodreads api
+            apiPayload['isbns'] = ','.join(newIsbns)
+            fetchAction = requests.get(url = apiUrl ,params=apiPayload)
+            if fetchAction.status_code != 200:
+                insertError(f"""Fetch error - bad status code from http request\nurl: {url}\npayload:{payload}\nstatus code: {res.status_code}\nresponse: {res.text}""",settings['errLog'])
+                output['status'] = False
+                return output
+            fetchAction = json.loads(fetchAction.content)
+            output['count'] += (len(fetchAction['books']))#add number to count
+
+            #iterate isbns and add these new ratings
+            for ratingResult in fetchAction['books']:
+                for book in googleIsbnFetch:
+                    if book['tmp_isbn'] == ratingResult['isbn'] or book['tmp_isbn'] == ratingResult['isbn13']:#match
+                        if isinstance(ratingResult['work_ratings_count'], int) and ratingResult['average_rating'].replace('.','',1).isdigit():#good format
+                            book['rating'] = ratingResult['average_rating']
+                            book['count'] = ratingResult['work_ratings_count']
+
+            #iterate all fetches and append to "data" the new founds
+            for book in googleIsbnFetch:
+                if book['rating'] and book['count']:#rating found from google isbn
+                    for mainBookObj in data:
+                        if mainBookObj['id'] == book['id'] and mainBookObj['table_name'] == book['table_name']:#match
+                            mainBookObj['count'] = book['count']
+                            mainBookObj['rating'] = book['rating']
+                            break
 
     #insert rating to DB table
     sql = '''INSERT INTO ''' + settings['db']['ratings_table'] + '''(id, table_name, rating, count) VALUES '''
