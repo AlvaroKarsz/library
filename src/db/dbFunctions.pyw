@@ -590,7 +590,7 @@ def fetchSerieById(db,settings,id):
 
 
 def fetchAllMyStories(db,settings):
-    sql = '''
+    sql = """
     SELECT
         self.id,
         self.name,
@@ -598,13 +598,20 @@ def fetchAllMyStories(db,settings):
         COALESCE(self.read_order,9999999) AS read,
         parent.author,
         parent.name AS parent_name,
-        parent.year
-        FROM ''' + settings['db']['stories_table'] + ''' self
-        LEFT JOIN ''' + settings['db']['books_table'] + ''' parent
+        parent.year,
+        COALESCE(rat.rating,'0') AS rating
+        -- if no rating exists - set as zero
+        FROM """ + settings['db']['stories_table'] + """ self
+
+        LEFT JOIN """ + settings['db']['books_table'] + """ parent
         ON self.parent = parent.id
+
+        LEFT JOIN """ + settings['db']['ratings_table'] + """ rat
+        ON self.id = rat.id AND rat.table_name = '""" + settings['db']['stories_table'] + """'
+
         ORDER BY
         self.id;
-        '''
+        """
     db.execute(sql)
     rows = db.fetchall()
     columns = db.description
@@ -638,7 +645,7 @@ def fetchMyReadList(db,settings):
 
 
 def fetchStoryById(db,settings,id):
-    sql = '''
+    sql = """
     SELECT
         my_stories_main.id AS id,
         my_stories_main.name AS name,
@@ -654,16 +661,18 @@ def fetchStoryById(db,settings,id):
         my_stories_entry1.id AS next_id,
         my_stories_entry1.name AS next_name,
         my_stories_entry2.id AS prev_id,
-        my_stories_entry2.name AS prev_name
+        my_stories_entry2.name AS prev_name,
+        ratings_e.rating AS rating,
+        ratings_e.count AS rating_count
 
-        FROM ''' + settings['db']['stories_table'] + ''' my_stories_main
+        FROM """ + settings['db']['stories_table'] + """ my_stories_main
 
-        LEFT JOIN  ''' + settings['db']['books_table'] + ''' my_books_main
+        LEFT JOIN  """ + settings['db']['books_table'] + """ my_books_main
         ON my_stories_main.parent = my_books_main.id
 
-        LEFT JOIN ''' +  settings['db']['stories_table'] + ''' my_stories_entry1
+        LEFT JOIN """ +  settings['db']['stories_table'] + """ my_stories_entry1
         ON my_stories_entry1.id = (
-            SELECT id FROM ''' + settings['db']['stories_table'] + ''' aa
+            SELECT id FROM """ + settings['db']['stories_table'] + """ aa
             WHERE aa.parent = my_stories_main.parent
             AND
             aa.id > my_stories_main.id
@@ -671,15 +680,19 @@ def fetchStoryById(db,settings,id):
             LIMIT 1
         )
 
-        LEFT JOIN ''' +  settings['db']['stories_table'] + ''' my_stories_entry2
+        LEFT JOIN """ +  settings['db']['stories_table'] + """ my_stories_entry2
         ON my_stories_entry2.id = (
-            SELECT id FROM ''' + settings['db']['stories_table'] + ''' aaa
+            SELECT id FROM """ + settings['db']['stories_table'] + """ aaa
                 WHERE aaa.parent = my_stories_main.parent
                 AND
                 aaa.id < my_stories_main.id
                 ORDER BY aaa.id DESC
                 LIMIT 1
             )
+
+        LEFT JOIN  """ + settings['db']['ratings_table'] + """ ratings_e
+        ON my_stories_main.id = ratings_e.id AND ratings_e.table_name = '""" + settings['db']['stories_table'] +  """'
+
         WHERE my_stories_main.id = %s
         GROUP BY
         my_stories_main.id,
@@ -695,8 +708,10 @@ def fetchStoryById(db,settings,id):
         my_stories_entry1.id,
         my_stories_entry1.name,
         my_stories_entry2.id,
-        my_stories_entry2.name;
-        '''
+        my_stories_entry2.name,
+        ratings_e.rating,
+        ratings_e.count;
+        """
     db.execute(sql,[id])
     rows = [db.fetchone()]
     columns = db.description
@@ -1245,7 +1260,11 @@ def cacheRatings(db,settings):
     rows = db.fetchall()
     columns = db.description
     data += postgresResultToColumnRowJson(columns,rows)
-
+    #stories:
+    db.execute("""SELECT main.id, main.name,books_e.author, '""" + settings['db']['stories_table'] + """' AS table_name, '' AS isbn FROM """ + settings['db']['stories_table'] + """ main LEFT JOIN """ + settings['db']['books_table'] + """ books_e ON books_e.id = main.parent;""")
+    rows = db.fetchall()
+    columns = db.description
+    data += postgresResultToColumnRowJson(columns,rows)
 
     #fetch isbns from ratings table - some isbns not exists in goodreads DB, so ratings table have a column with additional isbns to replace these
     db.execute("""SELECT additional_isbn, id, table_name FROM """ + settings['db']['ratings_table'] + """ WHERE additional_isbn IS NOT NULL;""")
@@ -1260,8 +1279,15 @@ def cacheRatings(db,settings):
                 data[index]['isbn'] = bk['additional_isbn']
                 break
 
+    #some additional_isbn are "false" - remove them from list and ignore them
+    data = [s for s in data if s['isbn'] != 'false']
+
     #create isbn string to fetch goodreads API
-    isbnString = ','.join(list(map(lambda a : a['isbn'],data)))
+    isbnString = list(map(lambda a : a['isbn'] ,data))
+    #now remove empty isbns from stories
+    isbnString = list(filter(None, isbnString))
+    #convert to string
+    isbnString = ','.join(isbnString)
 
     apiUrl = settings['api']['goodreads']['ratingByIsbnsArray']
     apiFormat = 'json'
@@ -1298,6 +1324,7 @@ def cacheRatings(db,settings):
         temp = ''
         newIsbns = []
         for bk in googleIsbnFetch:
+            temp = '' #reset
             temp = getISBNfromGoogleApiTitle(bk['name'],bk['author'],settings)
             if temp and temp.isdigit():#found and valid
                 bk['temp_isbn'] = temp#save isbn
@@ -1315,6 +1342,8 @@ def cacheRatings(db,settings):
             #iterate isbns and add these new ratings
             for ratingResult in fetchAction['books']:
                 for book in googleIsbnFetch:
+                    if 'temp_isbn' not in book:
+                        continue
                     if book['temp_isbn'] == ratingResult['isbn'] or book['temp_isbn'] == ratingResult['isbn13']:#match
                         if isinstance(ratingResult['work_ratings_count'], int) and ratingResult['average_rating'].replace('.','',1).isdigit():#good format
                             book['rating'] = ratingResult['average_rating']
@@ -1322,13 +1351,18 @@ def cacheRatings(db,settings):
 
             #iterate all fetches and append to "data" the new founds
             for book in googleIsbnFetch:
-                if book['rating'] and book['count']:#rating found from google isbn
+                if 'rating' in book and 'count' in book and book['rating'] and book['count']:#rating found from google isbn
                     for mainBookObj in data:
                         if mainBookObj['id'] == book['id'] and mainBookObj['table_name'] == book['table_name']:#match
                             mainBookObj['count'] = book['count']
                             mainBookObj['rating'] = book['rating']
                             mainBookObj['temp_isbn'] = book['temp_isbn']#save temp isbn in ratings table - so next time we will use this isbn instead of the one from the table's DB
                             break
+
+    #iterate all books and set additional_isbns as "false" if no ratings found - so next time we'll skip it
+    for idx, book in enumerate(data):
+        if 'rating' not in book or 'count' not in book:
+            data[idx]['temp_isbn'] = 'false'#this will indicate to ignore the book next time
 
     #insert rating to DB table
     sql = '''INSERT INTO ''' + settings['db']['ratings_table'] + ''' AS main (id, table_name, rating, count, additional_isbn) VALUES '''
@@ -1340,8 +1374,12 @@ def cacheRatings(db,settings):
                 sql += """','""" + str(book['temp_isbn']) + """'),"""
             else:#no temp isbn
                 sql += """',NULL),"""
-        else:
-            sql += """('""" + str(book['id']) + """','""" + book['table_name']  + """',NULL,NULL,NULL),"""
+        else:#no rating
+            sql += """('""" + str(book['id']) + """','""" + book['table_name']  + """',NULL,NULL,"""
+            if 'temp_isbn' in book:#book has temp isbn - save it
+                sql += """'""" + book['temp_isbn'] + """'),"""
+            else: # no temp isbn
+                sql += """NULL),"""
 
     sql = sql[:-1] #remove last comma
 
