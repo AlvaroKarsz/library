@@ -1295,7 +1295,7 @@ def cacheRatings(db,settings):
     apiPayload = {'key': settings['api']['goodreads']['key'], 'isbns': isbnString, 'format': apiFormat}
     fetchAction = requests.get(url = apiUrl ,params=apiPayload)
     if fetchAction.status_code != 200:
-        insertError(f"""Fetch error - bad status code from http request\nurl: {url}\npayload:{payload}\nstatus code: {res.status_code}\nresponse: {res.text}""",settings['errLog'])
+        insertError(f"""Fetch error - bad status code from http request\nurl: {apiUrl}\npayload:{apiPayload}\nstatus code: {fetchAction.status_code}\nresponse: {fetchAction.text}""",settings['errLog'])
         output['status'] = False
         return output
 
@@ -1332,12 +1332,15 @@ def cacheRatings(db,settings):
         if len(newIsbns):#new isbns found - fetch rating from goodreads api
             apiPayload['isbns'] = ','.join(newIsbns)
             fetchAction = requests.get(url = apiUrl ,params=apiPayload)
-            if fetchAction.status_code != 200:
-                insertError(f"""Fetch error - bad status code from http request\nurl: {url}\npayload:{payload}\nstatus code: {res.status_code}\nresponse: {res.text}""",settings['errLog'])
+            if fetchAction.status_code != 200 and fetchAction.status_code != 404:
+                insertError(f"""Fetch error - bad status code from http request\nurl: {apiUrl}\npayload:{apiPayload}\nstatus code: {fetchAction.status_code}\nresponse: {fetchAction.text}""",settings['errLog'])
                 output['status'] = False
                 return output
-            fetchAction = json.loads(fetchAction.content)
-            output['count'] += (len(fetchAction['books']))#add number to count
+            if fetchAction.status_code == 200:
+                fetchAction = json.loads(fetchAction.content)
+                output['count'] += (len(fetchAction['books']))#add number to count
+            else: #404
+                fetchAction = {'books':[]}
 
             #iterate isbns and add these new ratings
             for ratingResult in fetchAction['books']:
