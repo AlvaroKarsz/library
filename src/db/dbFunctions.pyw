@@ -806,6 +806,7 @@ def fetchMyOrderedlist(db,settings):
         main.name,
         main.author,
         main.year,
+        main.order_date AS order_date,
         COALESCE(rat.rating,'0') AS rating
         -- if no rating exists - set as zero
         FROM """ + settings['db']['wish_table'] + """ main
