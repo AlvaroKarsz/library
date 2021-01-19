@@ -20,6 +20,10 @@ settings['dialog'] = {}
 settings['dialog']['width'] = 700
 settings['dialog']['height'] = 300
 
+settings['readDialog'] = {}
+settings['readDialog']['width'] = 700
+settings['readDialog']['height'] = 480
+
 settings['storiesDialog'] = {}
 settings['storiesDialog']['width'] = 800
 settings['storiesDialog']['height'] = 600

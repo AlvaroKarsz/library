@@ -260,6 +260,7 @@ def fetchBookById(db,settings,id):
         my_books_main.read_date AS read_date,
         my_books_main.listed_date AS listed_date,
         my_books_main.serie_num AS serie_num,
+        my_books_main.completed AS read_completed,
         series_table.name AS serie,
         my_books_entry1.id AS next_id,
         my_books_entry1.name AS next_name,
@@ -313,6 +314,7 @@ def fetchBookById(db,settings,id):
         my_books_main.store,
         my_books_main.read_order,
         my_books_main.serie_num,
+        my_books_main.completed,
         series_table.name,
         my_books_main.listed_date,
         my_books_entry1.id,
@@ -330,11 +332,13 @@ def fetchBookById(db,settings,id):
     return postgresResultToColumnRowJson(columns,rows)[0]
 
 
-def markStoryAsReaded(db,settings,storyID,date):
+def markStoryAsReaded(db,settings,storyID,date, pages):
     #first mark story as readed
+    pages = pages if pages else None #null if not relevant
     sql = '''
     UPDATE ''' + settings['db']['stories_table'] + '''
     SET readed_date = %s,
+    completed = %s,
     read_order =
         (
             (
@@ -350,7 +354,7 @@ def markStoryAsReaded(db,settings,storyID,date):
         WHERE readed_date IS NOT NULL
         ) + 1
     );'''
-    db.execute(sql,[date,storyID])
+    db.execute(sql,[date,pages,storyID])
     readedStory = db.fetchone()[0]
     readedBook = None
     #now check if the collection is completed, if so mark it as readed too
@@ -437,7 +441,7 @@ def markStoryAsReaded(db,settings,storyID,date):
     return {'book':readedBook, 'story':readedStory}
 
 
-def markBookAsReaded(db,settings,bookID,date):
+def markBookAsReaded(db,settings,bookID,date, pages):
     #first mark it stories as readed
     sql = '''UPDATE ''' + settings['db']['stories_table'] + '''
      SET readed_date = %s,
@@ -457,7 +461,7 @@ def markBookAsReaded(db,settings,bookID,date):
         keepGoing = db.rowcount
 
 
-
+    pages = pages if pages else None #so it will be null in DB
     sql = '''UPDATE ''' + settings['db']['books_table'] + '''
         SET read_order =
             (
@@ -468,11 +472,12 @@ def markBookAsReaded(db,settings,bookID,date):
                 LIMIT 1
                 ) + 1
             ),
-        read_date = %s
+        read_date = %s,
+        completed = %s
     WHERE id = %s
     RETURNING read_order;
     '''
-    db.execute(sql,[date,bookID])
+    db.execute(sql,[date,pages,bookID])
     return db.fetchone()[0]
 
 
@@ -652,6 +657,7 @@ def fetchStoryById(db,settings,id):
         my_stories_main.pages AS pages,
         my_stories_main.readed_date AS read_date,
         my_stories_main.read_order AS read,
+        my_stories_main.completed AS read_completed,
         my_books_main.year AS year,
         my_books_main.name AS parent_name,
         my_books_main.author AS author,
@@ -703,6 +709,7 @@ def fetchStoryById(db,settings,id):
         my_books_main.author,
         my_books_main.language,
         my_books_main.listed_date,
+        my_stories_main.completed,
         my_books_main.original_language,
         my_books_main.read_order,
         my_stories_entry1.id,

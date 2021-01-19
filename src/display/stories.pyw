@@ -21,8 +21,8 @@ class Stories:
         return fetchStoryById(db,settings,id)
 
 
-    def markReaded(db,settings,storyId,date):
-        readedInfo = markStoryAsReaded(db,settings,storyId,date)
+    def markReaded(db,settings,storyId,date, pages):
+        readedInfo = markStoryAsReaded(db,settings,storyId,date,pages)
         alertString = f'''This is the {readedInfo['story']}th story you've readed.\n'''
         if readedInfo['book']:
             alertString += f'''By reading this story, you've completed the colletion, the {readedInfo['book']}th book you've readed!'''

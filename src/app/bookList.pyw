@@ -12,6 +12,7 @@ from insertWish import InsertWish
 from selectCover import CoverSelector
 from authorBooks import AuthorBooks
 from displayStories import DisplayStories
+from markRead import bookRead
 from displayDescription import Description
 from insertSerie import InsertSerie
 from stories import Stories
@@ -296,7 +297,7 @@ class App:
         self.setFgColor([hol1,hol2,strL],'white')
 
 
-    def addReadStamp(self,parent,readFlag,bookID):
+    def addReadStamp(self,parent,readFlag,bookID,bookName, bookAuthor, bookPages):
         string = "You've read this book" if readFlag else "You haven't read this book"
         stamp = Image.open(self.settings['icons']['has_been_read'] if readFlag else self.settings['icons']['has_not_been_read'])
         stamp = stamp.resize((self.settings['icons']['width'],self.settings['icons']['height']))
@@ -321,7 +322,7 @@ class App:
             toggle = Label(labelParent,text='Mark as readed',background='white',anchor='sw',font=('Arial',10))
             self.styleRedirectText(toggle)
             toggle.pack(side=LEFT)
-            toggle.bind('<Button-1>',lambda event: self.markThisBookReaded(bookID))
+            toggle.bind('<Button-1>',lambda event: self.markThisBookReaded(bookID,bookName, bookAuthor, bookPages))
             self.setBgColor(toggle,'black')
             self.setFgColor(toggle,'white')
 
@@ -481,14 +482,13 @@ class App:
         return path
 
 
-    def markThisBookReaded(self,bookID):
-        date = simpledialog.askstring("Read Date", "When did you read this book?\n\nExamples:\nJan 2020 - Mar 2020\nFeb 2020")
-        validDate = dateForDB(date)
-        if not validDate:
-            messagebox.showerror(title='Error', message="Invalid Date Format")
-        else :
-            self.markReaded(validDate,bookID)
-            self.redirectPopUp(bookID) # reload with the new icon
+    def markThisBookReaded(self,bookID, bookName, bookAuthor, bookPages):
+        t = Toplevel(self.window)
+        centerWindow(t,self.settings['readDialog']['width'],self.settings['readDialog']['height'])
+        traceBookRead = bookRead(t, self.db, self.settings, bookName, bookAuthor,bookPages, bookID, self.picFolder,self.markReaded)
+
+        _self = self #acess from another class object
+        traceBookRead.doneFlag.trace("w", lambda *args: _self.redirectPopUp(bookID)) # reload with the new icon
 
 
     def markThisBookUnRead(self,bookID):
@@ -516,7 +516,7 @@ class App:
 
 
         if 'read' in bookObj:
-            self.addReadStamp(selectedBookHeader,bookObj['read'],bookObj['id'])
+            self.addReadStamp(selectedBookHeader,bookObj['read'],bookObj['id'],bookObj['name'], bookObj['author'], bookObj['pages'])
 
         if 'ordered' in bookObj:
             secondOrderFlag = True if 'order_date_2' in bookObj and not bookObj['order_date_2'] else False
@@ -1040,6 +1040,9 @@ class App:
         if 'read_date' in bookO and bookO['read_date']:
             self.postSingleBookLine('Read Date: ' + str(bookO['read_date']),parent)
 
+        if 'read' in bookO and 'read_completed' in bookO and bookO['read_completed']: #mark if not completed
+            self.postSingleBookLine('Number of Pages Reded: ' + str(bookO['read_completed']) + '/' +  str(bookO['pages']),parent)
+
         if 'language' in bookO:
             self.postSingleBookLine('Language: ' + bookO['language'],parent)
 
@@ -1292,7 +1295,7 @@ class App:
         self.reloadData = self.loadStories
         self.buyingOption = True if hasattr(stories,'buyingOption') else False
         self.markReadedFlag = stories.markAsReadedFlag
-        self.markReaded = lambda date,id,: Stories.markReaded(self.db,self.settings,id,date)
+        self.markReaded = lambda date,id,pages: Stories.markReaded(self.db,self.settings,id,date,pages)
         self.booksCount = len(self.data)
         self.totalBooks = self.booksCount
         self.totalPages = roundUpDividation(self.booksCount, self.settings['maxBooksFetch']) or 1
@@ -1351,7 +1354,7 @@ class App:
         self.data = books.setData()
         self.reloadData = self.loadBooks
         self.markReadedFlag = books.markAsReadedFlag
-        self.markReaded = lambda date,id: Books.markReaded(self.db,self.settings,id,date)
+        self.markReaded = lambda date,id, pages: Books.markReaded(self.db,self.settings,id,date, pages)
         self.booksCount = len(self.data)
         self.totalBooks = self.booksCount
         self.totalPages = roundUpDividation(self.booksCount, self.settings['maxBooksFetch']) or 1
