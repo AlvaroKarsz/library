@@ -305,7 +305,7 @@ class InsertBook:
         nameColumn = dfPointer.columns[0]
         pagesColumn = dfPointer.columns[1]
         for i, j in dfPointer.iterrows():
-            self.addNewCollectionEntry([j[nameColumn],j[pagesColumn]])
+            self.addNewCollectionEntry([j[nameColumn],str(j[pagesColumn]).split('.')[0]]) #if pages number was calculated in excel formula - it will appear with a dot "5.0", get number before dot
 
 
     def killAllChildren(self,widget):
