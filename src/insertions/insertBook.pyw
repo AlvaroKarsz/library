@@ -233,11 +233,10 @@ class InsertBook:
         self.isCollectionNextRow = 0
         self.collectionArr = []
 
-        if 'stories' in autoValues:
+        if 'stories' in autoValues and autoValues['stories'] and notEmptyEls(autoValues['stories']):
             btn.pack(side=LEFT)#display 'add' button
-            if autoValues['stories'] and notEmptyEls(autoValues['stories']):
-                self.isCollection.set(True)
-                Thread(target = lambda: self.insertAutoValuesCollection(autoValues['stories'])).start()
+            self.isCollection.set(True)
+            Thread(target = lambda: self.insertAutoValuesCollection(autoValues['stories'])).start()
 
 
     def addExcelCsvHandler(self,parent):
