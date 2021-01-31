@@ -1294,27 +1294,19 @@ def cacheRatings(db,settings):
     isbnString = list(map(lambda a : a['isbn'] ,data))
     #now remove empty isbns from stories
     isbnString = list(filter(None, isbnString))
-    #convert to string
-    isbnString = ','.join(isbnString)
 
-    apiUrl = settings['api']['goodreads']['ratingByIsbnsArray']
-    apiFormat = 'json'
-
-    apiPayload = {'key': settings['api']['goodreads']['key'], 'isbns': isbnString, 'format': apiFormat}
-    fetchAction = requests.get(url = apiUrl ,params=apiPayload)
-    if fetchAction.status_code != 200:
-        insertError(f"""Fetch error - bad status code from http request\nurl: {apiUrl}\npayload:{apiPayload}\nstatus code: {fetchAction.status_code}\nresponse: {fetchAction.text}""",settings['errLog'])
+    #fetch ratings from API
+    fetchedRatingsFromAPI = fetchRatingsByIsbnArr(isbnString, settings)
+    if fetchedRatingsFromAPI == False:
         output['status'] = False
         return output
 
-    fetchAction = json.loads(fetchAction.content)
-    output['count'] = (len(fetchAction['books']))
-
+    output['count'] = (len(fetchedRatingsFromAPI))
     #iterate api result and keep the rating data in data ARRAY
     FoundFlag = False
     for book in data:
         FoundFlag = False#reset
-        for ratingResult in fetchAction['books']:
+        for ratingResult in fetchedRatingsFromAPI:
             #make sure the format is right - numbers and number with one dot - if so - no need to escape value before inserting to DB
             if book['isbn'] == ratingResult['isbn'] or book['isbn'] == ratingResult['isbn13']:#match
                 if isinstance(ratingResult['work_ratings_count'], int) and ratingResult['average_rating'].replace('.','',1).isdigit():#good format
@@ -1338,20 +1330,14 @@ def cacheRatings(db,settings):
                 bk['temp_isbn'] = temp#save isbn
                 newIsbns.append(temp)#push to arr
         if len(newIsbns):#new isbns found - fetch rating from goodreads api
-            apiPayload['isbns'] = ','.join(newIsbns)
-            fetchAction = requests.get(url = apiUrl ,params=apiPayload)
-            if fetchAction.status_code != 200 and fetchAction.status_code != 404:
-                insertError(f"""Fetch error - bad status code from http request\nurl: {apiUrl}\npayload:{apiPayload}\nstatus code: {fetchAction.status_code}\nresponse: {fetchAction.text}""",settings['errLog'])
+            #fetch ratings from API
+            fetchedRatingsFromAPI = fetchRatingsByIsbnArr(newIsbns, settings)
+            if fetchedRatingsFromAPI == False:
                 output['status'] = False
                 return output
-            if fetchAction.status_code == 200:
-                fetchAction = json.loads(fetchAction.content)
-                output['count'] += (len(fetchAction['books']))#add number to count
-            else: #404
-                fetchAction = {'books':[]}
 
             #iterate isbns and add these new ratings
-            for ratingResult in fetchAction['books']:
+            for ratingResult in fetchedRatingsFromAPI:
                 for book in googleIsbnFetch:
                     if 'temp_isbn' not in book:
                         continue

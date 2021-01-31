@@ -853,3 +853,27 @@ def getPicturesFolderNameFromPath(path):
 
 def getnameFromfileString(str):
     return str.split('.')[0]
+
+def cutArrToSmallerArrs(mainArr, elementsInMiniArrays):
+    output = []
+    for i in range(0,len(mainArr),elementsInMiniArrays):
+        output.append(mainArr[i:elementsInMiniArrays + i])
+    return output
+
+def fetchRatingsByIsbnArr(isbnArr, settings):
+    MAX_ISBNS_IN_HTTP_PAYLOAD = 500
+    apiUrl = settings['api']['goodreads']['ratingByIsbnsArray']
+    apiFormat = 'json'
+    fetchedRatingsFromAPI = []
+    fetchAction = ""
+    isbnArr = cutArrToSmallerArrs(isbnArr, MAX_ISBNS_IN_HTTP_PAYLOAD)
+    for miniArr in isbnArr: #iterate mini arrays
+        apiPayload = {'key': settings['api']['goodreads']['key'], 'isbns': ','.join(miniArr), 'format': apiFormat}
+        fetchAction = requests.get(url = apiUrl ,params=apiPayload)
+        if fetchAction.status_code != 200 and fetchAction.status_code != 404:
+            insertError(f"""Fetch error - bad status code from http request\nurl: {apiUrl}\npayload:{apiPayload}\nstatus code: {fetchAction.status_code}\nresponse: {fetchAction.text}""",settings['errLog'])
+            return False
+        else:
+            if fetchAction.status_code == 200:
+                fetchedRatingsFromAPI += json.loads(fetchAction.content)['books']
+    return fetchedRatingsFromAPI
